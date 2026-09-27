@@ -1,25 +1,15 @@
 # bixverse pipeline. Usage: Rscript bixverse.R <data_dir> <out_dir> <scratch_dir>
 
-suppressPackageStartupMessages({
-  library(bixverse)
-  library(data.table)
-})
+source("/bench/pipelines/common.R")
+suppressPackageStartupMessages(library(bixverse))
 
-args <- commandArgs(trailingOnly = TRUE)
-data <- args[1]
-out <- args[2]
-scratch <- args[3]
-
-steps_file <- file.path(out, "steps.csv")
-cat("step,start,end\n", file = steps_file)
-
-step <- function(name, expr) {
-  start <- as.numeric(Sys.time())
-  force(expr)
-  end <- as.numeric(Sys.time())
-  cat(sprintf("%s,%.3f,%.3f\n", name, start, end), file = steps_file, append = TRUE)
-  message(sprintf("%s: %.1f s", name, end - start))
-}
+# BIX_KNN sets the kNN for the sNN graph, BIX_TSNE_KNN the one tSNE builds
+# internally (k = 3 x perplexity). nndescent uses extract_knn as in the big
+# data vignette.
+knn_method <- Sys.getenv("BIX_KNN", "kmknn")
+tsne_knn_method <- Sys.getenv("BIX_TSNE_KNN", "kmknn")
+knn_params <- list(knn_method = knn_method)
+if (knn_method == "nndescent") knn_params$extract_knn <- TRUE
 
 # load includes the pre-filter (genes in >= 5 cells, then cells with >= 100
 # genes and >= 250 UMIs) and the log-normalisation, fused in one streaming pass
@@ -70,7 +60,11 @@ step("harmony", {
 })
 
 step("knn_snn", {
-  sce <- find_neighbours_sc(object = sce, embd_to_use = "harmony_v2")
+  sce <- find_neighbours_sc(
+    object = sce,
+    embd_to_use = "harmony_v2",
+    neighbours_params = params_sc_neighbours(knn = knn_params)
+  )
 })
 
 step("cluster", {
@@ -86,7 +80,8 @@ step("tsne_default", {
     object = sce,
     embd_to_use = "harmony_v2",
     perplexity = 30,
-    approx_type = "bh"
+    approx_type = "bh",
+    knn_method = tsne_knn_method
   )
 })
 
@@ -96,7 +91,8 @@ step("tsne_fft", {
     embd_to_use = "harmony_v2",
     slot_name = "tsne_fft",
     perplexity = 30,
-    approx_type = "fft"
+    approx_type = "fft",
+    knn_method = tsne_knn_method
   )
 })
 

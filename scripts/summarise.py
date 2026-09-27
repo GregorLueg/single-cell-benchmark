@@ -12,8 +12,11 @@ import polars as pl
 GB = 1024**3
 rows = []
 for tool_dir in sorted(p for p in Path(sys.argv[1]).iterdir() if (p / "steps.csv").exists()):
-    steps = pl.read_csv(tool_dir / "steps.csv")
     mem = pl.read_csv(tool_dir / "mem.csv")
+    if (tool_dir / "steps.csv").stat().st_size == 0:
+        print(f"{tool_dir.name}: no completed steps, peak anon {mem['anon_bytes'].max() / GB:.2f} GB")
+        continue
+    steps = pl.read_csv(tool_dir / "steps.csv")
     for s in steps.iter_rows(named=True):
         # widen by one sample either side so short steps still catch a reading
         win = mem.filter(pl.col("t").is_between(s["start"] - 1, s["end"] + 1))
