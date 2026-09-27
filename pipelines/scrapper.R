@@ -72,6 +72,19 @@ step("tsne_default", {
   tsne <- runTsne(t(emb), perplexity = 30, num.threads = threads)
 })
 
+# qdtsne defaults to theta = 1 and 500 iterations; this row matches the usual
+# theta = 0.5, 1000 iterations, 250 early exaggeration
+step("tsne_matched", {
+  tsne_matched <- runTsne(
+    t(emb),
+    perplexity = 30,
+    theta = 0.5,
+    max.iterations = 1000,
+    early.exaggeration.iterations = 250,
+    num.threads = threads
+  )
+})
+
 res <- data.table(cell_id = md$bc_wells, cluster = clusters$membership)
 fwrite(res, file.path(out, "clusters.csv"))
 message(sprintf("cells after QC: %d, clusters: %d", nrow(res), uniqueN(res$cluster)))

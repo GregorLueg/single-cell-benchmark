@@ -18,7 +18,8 @@ esac
 docker volume rm -f scbench-scratch > /dev/null
 docker volume create scbench-scratch > /dev/null
 
-docker run --rm --cpus=8 --memory="$mem" --memory-swap="$memswap" \
+docker rm -f scbench-run > /dev/null 2>&1 || true
+docker run --rm --name scbench-run --cpus=8 --memory="$mem" --memory-swap="$memswap" \
   -e OMP_NUM_THREADS=8 -e OPENBLAS_NUM_THREADS=8 -e RAYON_NUM_THREADS=8 -e INPUT="${INPUT:-mtx}" -e BIX_KNN="${BIX_KNN:-kmknn}" -e BIX_TSNE_KNN="${BIX_TSNE_KNN:-kmknn}" \
   -v "$root/data/$dataset:/data:ro" \
   -v "$out:/out" \
