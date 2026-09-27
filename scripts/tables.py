@@ -27,8 +27,10 @@ COLUMNS = {
     "bixverse GPU*": ["bixverse_gpu"],
     "Scanpy mtx": ["scanpy_mtx", "scanpy"],
     "Scanpy h5ad": ["scanpy_h5ad"],
-    "scrapper": ["scrapper"],
-    "Seurat std": ["seurat_standard"],
+    "scrapper mtx": ["scrapper"],
+    "scrapper h5ad": ["scrapper_h5ad"],
+    "Seurat std mtx": ["seurat_standard"],
+    "Seurat std h5ad": ["seurat_standard_h5ad"],
     "Seurat BPCells": ["seurat_bpcells"],
 }
 
