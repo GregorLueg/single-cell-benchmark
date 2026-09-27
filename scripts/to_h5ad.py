@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["anndata>=0.11", "scipy>=1.13", "pandas", "h5py"]
+# dependencies = ["anndata>=0.11", "scipy>=1.13", "pandas<3", "h5py"]
 # ///
 """Convert a subsample dir (DGE.mtx, cells as rows) to DGE.h5ad with raw counts in X."""
 
@@ -18,7 +18,8 @@ obs = pd.read_csv(d / "cell_metadata.csv", index_col=0)
 var = pd.read_csv(d / "all_genes.csv", index_col=0)
 # Plain object indices so anndata writes them as string-array datasets. With
 # only group-encoded columns in /var, bixverse's get_h5ad_dimensions() cannot
-# infer the gene count (fixed upstream separately).
+# infer the gene count (fixed upstream separately). pandas >= 3 infers a str
+# dtype even from object arrays, which anndata writes as nullable-string-array.
 obs.index = pd.Index(obs.index.to_numpy(dtype=object), name=obs.index.name)
 var.index = pd.Index(var.index.to_numpy(dtype=object), name=var.index.name)
 adata = ad.AnnData(X=x, obs=obs, var=var)
