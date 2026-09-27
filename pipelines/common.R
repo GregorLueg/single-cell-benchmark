@@ -16,7 +16,7 @@ step <- function(name, expr) {
   force(expr)
   end <- as.numeric(Sys.time())
   cat(sprintf("%s,%.3f,%.3f\n", name, start, end), file = steps_file, append = TRUE)
-  message(sprintf("%s: %.1f s", name, end - start))
+  message(sprintf(">>> %s: %.1f s <<<", name, end - start))
 }
 
 genes <- fread(file.path(data, "all_genes.csv"))

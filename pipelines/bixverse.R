@@ -13,25 +13,36 @@ if (knn_method == "nndescent") knn_params$extract_knn <- TRUE
 
 # load includes the pre-filter (genes in >= 5 cells, then cells with >= 100
 # genes and >= 250 UMIs) and the log-normalisation, fused in one streaming pass
+qc_param <- params_sc_min_quality(
+  min_unique_genes = 100L,
+  min_lib_size = 250L,
+  min_cells = 5L,
+  target_size = 1e4
+)
+
 step("load", {
   sce <- SingleCells(dir_data = scratch)
-  sce <- load_mtx(
-    object = sce,
-    sc_mtx_io_param = params_sc_mtx_io(
-      path_mtx = file.path(data, "DGE.mtx"),
-      path_obs = file.path(data, "cell_metadata.csv"),
-      path_var = file.path(data, "all_genes.csv"),
-      cells_as_rows = TRUE,
-      has_hdr = TRUE
-    ),
-    sc_qc_param = params_sc_min_quality(
-      min_unique_genes = 100L,
-      min_lib_size = 250L,
-      min_cells = 5L,
-      target_size = 1e4
-    ),
-    streaming = 2L
-  )
+  sce <- if (Sys.getenv("INPUT", "mtx") == "h5ad") {
+    load_h5ad(
+      object = sce,
+      h5_path = file.path(data, "DGE.h5ad"),
+      sc_qc_param = qc_param,
+      streaming = 2L
+    )
+  } else {
+    load_mtx(
+      object = sce,
+      sc_mtx_io_param = params_sc_mtx_io(
+        path_mtx = file.path(data, "DGE.mtx"),
+        path_obs = file.path(data, "cell_metadata.csv"),
+        path_var = file.path(data, "all_genes.csv"),
+        cells_as_rows = TRUE,
+        has_hdr = TRUE
+      ),
+      sc_qc_param = qc_param,
+      streaming = 2L
+    )
+  }
 })
 
 step("qc", {

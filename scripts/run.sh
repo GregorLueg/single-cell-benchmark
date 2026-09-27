@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Usage: [BIX_KNN=nndescent] [BIX_TSNE_KNN=nndescent] [TAG=suffix] scripts/run.sh <tool> <dataset>
+# Usage: [INPUT=h5ad] [BIX_KNN=nndescent] [BIX_TSNE_KNN=nndescent] [TAG=suffix] scripts/run.sh <tool> <dataset>
 #   tool: scanpy | seurat_bpcells | seurat_standard | scrapper | bixverse
 # Container is capped like a MacBook Air: 8 cores, 24 GB RAM plus swap.
 set -euo pipefail
@@ -19,7 +19,7 @@ docker volume rm -f scbench-scratch > /dev/null
 docker volume create scbench-scratch > /dev/null
 
 docker run --rm --cpus=8 --memory="$mem" --memory-swap="$memswap" \
-  -e OMP_NUM_THREADS=8 -e OPENBLAS_NUM_THREADS=8 -e RAYON_NUM_THREADS=8 -e BIX_KNN="${BIX_KNN:-kmknn}" -e BIX_TSNE_KNN="${BIX_TSNE_KNN:-kmknn}" \
+  -e OMP_NUM_THREADS=8 -e OPENBLAS_NUM_THREADS=8 -e RAYON_NUM_THREADS=8 -e INPUT="${INPUT:-mtx}" -e BIX_KNN="${BIX_KNN:-kmknn}" -e BIX_TSNE_KNN="${BIX_TSNE_KNN:-kmknn}" \
   -v "$root/data/$dataset:/data:ro" \
   -v "$out:/out" \
   -v "$root/pipelines:/bench/pipelines:ro" \

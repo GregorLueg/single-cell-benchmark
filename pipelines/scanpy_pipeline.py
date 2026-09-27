@@ -1,5 +1,6 @@
 """Scanpy pipeline. Usage: scanpy_pipeline.py <data_dir> <out_dir>"""
 
+import os
 import sys
 import time
 from contextlib import contextmanager
@@ -25,14 +26,16 @@ def step(name):
     yield
     steps.write(f"{name},{start},{time.time()}\n")
     steps.flush()
-    print(f"{name}: {time.time() - start:.1f} s", flush=True)
+    print(f">>> {name}: {time.time() - start:.1f} s <<<", flush=True)
 
 
 with step("load"):
-    adata = sc.read_mtx(data / "DGE.mtx")
-    adata.obs = pd.read_csv(data / "cell_metadata.csv", index_col=0)
-    genes = pd.read_csv(data / "all_genes.csv", index_col=0)
-    adata.var = genes
+    if os.environ.get("INPUT", "mtx") == "h5ad":
+        adata = sc.read_h5ad(data / "DGE.h5ad")
+    else:
+        adata = sc.read_mtx(data / "DGE.mtx")
+        adata.obs = pd.read_csv(data / "cell_metadata.csv", index_col=0)
+        adata.var = pd.read_csv(data / "all_genes.csv", index_col=0)
     # same pre-filter as bixverse: genes first, then cells
     sc.pp.filter_genes(adata, min_cells=5)
     sc.pp.filter_cells(adata, min_genes=100)
