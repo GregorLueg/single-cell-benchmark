@@ -10,7 +10,7 @@ out="$root/results/$dataset/bixverse_gpu"
 scratch="$root/scratch_native"
 rm -rf "$out" "$scratch"; mkdir -p "$out" "$scratch"
 
-R_LIBS="$root/rlib" RAYON_NUM_THREADS=8 BENCH_DIR="$root" /usr/bin/time -l \
+BIX_CSC_GB="${BIX_CSC_GB:-8}" R_LIBS="$root/rlib" RAYON_NUM_THREADS=8 BENCH_DIR="$root" /usr/bin/time -l \
   Rscript "$root/pipelines/bixverse_gpu.R" "$root/data/$dataset" "$out" "$scratch" \
   > "$out/log.txt" 2>&1 &
 pid=$!

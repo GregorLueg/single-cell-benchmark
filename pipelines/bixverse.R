@@ -13,6 +13,9 @@ if (knn_method == "nndescent") knn_params$extract_knn <- TRUE
 
 # load includes the pre-filter (genes in >= 5 cells, then cells with >= 100
 # genes and >= 250 UMIs) and the log-normalisation, fused in one streaming pass
+# cap on the CSR to CSC conversion buffers, as in the big data vignette
+csc_mem_gb <- as.numeric(Sys.getenv("BIX_CSC_GB", "8"))
+
 qc_param <- params_sc_min_quality(
   min_unique_genes = 100L,
   min_lib_size = 250L,
@@ -27,7 +30,7 @@ step("load", {
       object = sce,
       h5_path = file.path(data, "DGE.h5ad"),
       sc_qc_param = qc_param,
-      streaming = 2L
+      csc_mem_gb = csc_mem_gb
     )
   } else {
     load_mtx(
@@ -40,7 +43,7 @@ step("load", {
         has_hdr = TRUE
       ),
       sc_qc_param = qc_param,
-      streaming = 2L
+      csc_mem_gb = csc_mem_gb
     )
   }
 })

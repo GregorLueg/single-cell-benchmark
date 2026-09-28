@@ -8,6 +8,9 @@ suppressPackageStartupMessages({
   library(bixverse.gpu)
 })
 
+# cap on the CSR to CSC conversion buffers, as in the big data vignette
+csc_mem_gb <- as.numeric(Sys.getenv("BIX_CSC_GB", "8"))
+
 qc_param <- params_sc_min_quality(
   min_unique_genes = 100L,
   min_lib_size = 250L,
@@ -27,7 +30,7 @@ step("load", {
       has_hdr = TRUE
     ),
     sc_qc_param = qc_param,
-    streaming = 2L
+    csc_mem_gb = csc_mem_gb
   )
 })
 
