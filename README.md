@@ -20,8 +20,7 @@ every framework, 24 GB of RAM and 8 cores. Wall time and peak memory per step.
   cache is excluded, so streaming tools are not charged for their files.
 - **Repeats**: one per run. Treat differences of a few seconds as noise.
 - **bixverse builds**: `scripts/vendor.sh` exports `main` of the local checkouts
-  ahead of r-universe. The full data set still shows bixverse 0.5.2 (marked in
-  the column headers) until it is rerun; 0.5.2 results for all sizes live in
+  ahead of r-universe. 0.5.2 results for all sizes live in
   `results/archive_bixverse_0.5.2/`.
 
 | framework | version |
@@ -108,29 +107,29 @@ Seconds per step. **OOM** marks the step where the container was killed.
 
 ### Full data set (684,932 after QC)
 
-| step | bixverse mtx (0.5.2) | bixverse h5ad (0.5.2) | bixverse GPU (native) (0.5.2) | Scanpy mtx | Scanpy h5ad | scrapper mtx | scrapper h5ad | Seurat std mtx | Seurat std h5ad | Seurat BPCells |
+| step | bixverse mtx | bixverse h5ad | bixverse GPU (native) | Scanpy mtx | Scanpy h5ad | scrapper mtx | scrapper h5ad | Seurat std mtx | Seurat std h5ad | Seurat BPCells |
 |---|---|---|---|---|---|---|---|---|---|---|
-| load | 222.3 | 160.0 | 159.4 | **OOM** | **OOM** | **OOM** | **OOM** | **OOM** | **OOM** | 139.7 |
-| qc | 3.3 | 3.8 | 3.7 | - | - | - | - | - | - | 9.2 |
+| load | 231.6 | 157.7 | 181.7 | **OOM** | **OOM** | **OOM** | **OOM** | **OOM** | **OOM** | 139.7 |
+| qc | 3.7 | 4.3 | 6.6 | - | - | - | - | - | - | 9.2 |
 | normalise | n/a | n/a | n/a | - | - | - | - | - | - | 15.9 |
-| hvg | 1.9 | 1.8 | 2.9 | - | - | - | - | - | - | 15.8 |
-| pca | 18.7 | 18.8 | 6.7 | - | - | - | - | - | - | 703.0 |
-| harmony | 63.7 | 69.4 | 13.3 | - | - | - | - | - | - | 220.1 |
-| knn_snn | 17.7 | 18.8 | 18.0 | - | - | - | - | - | - | 201.3 |
-| cluster | 15.1 | 15.6 | 8.5 | - | - | - | - | - | - | 248.7 |
-| umap | 51.0 | 53.4 | 5.7 | - | - | - | - | - | - | 749.4 |
-| tsne_default | 531.3 | 558.1 | 808.3 | - | - | - | - | - | - | 1600.3 |
-| tsne_fft | 313.8 | 326.5 | 599.1 | - | - | n/a | n/a | - | - | 227.4 |
-| **total** | **1239** | **1226** | **1626** | failed | failed | failed | failed | failed | failed | **4131** |
-| total without tSNE | 394 | 342 | 218 | failed | failed | failed | failed | failed | failed | 2303 |
-| **peak GB** | **11.0** | **17.5** | **18.2** | **22.5** | **22.5** | **22.8** | **22.8** | **22.8** | **22.8** | **9.4** |
-| peak swap GB | 0.0 | 0.1 | 0.0 | 3.7 | 3.2 | 3.5 | 3.0 | 3.4 | 3.0 | 0.0 |
+| hvg | 1.6 | 1.7 | 5.6 | - | - | - | - | - | - | 15.8 |
+| pca | 6.3 | 6.6 | 4.2 | - | - | - | - | - | - | 703.0 |
+| harmony | 63.2 | 67.7 | 16.2 | - | - | - | - | - | - | 220.1 |
+| knn_snn | 17.6 | 18.6 | 17.7 | - | - | - | - | - | - | 201.3 |
+| cluster | 16.5 | 16.1 | 11.1 | - | - | - | - | - | - | 248.7 |
+| umap | 51.5 | 53.9 | 5.9 | - | - | - | - | - | - | 749.4 |
+| tsne_default | 504.4 | 520.3 | 329.6 | - | - | - | - | - | - | 1600.3 |
+| tsne_fft | 271.1 | 276.2 | 91.8 | - | - | n/a | n/a | - | - | 227.4 |
+| **total** | **1167** | **1123** | **670** | failed | failed | failed | failed | failed | failed | **4131** |
+| total without tSNE | 392 | 327 | 249 | failed | failed | failed | failed | failed | failed | 2303 |
+| **peak GB** | **10.8** | **17.2** | **16.8** | **22.5** | **22.5** | **22.8** | **22.8** | **22.8** | **22.8** | **9.4** |
+| peak swap GB | 0.1 | 0.1 | 0.0 | 3.7 | 3.2 | 3.5 | 3.0 | 3.4 | 3.0 | 0.0 |
 
 ## What it shows
 
 - **Only bixverse and Seurat + BPCells finish the full data set.** bixverse
-  0.5.2 takes 6.6 min without tSNE (5.7 min from h5ad), Seurat + BPCells 38
-  min. Everything that holds the counts in memory dies at load.
+  takes 6.5 min without tSNE (5.5 min from h5ad, 4.2 min on the GPU), Seurat +
+  BPCells 38 min. Everything that holds the counts in memory dies at load.
 - **The loaders decide who survives.** Every OOM happens in load. Reading the
   mtx kills Scanpy, scrapper and Seurat at 500k already. From h5ad, Scanpy and
   scrapper make it through 500k, scrapper only just (22.7 GB plus 3.2 GB swap).
@@ -142,11 +141,14 @@ Seconds per step. **OOM** marks the step where the container was killed.
   Barnes-Hut at 500k.
 - **bixverse PCA is no longer the weak spot.** 3.5 s at 500k against 5.7 s for
   Scanpy and 10.2 s for scrapper, while reading from disk and scaling to unit
-  variance.
+  variance. 6.3 s on the full data, against 703 s for BPCells.
+- **The load is now the bill.** On the full data it is 232 s of the 392 s
+  without tSNE, mostly writing the second, gene-major view of the counts.
 - **The GPU earns its keep from 500k.** 118 s without tSNE at 500k (152 s on
   CPU from h5ad), and FFT tSNE in 34.9 s against 88.7 s on CPU, 109.5 s for
-  FIt-SNE and 114.9 s for openTSNE. tSNE still dominates every run that has it,
-  so dropping it from a large-data workflow is the smart call.
+  FIt-SNE and 114.9 s for openTSNE. On the full data, GPU FFT tSNE takes 92 s
+  and the whole GPU run 11 min including both tSNEs. tSNE still dominates every
+  run that has it, so dropping it from a large-data workflow is the smart call.
 
 ## bixverse: 0.5.2 against 0.5.3
 
@@ -173,11 +175,14 @@ Seconds at 500k (346,259 cells after QC).
   weighting now, not debris.
 - **PCA**: 4x faster at 500k, 2x at 100k.
 - **GPU tSNE**: new defaults. FFT went from 41.1 s to 7.7 s at 100k.
+- **Full data set**: clusters down from 1,684 to 55 (mtx), PCA from 18.7 s to
+  6.3 s, GPU FFT tSNE from 599 s to 92 s, GPU total from 1,626 s to 670 s. GPU
+  load, QC and HVG came in slower (159 to 182 s, 3.7 to 6.6 s, 2.9 to 5.6 s),
+  one repeat each, so possibly noise.
 - **Still open**: `get_h5ad_dimensions()` takes the gene count from the first
   plain dataset in `/var`, and h5ad files written with pandas >= 3 have none
-  (`scripts/to_h5ad.py` pins pandas < 3 as a workaround). The h5ad load peaked
-  at 17.5 GB on the full data under 0.5.2. The full data set needs a rerun on
-  0.5.3.
+  (`scripts/to_h5ad.py` pins pandas < 3 as a workaround). The h5ad load still
+  peaks at 17.2 GB on the full data (10.8 GB from mtx).
 
 ## Running it
 
