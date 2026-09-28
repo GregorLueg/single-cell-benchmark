@@ -61,6 +61,9 @@ def load_run(d):
             kind = "TIMEOUT"
         elif status == 137:
             kind = "OOM"
+        elif "did not deliver a result" in log:
+            # the kernel killed a forked BiocParallel worker, not the main process
+            kind = "OOM (worker)"
         else:
             kind = f"error {status}"
         failed_at = (failed_at, kind)
