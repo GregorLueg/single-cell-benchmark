@@ -59,7 +59,14 @@ step("harmony", {
 })
 
 step("knn_snn", {
-  sce <- find_neighbours_cagra_sc(object = sce, embd_to_use = "harmony_gpu")
+  # GPU NNDescent without CAGRA's beam search
+  sce <- find_neighbours_gpu_sc(
+    object = sce,
+    embd_to_use = "harmony_gpu",
+    knn_method = "nndescent",
+    k = 15L,
+    nn_params = params_nn_gpu(dist_metric = "euclidean", extract_knn = TRUE)
+  )
 })
 
 step("cluster", {
