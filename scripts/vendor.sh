@@ -5,7 +5,7 @@
 set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
 rm -rf "$root/vendor"; mkdir -p "$root/vendor"
-for pkg in bixverse bixverse.gpu; do
+for pkg in manifoldsR bixverse bixverse.gpu; do
   mkdir -p "$root/vendor/$pkg"
   git -C ~/repos/shared/$pkg archive main | tar -x -C "$root/vendor/$pkg"
   echo "$pkg $(git -C ~/repos/shared/$pkg rev-parse --short main)" >> "$root/vendor/SHAS"
