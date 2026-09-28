@@ -93,6 +93,8 @@ def table(ds_dir):
             out.append(f"| {s} | " + " | ".join(cells) + " |")
     out.append("| **total** | " + " | ".join(
         (f"**{sum(runs[c][1].values()):.0f}**" if not runs[c][4] else "failed") for c in cols) + " |")
+    out.append("| total without tSNE | " + " | ".join(
+        (f"{sum(v for k, v in runs[c][1].items() if not k.startswith('tsne')):.0f}" if not runs[c][4] else "failed") for c in cols) + " |")
     out.append("| **peak GB** | " + " | ".join(f"**{runs[c][2]:.1f}**" for c in cols) + " |")
     out.append("| peak swap GB | " + " | ".join(f"{runs[c][3]:.1f}" for c in cols) + " |")
     return "\n".join(out)
