@@ -72,6 +72,13 @@ def table(ds_dir):
         d = next((ds_dir / n for n in names if (ds_dir / n / "mem.csv").exists()), None)
         if d:
             runs[col] = (d.name, *load_run(d))
+            continue
+        # fall back to an archived bixverse run, labelled with its version
+        for arch in sorted(ds_dir.parent.glob("archive_bixverse_*")):
+            d = next((arch / ds_dir.name / n for n in names if (arch / ds_dir.name / n / "mem.csv").exists()), None)
+            if d:
+                runs[f"{col} ({arch.name.removeprefix('archive_bixverse_')})"] = (d.name, *load_run(d))
+                break
     if not runs:
         return ""
     cols = list(runs)
