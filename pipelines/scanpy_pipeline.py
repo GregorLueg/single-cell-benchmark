@@ -7,6 +7,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 import anndata as ad
+import dask
 import h5py
 import harmonypy
 import numpy as np
@@ -53,7 +54,30 @@ with step("load"):
 
 with step("qc"):
     adata.var["mt"] = adata.var["gene_name"].str.startswith("MT-")
-    sc.pp.calculate_qc_metrics(adata, qc_vars=["mt"], percent_top=None, log1p=False, inplace=True)
+    if INPUT == "dask":
+        # calculate_qc_metrics peaks at 16.6 GB transiently on 500k cells under
+        # dask (independent of chunk size); the three per-cell sums QC needs,
+        # as per-block reductions, peak at 6.2 GB
+        def per_row(a, fn):
+            return a.map_blocks(
+                lambda b: np.asarray(fn(b)).reshape(-1, 1),
+                dtype=np.float64,
+                chunks=(a.chunks[0], (1,)),
+            )
+
+        total, ngenes, mt = (
+            np.asarray(v).ravel()
+            for v in dask.compute(
+                per_row(adata.X, lambda b: b.sum(axis=1)),
+                per_row(adata.X, lambda b: np.diff(b.indptr)),
+                per_row(adata.X[:, adata.var["mt"].values], lambda b: b.sum(axis=1)),
+            )
+        )
+        adata.obs["total_counts"] = total
+        adata.obs["n_genes_by_counts"] = ngenes
+        adata.obs["pct_counts_mt"] = 100 * mt / total
+    else:
+        sc.pp.calculate_qc_metrics(adata, qc_vars=["mt"], percent_top=None, log1p=False, inplace=True)
     keep = (
         (adata.obs["pct_counts_mt"] < 5)
         & (adata.obs["total_counts"] >= 750)
