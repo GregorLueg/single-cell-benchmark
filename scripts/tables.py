@@ -19,6 +19,7 @@ TOOL_STEPS = {
     "scanpy": [s for s in STEPS if s != "tsne_matched"],
     "scrapper": [s for s in STEPS if s != "tsne_fft"],
     "seurat": [s for s in STEPS if s != "tsne_matched"],
+    "osca": [s for s in STEPS if s not in ("tsne_matched", "tsne_fft")],
 }
 # column -> result dir name, in display order
 COLUMNS = {
@@ -33,6 +34,7 @@ COLUMNS = {
     "Seurat std mtx": ["seurat_standard"],
     "Seurat std h5ad": ["seurat_standard_h5ad"],
     "Seurat BPCells": ["seurat_bpcells"],
+    "OSCA HDF5": ["osca"],
 }
 
 

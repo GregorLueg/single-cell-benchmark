@@ -30,3 +30,6 @@ COPY vendor/manifoldsR /tmp/manifoldsR
 COPY vendor/bixverse /tmp/bixverse
 RUN Rscript -e 'for (p in c("/tmp/manifoldsR", "/tmp/bixverse")) remotes::install_local(p, dependencies = TRUE, upgrade = "never", force = TRUE, repos = c("https://gregorlueg.r-universe.dev", getOption("repos")))' \
     && rm -rf /tmp/manifoldsR /tmp/bixverse
+
+# OSCA: Bioconductor's HDF5-backed out-of-core path
+RUN Rscript -e 'BiocManager::install(c("SingleCellExperiment", "HDF5Array", "DelayedArray", "scuttle", "scran", "scater", "BiocSingular", "bluster", "BiocParallel"), ask = FALSE, update = FALSE, Ncpus = 8)'
