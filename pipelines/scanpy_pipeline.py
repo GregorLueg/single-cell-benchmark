@@ -6,6 +6,8 @@ import time
 from contextlib import contextmanager
 from pathlib import Path
 
+import anndata as ad
+import h5py
 import harmonypy
 import numpy as np
 import pandas as pd
@@ -29,9 +31,17 @@ def step(name):
     print(f">>> {name}: {time.time() - start:.1f} s <<<", flush=True)
 
 
+INPUT = os.environ.get("INPUT", "mtx")
+
 with step("load"):
-    if os.environ.get("INPUT", "mtx") == "h5ad":
+    if INPUT == "h5ad":
         adata = sc.read_h5ad(data / "DGE.h5ad")
+    elif INPUT == "dask":
+        # X stays on disk as a dask array of CSR row chunks; obs and var are small
+        chunk = int(os.environ.get("CHUNK", "50000"))
+        with h5py.File(data / "DGE.h5ad") as f:
+            adata = ad.AnnData(obs=ad.io.read_elem(f["obs"]), var=ad.io.read_elem(f["var"]))
+            adata.X = ad.experimental.read_elem_lazy(f["X"], chunks=(chunk, adata.n_vars))
     else:
         adata = sc.read_mtx(data / "DGE.mtx")
         adata.obs = pd.read_csv(data / "cell_metadata.csv", index_col=0)
@@ -60,6 +70,9 @@ with step("hvg"):
 
 with step("pca"):
     sc.pp.pca(adata, n_comps=30)
+    if INPUT == "dask":
+        # the projection stays lazy until computed
+        adata.obsm["X_pca"] = np.asarray(adata.obsm["X_pca"].compute())
 
 with step("harmony"):
     # sc.external.pp.harmony_integrate transposes the output, which breaks on
