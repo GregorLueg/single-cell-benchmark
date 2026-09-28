@@ -23,3 +23,8 @@ RUN Rscript -e 'install.packages(c("manifoldsR", "bixverse"), repos = c("https:/
 
 COPY docker/monitor.sh docker/entrypoint.sh /bench/
 ENTRYPOINT ["/bench/entrypoint.sh"]
+
+# bixverse from the local main checkout (scripts/vendor.sh), ahead of r-universe
+COPY vendor/bixverse /tmp/bixverse
+RUN Rscript -e 'remotes::install_local("/tmp/bixverse", dependencies = TRUE, upgrade = "never", repos = c("https://gregorlueg.r-universe.dev", getOption("repos")))' \
+    && rm -rf /tmp/bixverse
