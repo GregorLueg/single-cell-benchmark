@@ -1,0 +1,169 @@
+# /// script
+# requires-python = ">=3.12"
+# dependencies = ["polars>=1.30"]
+# ///
+"""Markdown tables from the benchmark results.
+
+Usage: tables.py <results_dir> [dataset ...]          per-step tables
+       tables.py --summary <results_dir>              one row per framework
+       tables.py --long <results_dir>                 tidy CSV for plotting
+"""
+
+import re
+import sys
+from pathlib import Path
+
+import polars as pl
+
+GB = 1024**3
+STEPS = ["load", "qc", "normalise", "hvg", "pca", "harmony", "knn_snn", "cluster",
+         "umap", "tsne_default", "tsne_matched", "tsne_fft"]
+TOOL_STEPS = {
+    "bixverse": [s for s in STEPS if s not in ("normalise", "tsne_matched")],
+    "scanpy": [s for s in STEPS if s != "tsne_matched"],
+    "scrapper": [s for s in STEPS if s != "tsne_fft"],
+    "seurat": [s for s in STEPS if s != "tsne_matched"],
+    "osca": [s for s in STEPS if s not in ("tsne_matched", "tsne_fft")],
+}
+# column -> result dir name, in display order
+COLUMNS = {
+    "bixverse mtx": ["bixverse_mtx_snn_nndescent", "bixverse_mtx", "bixverse"],
+    "bixverse h5ad": ["bixverse_h5ad"],
+    "bixverse GPU*": ["bixverse_gpu"],
+    "Scanpy mtx": ["scanpy_mtx", "scanpy"],
+    "Scanpy h5ad": ["scanpy_h5ad"],
+    "Scanpy dask": ["scanpy_dask"],
+    "scrapper mtx": ["scrapper"],
+    "scrapper h5ad": ["scrapper_h5ad"],
+    "Seurat std mtx": ["seurat_standard"],
+    "Seurat std h5ad": ["seurat_standard_h5ad"],
+    "Seurat BPCells": ["seurat_bpcells"],
+    "OSCA HDF5": ["osca"],
+}
+
+
+def family(name):
+    return next(k for k in TOOL_STEPS if name.startswith(k))
+
+
+def load_run(d):
+    log = (d / "log.txt").read_text(errors="ignore")
+    m = re.findall(r"^exit=(\d+)", log, re.M)
+    status = int(m[-1]) if m else None
+    mem = pl.read_csv(d / "mem.csv")
+    steps = {}
+    if (d / "steps.csv").stat().st_size > 20:
+        for r in pl.read_csv(d / "steps.csv").iter_rows(named=True):
+            steps[r["step"]] = r["end"] - r["start"]
+    peak = mem["anon_bytes"].max() / GB
+    swap = mem["swap_bytes"].max() / GB
+    failed_at = None
+    if status not in (0, None):
+        order = TOOL_STEPS[family(d.name)]
+        failed_at = next((s for s in order if s not in steps), order[-1])
+        if (d / "TIMEOUT").exists():
+            kind = "TIMEOUT"
+        elif status == 137:
+            kind = "OOM"
+        elif "did not deliver a result" in log:
+            # the kernel killed a forked BiocParallel worker, not the main process
+            kind = "OOM (worker)"
+        else:
+            kind = f"error {status}"
+        failed_at = (failed_at, kind)
+    elif status is None:
+        failed_at = (next((s for s in TOOL_STEPS[family(d.name)] if s not in steps), "?"), "running")
+    return steps, peak, swap, failed_at
+
+
+def collect(ds_dir):
+    runs = {}
+    for col, names in COLUMNS.items():
+        d = next((ds_dir / n for n in names if (ds_dir / n / "mem.csv").exists()), None)
+        if d:
+            runs[col] = (d.name, *load_run(d))
+            continue
+        # fall back to an archived bixverse run, labelled with its version
+        for arch in sorted(ds_dir.parent.glob("archive_bixverse_*")):
+            d = next((arch / ds_dir.name / n for n in names if (arch / ds_dir.name / n / "mem.csv").exists()), None)
+            if d:
+                runs[f"{col} ({arch.name.removeprefix('archive_bixverse_')})"] = (d.name, *load_run(d))
+                break
+    return runs
+
+
+def table(ds_dir):
+    runs = collect(ds_dir)
+    if not runs:
+        return ""
+    cols = list(runs)
+    out = [f"### {ds_dir.name}", "", "| step | " + " | ".join(cols) + " |",
+           "|---" * (len(cols) + 1) + "|"]
+    for s in STEPS:
+        cells = []
+        for c in cols:
+            name, steps, _, _, failed = runs[c]
+            if s not in TOOL_STEPS[family(name)]:
+                cells.append("n/a")
+            elif s in steps:
+                cells.append(f"{steps[s]:.1f}")
+            elif failed and failed[0] == s:
+                cells.append(f"**{failed[1]}**")
+            else:
+                cells.append("-")
+        if any(x not in ("n/a", "-") for x in cells):
+            out.append(f"| {s} | " + " | ".join(cells) + " |")
+    out.append("| **total** | " + " | ".join(
+        (f"**{sum(runs[c][1].values()):.0f}**" if not runs[c][4] else "failed") for c in cols) + " |")
+    out.append("| total without tSNE | " + " | ".join(
+        (f"{sum(v for k, v in runs[c][1].items() if not k.startswith('tsne')):.0f}" if not runs[c][4] else "failed") for c in cols) + " |")
+    out.append("| **peak GB** | " + " | ".join(f"**{runs[c][2]:.1f}**" for c in cols) + " |")
+    out.append("| peak swap GB | " + " | ".join(f"{runs[c][3]:.1f}" for c in cols) + " |")
+    return "\n".join(out)
+
+
+def summary(root):
+    sizes = {"parse_100k": "100k", "parse_500k": "500k", "parse_full": "full"}
+    per_size = {label: collect(root / ds) for ds, label in sizes.items()}
+    cols = [c for c in COLUMNS if any(c in r for r in per_size.values())]
+    out = ["| framework | " + " | ".join(sizes.values()) + " |", "|---" * (len(sizes) + 1) + "|"]
+    for c in cols:
+        cells = []
+        for label in sizes.values():
+            run = per_size[label].get(c)
+            if run is None:
+                cells.append("-")
+                continue
+            _, steps, peak, _, failed = run
+            if failed:
+                cells.append(f"{failed[1]} at {failed[0]}")
+            else:
+                no_tsne = sum(v for k, v in steps.items() if not k.startswith("tsne"))
+                cells.append(f"{no_tsne:.0f} s, {peak:.1f} GB")
+        out.append(f"| {c} | " + " | ".join(cells) + " |")
+    return "\n".join(out)
+
+
+def long(root):
+    sizes = {"parse_100k": 69412, "parse_500k": 346259, "parse_full": 684932}
+    mem_rows = ["column,size,cells,step,seconds,peak_gb,status"]
+    for ds, cells in sizes.items():
+        for col, (name, steps, peak, _, failed) in collect(root / ds).items():
+            order = TOOL_STEPS[family(name)]
+            status = failed[1] if failed else "ok"
+            for st in order:
+                if st in steps:
+                    mem_rows.append(f"{col},{ds},{cells},{st},{steps[st]:.2f},{peak:.2f},ok")
+                elif failed and st == failed[0]:
+                    mem_rows.append(f"{col},{ds},{cells},{st},,{peak:.2f},{status}")
+    return "\n".join(mem_rows)
+
+
+if sys.argv[1] == "--long":
+    print(long(Path(sys.argv[2])))
+elif sys.argv[1] == "--summary":
+    print(summary(Path(sys.argv[2])))
+else:
+    root = Path(sys.argv[1])
+    datasets = sys.argv[2:] or ["parse_100k", "parse_500k", "parse_full"]
+    print("\n\n".join(t for t in (table(root / d) for d in datasets if (root / d).exists()) if t))
