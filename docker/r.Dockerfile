@@ -32,4 +32,4 @@ RUN Rscript -e 'for (p in c("/tmp/manifoldsR", "/tmp/bixverse")) remotes::instal
     && rm -rf /tmp/manifoldsR /tmp/bixverse
 
 # OSCA: Bioconductor's HDF5-backed out-of-core path
-RUN Rscript -e 'BiocManager::install(c("SingleCellExperiment", "HDF5Array", "DelayedArray", "scuttle", "scran", "scater", "BiocSingular", "bluster", "BiocParallel"), ask = FALSE, update = FALSE, Ncpus = 8)'
+RUN Rscript -e 'BiocManager::install(c("SingleCellExperiment", "HDF5Array", "DelayedArray", "scuttle", "scran", "scater", "BiocSingular", "bluster", "BiocParallel", "beachmat.hdf5"), ask = FALSE, update = FALSE, Ncpus = 8)'
