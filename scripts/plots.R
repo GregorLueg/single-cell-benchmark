@@ -25,11 +25,11 @@ ink <- "#0b0b0b"
 ink_2 <- "#52514e"
 grid_col <- "#e4e3df"
 seq_ramp <- c("#cde2fb", "#9ec5f4", "#6da7ec", "#3987e5", "#256abf", "#184f95", "#0d366b")
-# green for faster; every tile also prints its fold change, so red vs green
-# never carries the meaning alone
-div_low <- "#008300"
+# blue for faster, orange for slower: a pair colour-blind readers can separate,
+# and every tile prints its fold change as well
+div_low <- "#2a78d6"
 div_mid <- "#f0efec"
-div_high <- "#d5382f"
+div_high <- "#eb6834"
 
 column_order <- c(
   "bixverse mtx", "bixverse h5ad", "bixverse GPU*",
