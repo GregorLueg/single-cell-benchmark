@@ -7,6 +7,9 @@ source("/bench/pipelines/common.R")
 suppressPackageStartupMessages({
   library(SingleCellExperiment)
   library(HDF5Array)
+  # native C++ access to HDF5 seeds; without it beachmat falls back to R-level
+  # block extraction
+  library(beachmat.hdf5)
   library(scuttle)
   library(scran)
   library(scater)
