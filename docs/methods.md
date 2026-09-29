@@ -31,7 +31,7 @@
 
 | framework | version |
 |---|---|
-| bixverse | 0.5.4 (`feat-better-sc-io` 87f73fa, bixverse-rs `release-0.5.6` cb90e16), bixverse.gpu 0.3.3 (`main` 5d35214), manifoldsR 0.3.4 (`main` 5a30cd1) |
+| bixverse | 0.5.4 (`main` 718bcca6f, bixverse-rs `release-0.5.6` cb90e16), bixverse.gpu 0.3.4 (`feat-gpu-tsne` 0b42e0a), manifoldsR 0.3.5 (`main` 61a55e2) |
 | Scanpy | 1.12.4 (anndata 0.13.4, dask 2026.8.0, harmonypy 2.0.2, openTSNE 1.0.4, scikit-learn 1.9.1) |
 | scrapper | 1.6.3 |
 | Seurat | 5.5.1 (BPCells 0.3.1, harmony 2.0.5) |
@@ -63,6 +63,13 @@ path.
     openTSNE for Scanpy). scrapper's qdtsne defaults to theta = 1 and 500
     iterations, so `tsne_matched` reruns it at theta = 0.5, 1000 iterations and
     250 early exaggeration rounds, like everyone else.
+
+The warm start (`WARM=1`) times only the reconnect: `load_existing` for
+bixverse, `open_matrix_dir` plus `CreateSeuratObject` for Seurat + BPCells. It
+needs a cold run of the same tool and data set first, and lives in
+`<tool>_warm`.
+
+bixverse's `tsne_fft` uses `fft_3k`; the GPU row uses `fft_3k_gpu`.
 
 bixverse uses nndescent for the sNN kNN and kmknn inside tSNE. Every tSNE
 builds its own kNN at k = 3 x perplexity. For UMAP, bixverse and Scanpy reuse
@@ -102,7 +109,7 @@ the graph; Seurat, scrapper and OSCA rebuild it.
 ```bash
 uv run scripts/subsample.py ~/Desktop/parse_pbmc_1m data/parse_100k 100000
 uv run scripts/to_h5ad.py data/parse_100k
-REF_bixverse=main scripts/vendor.sh     # local checkouts, per-package refs
+REF_bixverse=main REF_bixverse_gpu=feat-gpu-tsne scripts/vendor.sh     # local checkouts, per-package refs
 docker build -f docker/r.Dockerfile -t scbench-r .
 docker build -f docker/py.Dockerfile -t scbench-py .
 
@@ -110,6 +117,9 @@ docker build -f docker/py.Dockerfile -t scbench-py .
 # INPUT: mtx | h5ad | dask (scanpy only)
 [INPUT=h5ad] [BIX_KNN=nndescent] [BIX_CSC_GB=8] [TAG=suffix] scripts/run.sh <tool> parse_100k
 scripts/run_native.sh parse_100k       # bixverse.gpu on Metal
+
+# warm start: reconnect to what the last cold run left in the scratch volume
+WARM=1 scripts/run.sh bixverse parse_100k          # or seurat_bpcells
 
 uv run scripts/tables.py results
 

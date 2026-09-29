@@ -26,9 +26,5 @@ native RSS. Older results live in `results/archive_bixverse_*`.
 ## Open items
 
 - bixverse: the CSR to CSC transpose is still the largest part of a cold load.
-- bixverse GPU: FFT tSNE on the device (manifolds-rs `fft_3k_gpu`) is not wired
-  in yet.
 - `scripts/to_h5ad.py` pins pandas < 3 because bixverse 0.5.3 could not read
   the gene count from `/var` without a plain dataset; recheck with 0.5.4.
-- Warm start (reconnecting to converted data) for bixverse and Seurat +
-  BPCells.

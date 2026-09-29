@@ -92,7 +92,7 @@ step("tsne_fft", {
     embd_to_use = "harmony_gpu",
     slot_name = "tsne_fft",
     perplexity = 30,
-    approx_type = "fft"
+    approx_type = "fft_3k_gpu"
   )
 })
 

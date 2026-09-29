@@ -92,6 +92,33 @@ def collect(ds_dir):
     return runs
 
 
+# framework -> (cold result dirs, warm result dir); the warm run is load only
+WARM = {
+    "bixverse": (["bixverse_mtx_snn_nndescent", "bixverse_mtx", "bixverse"], "bixverse_warm"),
+    "Seurat BPCells": (["seurat_bpcells"], "seurat_bpcells_warm"),
+}
+
+
+def warm_table(ds_dir):
+    rows = []
+    for name, (cold, warm) in WARM.items():
+        w = ds_dir / warm
+        c = next((ds_dir / n for n in cold if (ds_dir / n / "mem.csv").exists()), None)
+        if not (w / "mem.csv").exists() or c is None:
+            continue
+        cold_load = load_run(c)[0].get("load")
+        warm_run = load_run(w)
+        if warm_run[3] or "load" not in warm_run[0]:
+            rows.append(f"| {name} | - | failed | - |")
+        else:
+            cold_s = f"{cold_load:.1f}" if cold_load is not None else "-"
+            rows.append(f"| {name} | {cold_s} | {warm_run[0]['load']:.1f} | {warm_run[1]:.1f} |")
+    if not rows:
+        return ""
+    return "\n".join([f"### {ds_dir.name}: warm start", "", "| framework | cold load s | warm load s | warm peak GB |",
+                      "|---|---|---|---|", *rows])
+
+
 def table(ds_dir):
     runs = collect(ds_dir)
     if not runs:
@@ -166,4 +193,4 @@ elif sys.argv[1] == "--summary":
 else:
     root = Path(sys.argv[1])
     datasets = sys.argv[2:] or ["parse_100k", "parse_500k", "parse_full"]
-    print("\n\n".join(t for t in (table(root / d) for d in datasets if (root / d).exists()) if t))
+    print("\n\n".join(t for d in datasets if (root / d).exists() for t in (table(root / d), warm_table(root / d)) if t))

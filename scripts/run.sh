@@ -1,22 +1,27 @@
 #!/usr/bin/env bash
 # Usage: [INPUT=h5ad] [BIX_KNN=nndescent] [BIX_TSNE_KNN=nndescent] [TAG=suffix] scripts/run.sh <tool> <dataset>
 #   tool: scanpy | seurat_bpcells | seurat_standard | scrapper | bixverse
+# WARM=1 reconnects to the on-disk data the last cold run left in the scratch
+# volume (bixverse | seurat_bpcells only), so run the cold run first.
 # Container is capped like a MacBook Air: 8 cores, 24 GB RAM plus swap.
 set -euo pipefail
 tool="$1"; dataset="$2"
 root="$(cd "$(dirname "$0")/.." && pwd)"
 mem="${MEM:-24g}"; memswap="${MEMSWAP:-32g}"
-out="$root/results/$dataset/$tool${TAG:+_$TAG}"
+warm="${WARM:-0}"; suffix=""; [ "$warm" = 1 ] && suffix="_warm"
+out="$root/results/$dataset/$tool${suffix}${TAG:+_$TAG}"
 rm -rf "$out"; mkdir -p "$out"
 
 case "$tool" in
   scanpy) image=scbench-py; cmd=(python /bench/pipelines/scanpy_pipeline.py /data /out) ;;
-  *)      image=scbench-r;  cmd=(Rscript "/bench/pipelines/${tool}.R" /data /out /scratch) ;;
+  *)      image=scbench-r;  cmd=(Rscript "/bench/pipelines/${tool}${suffix}.R" /data /out /scratch) ;;
 esac
 
 # on-disk scratch lives in a volume inside the VM, not a slow bind mount
-docker volume rm -f scbench-scratch > /dev/null
-docker volume create scbench-scratch > /dev/null
+if [ "$warm" != 1 ]; then
+  docker volume rm -f scbench-scratch > /dev/null
+  docker volume create scbench-scratch > /dev/null
+fi
 
 docker rm -f scbench-run > /dev/null 2>&1 || true
 docker run --rm --name scbench-run --cpus=8 --memory="$mem" --memory-swap="$memswap" \
