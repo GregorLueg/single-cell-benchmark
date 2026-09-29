@@ -213,60 +213,72 @@ fig2 <- ggplot(hm, aes(step, factor(column, levels = rev(column_order)))) +
 ggsave(file.path(fig_dir, "steps_heatmap.png"), fig2, width = 10, height = 13, dpi = 200, bg = surface)
 ggsave(file.path(fig_dir, "steps_heatmap.pdf"), fig2, width = 10, height = 13, bg = surface)
 
-#### figure 3: speed-up against in-memory Scanpy at 500k ----------------------
+#### figure 3: speed-up per step against a Scanpy reference ------------------
 
-ref_col <- "Scanpy h5ad"
-d500 <- dt[size == "parse_500k" & status == "ok"]
-survivors <- runs[size == "parse_500k" & status == "ok" & column != ref_col, as.character(column)]
-ref <- d500[column == ref_col, .(step, ref_s = seconds)]
-tot <- runs[size == "parse_500k" & status == "ok", .(column, step = "total (no tSNE)", seconds = no_tsne)]
-fc <- rbind(d500[, .(column, step = as.character(step), seconds)], tot)
-fc <- merge(
-  fc[column %in% survivors],
-  rbind(ref[, .(step = as.character(step), ref_s)], tot[column == ref_col, .(step, ref_s = seconds)]),
-  by = "step"
-)
-fc[, fold := ref_s / seconds]
-fc[, step := factor(step, levels = c(step_order, "total (no tSNE)"))]
-fc[, column := factor(column, levels = rev(column_order))]
 # normalisation is deferred in Dask and scrapper (normalizeCounts(delayed = TRUE)):
-# the cost lands in later steps, so a fold change is meaningless there
-fc[, lazy := step == "normalise" & column %in% c("Scanpy dask", "scrapper h5ad")]
-fc[lazy == TRUE, fold := NA_real_]
-fc[, lab := fcase(
-  lazy, "lazy",
-  fold >= 10, sprintf("%.0fx", fold),
-  fold < 0.1, sprintf("%.2fx", fold),
-  default = sprintf("%.1fx", fold)
-)]
-lim <- log2(32)
+# the cost lands in later steps, so a fold change against or of it is meaningless
+lazy_cols <- c("Scanpy dask", "scrapper h5ad")
 
-fig3 <- ggplot(fc, aes(step, column)) +
-  geom_tile(aes(fill = pmax(pmin(log2(fold), lim), -lim)), colour = surface, linewidth = 0.8) +
-  geom_text(aes(label = lab), size = 2.6, colour = ink) +
-  scale_fill_gradient2(
-    low = div_high, mid = div_mid, high = div_low, midpoint = 0,
-    na.value = "#d9d8d4",
-    limits = c(-lim, lim),
-    breaks = log2(c(1 / 16, 1 / 4, 1, 4, 16)),
-    labels = c("16x slower", "4x slower", "same", "4x faster", "16x faster"),
-    name = NULL
-  ) +
-  labs(
-    title = "Speed-up per step against in-memory Scanpy (h5ad), 500k",
-    subtitle = "The largest size in-memory Scanpy survives. Only runs that completed at 500k.",
-    caption = paste(
-      "bixverse normalises during load. scrapper's default tSNE runs at theta = 1 and 500 iterations",
-      "(the others 0.5 and 1000); matched, it takes 202 s at 500k."
-    ),
-    x = NULL, y = NULL
-  ) +
-  theme_bench() +
-  theme(
-    panel.grid.major = element_blank(),
-    axis.text.x = element_text(angle = 35, hjust = 1),
-    legend.key.width = unit(1.8, "cm")
-  )
+speedup_plot <- function(size_key, ref_col, title, subtitle, caption, file, height) {
+  d <- dt[size == size_key & status == "ok"]
+  survivors <- runs[size == size_key & status == "ok" & column != ref_col, as.character(column)]
+  tot <- runs[size == size_key & status == "ok", .(column, step = "total (no tSNE)", seconds = no_tsne)]
+  fc <- rbind(d[, .(column, step = as.character(step), seconds)], tot)
+  ref <- fc[column == ref_col, .(step, ref_s = seconds)]
+  fc <- merge(fc[column %in% survivors], ref, by = "step")
+  fc[, fold := ref_s / seconds]
+  fc[, lazy := step == "normalise" & (column %in% lazy_cols | ref_col %in% lazy_cols)]
+  fc[lazy == TRUE, fold := NA_real_]
+  fc[, step := factor(step, levels = c(step_order, "total (no tSNE)"))]
+  fc[, column := factor(column, levels = rev(column_order))]
+  fc[, lab := fcase(
+    lazy, "lazy",
+    fold >= 10, sprintf("%.0fx", fold),
+    fold < 0.1, sprintf("%.2fx", fold),
+    default = sprintf("%.1fx", fold)
+  )]
+  lim <- log2(32)
 
-ggsave(file.path(fig_dir, "speedup_vs_scanpy_500k.png"), fig3, width = 9.5, height = 4, dpi = 200, bg = surface)
-ggsave(file.path(fig_dir, "speedup_vs_scanpy_500k.pdf"), fig3, width = 9.5, height = 4, bg = surface)
+  p <- ggplot(fc, aes(step, column)) +
+    geom_tile(aes(fill = pmax(pmin(log2(fold), lim), -lim)), colour = surface, linewidth = 0.8) +
+    geom_text(aes(label = lab), size = 2.6, colour = ink) +
+    scale_fill_gradient2(
+      low = div_high, mid = div_mid, high = div_low, midpoint = 0,
+      na.value = "#d9d8d4",
+      limits = c(-lim, lim),
+      breaks = log2(c(1 / 16, 1 / 4, 1, 4, 16)),
+      labels = c("16x slower", "4x slower", "same", "4x faster", "16x faster"),
+      name = NULL
+    ) +
+    labs(title = title, subtitle = subtitle, caption = caption, x = NULL, y = NULL) +
+    theme_bench() +
+    theme(
+      panel.grid.major = element_blank(),
+      axis.text.x = element_text(angle = 35, hjust = 1),
+      legend.key.width = unit(1.8, "cm")
+    )
+
+  ggsave(file.path(fig_dir, paste0(file, ".png")), p, width = 9.5, height = height, dpi = 200, bg = surface)
+  ggsave(file.path(fig_dir, paste0(file, ".pdf")), p, width = 9.5, height = height, bg = surface)
+}
+
+speedup_plot(
+  "parse_500k", "Scanpy h5ad",
+  title = "Speed-up per step against in-memory Scanpy (h5ad), 500k",
+  subtitle = "The largest size in-memory Scanpy survives. Only runs that completed at 500k.",
+  caption = paste(
+    "bixverse normalises during load. scrapper's default tSNE runs at theta = 1 and 500 iterations",
+    "(the others 0.5 and 1000); matched, it takes 202 s at 500k."
+  ),
+  file = "speedup_vs_scanpy_500k",
+  height = 4
+)
+
+speedup_plot(
+  "parse_full", "Scanpy dask",
+  title = "Speed-up per step against Scanpy with Dask, full data set",
+  subtitle = "In-memory Scanpy dies at load here; Dask is the Scanpy path that finishes. Only runs that completed.",
+  caption = "bixverse normalises during load; Dask defers normalisation, so the normalise column carries no fold change.",
+  file = "speedup_vs_scanpy_dask_full",
+  height = 3.2
+)

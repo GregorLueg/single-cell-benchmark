@@ -75,6 +75,8 @@ Regenerate with `uv run scripts/tables.py results`.
 
 ![Speed-up per step against in-memory Scanpy at 500k](figures/speedup_vs_scanpy_500k.png)
 
+![Speed-up per step against Scanpy with Dask on the full data set](figures/speedup_vs_scanpy_dask_full.png)
+
 - **Three frameworks finish the full data set, all out-of-core.** Without
   tSNE: bixverse 3.9 min from h5ad (4.7 min from mtx, 2.1 min on the GPU),
   Scanpy Dask 10.5 min, Seurat + BPCells 38 min. Everything that holds the
