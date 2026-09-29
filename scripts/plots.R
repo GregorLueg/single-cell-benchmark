@@ -25,7 +25,9 @@ ink <- "#0b0b0b"
 ink_2 <- "#52514e"
 grid_col <- "#e4e3df"
 seq_ramp <- c("#cde2fb", "#9ec5f4", "#6da7ec", "#3987e5", "#256abf", "#184f95", "#0d366b")
-div_low <- "#2a78d6"
+# green for faster; every tile also prints its fold change, so red vs green
+# never carries the meaning alone
+div_low <- "#008300"
 div_mid <- "#f0efec"
 div_high <- "#d5382f"
 
@@ -241,7 +243,11 @@ speedup_plot <- function(size_key, ref_col, title, subtitle, caption, file, heig
 
   p <- ggplot(fc, aes(step, column)) +
     geom_tile(aes(fill = pmax(pmin(log2(fold), lim), -lim)), colour = surface, linewidth = 0.8) +
-    geom_text(aes(label = lab), size = 2.6, colour = ink) +
+    geom_text(
+      aes(label = lab, colour = !is.na(fold) & abs(log2(fold)) > 3.5),
+      size = 2.6, show.legend = FALSE
+    ) +
+    scale_colour_manual(values = c(`FALSE` = ink, `TRUE` = "#ffffff")) +
     scale_fill_gradient2(
       low = div_high, mid = div_mid, high = div_low, midpoint = 0,
       na.value = "#d9d8d4",
