@@ -59,8 +59,12 @@ step("normalise", {
   sce <- logNormCounts(sce, BPPARAM = bpparam)
 })
 
+# serial: with MulticoreParam(8) the forked workers split genes over a
+# cell-major file and each pulls large blocks, ~18 GB plus swap at 100k
 step("hvg", {
-  dec <- modelGeneVar(sce, BPPARAM = bpparam)
+  DelayedArray::setAutoBPPARAM(BiocParallel::SerialParam())
+  dec <- modelGeneVar(sce, BPPARAM = BiocParallel::SerialParam())
+  DelayedArray::setAutoBPPARAM(bpparam)
   hvgs <- getTopHVGs(dec, n = 2000)
 })
 
