@@ -29,8 +29,9 @@ every framework, 24 GB of RAM and 8 cores. Wall time and peak memory per step.
   Dask row therefore computes the three per-cell QC sums with `map_blocks`
   instead (6.2 GB peak, same cells kept). Everything else is stock Scanpy.
 - **OSCA HDF5**: SingleCellExperiment over `HDF5Array::H5ADMatrix`, the
-  documented Bioconductor path with `MulticoreParam(8)`, untuned. See the
-  caveats below: it does not survive HVG at 500k.
+  documented Bioconductor path with `MulticoreParam(8)` (pipeline as of
+  commit f124aa9). It does not survive HVG at 500k; see the caveats for what
+  was tried.
 
 | framework | version |
 |---|---|
@@ -195,14 +196,23 @@ native RSS.
 - **Harness code.** The R pre-filter for scrapper and Seurat standard makes
   copies (`counts > 0`, column subsetting); part of their in-memory OOMs may
   be ours. The Scanpy Dask QC is hand-written (see Setup).
-- **OSCA is untuned.** HVG takes 609 s at 100k at 22.7 GB plus 3.7 GB swap;
-  at 500k and on the full data a forked worker is killed there. Two likely
-  causes: `modelGeneVar` splits genes across 8 workers while the h5ad stores
-  cells as rows, and beachmat logs "using unknown matrix fallback for
-  'CSC_H5ADMatrixSeed'", i.e. no native C++ access to the h5ad seed. A
-  gene-major HDF5 copy or a serial `BPPARAM` may well survive; not tested. The
-  same logs also mark `perCellQCMetrics`, `librarySizeFactors` and
-  `normalizeCounts` as deprecated in favour of scrapper.
+- **OSCA: OOMs in parallel, impractical serially.** The documented path
+  (`MulticoreParam(8)`) takes 609 s for HVG at 100k at 22.7 GB plus 3.7 GB
+  swap; at 500k and on the full data the kernel kills a forked worker there.
+  Two follow-ups at 100k, on a machine shared with other tests:
+  - `beachmat.hdf5` gives the C++ layer native access to the h5ad seed
+    (without it beachmat logs "unknown matrix fallback for
+    'CSC_H5ADMatrixSeed'"). QC halves, 10.0 s to 4.9 s, but HVG still climbs
+    to ~18 GB plus swap.
+  - Serial HVG (`SerialParam`) holds ~3 to 4 GB with no swap, but had not
+    finished after 27 min, and was stopped. Linear extrapolation puts 500k at
+    hours.
+  The memory comes from 8 workers splitting genes over a cell-major file; the
+  time from per-gene access to cell-contiguous storage. A gene-major HDF5 copy
+  or a single pass of per-gene accumulators would probably fix both; neither is
+  tried here. On a machine with more memory, more HVG workers may fit. The same
+  logs mark `perCellQCMetrics`, `librarySizeFactors` and `normalizeCounts`
+  as deprecated in favour of scrapper.
 - **Defaults differ** in scaling, normalisation and graph construction; see
   Workflow.
 
