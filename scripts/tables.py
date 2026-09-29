@@ -2,8 +2,11 @@
 # requires-python = ">=3.12"
 # dependencies = ["polars>=1.30"]
 # ///
-"""Markdown tables per dataset: wall time per step, failures marked at the step
-where they happened. Usage: tables.py <results_dir> [dataset ...]"""
+"""Markdown tables from the benchmark results.
+
+Usage: tables.py <results_dir> [dataset ...]          per-step tables
+       tables.py --summary <results_dir>              one row per framework
+"""
 
 import re
 import sys
@@ -72,7 +75,7 @@ def load_run(d):
     return steps, peak, swap, failed_at
 
 
-def table(ds_dir):
+def collect(ds_dir):
     runs = {}
     for col, names in COLUMNS.items():
         d = next((ds_dir / n for n in names if (ds_dir / n / "mem.csv").exists()), None)
@@ -85,6 +88,11 @@ def table(ds_dir):
             if d:
                 runs[f"{col} ({arch.name.removeprefix('archive_bixverse_')})"] = (d.name, *load_run(d))
                 break
+    return runs
+
+
+def table(ds_dir):
+    runs = collect(ds_dir)
     if not runs:
         return ""
     cols = list(runs)
@@ -113,6 +121,31 @@ def table(ds_dir):
     return "\n".join(out)
 
 
-root = Path(sys.argv[1])
-datasets = sys.argv[2:] or ["parse_100k", "parse_500k", "parse_full"]
-print("\n\n".join(t for t in (table(root / d) for d in datasets if (root / d).exists()) if t))
+def summary(root):
+    sizes = {"parse_100k": "100k", "parse_500k": "500k", "parse_full": "full"}
+    per_size = {label: collect(root / ds) for ds, label in sizes.items()}
+    cols = [c for c in COLUMNS if any(c in r for r in per_size.values())]
+    out = ["| framework | " + " | ".join(sizes.values()) + " |", "|---" * (len(sizes) + 1) + "|"]
+    for c in cols:
+        cells = []
+        for label in sizes.values():
+            run = per_size[label].get(c)
+            if run is None:
+                cells.append("-")
+                continue
+            _, steps, peak, _, failed = run
+            if failed:
+                cells.append(f"{failed[1]} at {failed[0]}")
+            else:
+                no_tsne = sum(v for k, v in steps.items() if not k.startswith("tsne"))
+                cells.append(f"{no_tsne:.0f} s, {peak:.1f} GB")
+        out.append(f"| {c} | " + " | ".join(cells) + " |")
+    return "\n".join(out)
+
+
+if sys.argv[1] == "--summary":
+    print(summary(Path(sys.argv[2])))
+else:
+    root = Path(sys.argv[1])
+    datasets = sys.argv[2:] or ["parse_100k", "parse_500k", "parse_full"]
+    print("\n\n".join(t for t in (table(root / d) for d in datasets if (root / d).exists()) if t))
