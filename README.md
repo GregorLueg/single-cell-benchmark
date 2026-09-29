@@ -8,6 +8,8 @@ normalise, HVG, PCA, Harmony, kNN/sNN, Leiden, UMAP, tSNE), in Docker capped at
 
 ## Headline
 
+![Scaling: time and peak memory against cells](docs/figures/scaling.png)
+
 Seconds from load to UMAP (tSNE excluded) and peak memory, or where the run
 died. One repeat each.
 

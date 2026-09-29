@@ -6,6 +6,7 @@
 
 Usage: tables.py <results_dir> [dataset ...]          per-step tables
        tables.py --summary <results_dir>              one row per framework
+       tables.py --long <results_dir>                 tidy CSV for plotting
 """
 
 import re
@@ -143,7 +144,24 @@ def summary(root):
     return "\n".join(out)
 
 
-if sys.argv[1] == "--summary":
+def long(root):
+    sizes = {"parse_100k": 69412, "parse_500k": 346259, "parse_full": 684932}
+    mem_rows = ["column,size,cells,step,seconds,peak_gb,status"]
+    for ds, cells in sizes.items():
+        for col, (name, steps, peak, _, failed) in collect(root / ds).items():
+            order = TOOL_STEPS[family(name)]
+            status = failed[1] if failed else "ok"
+            for st in order:
+                if st in steps:
+                    mem_rows.append(f"{col},{ds},{cells},{st},{steps[st]:.2f},{peak:.2f},ok")
+                elif failed and st == failed[0]:
+                    mem_rows.append(f"{col},{ds},{cells},{st},,{peak:.2f},{status}")
+    return "\n".join(mem_rows)
+
+
+if sys.argv[1] == "--long":
+    print(long(Path(sys.argv[2])))
+elif sys.argv[1] == "--summary":
     print(summary(Path(sys.argv[2])))
 else:
     root = Path(sys.argv[1])

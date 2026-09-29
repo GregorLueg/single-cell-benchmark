@@ -112,4 +112,8 @@ docker build -f docker/py.Dockerfile -t scbench-py .
 scripts/run_native.sh parse_100k       # bixverse.gpu on Metal
 
 uv run scripts/tables.py results
+
+# figures in docs/figures (ggplot2, patchwork, ggrepel)
+uv run scripts/tables.py --long results > docs/figures/results_long.csv
+Rscript scripts/plots.R
 ```

@@ -7,6 +7,8 @@ Setup and caveats: [methods](methods.md).
 
 Regenerate with `uv run scripts/tables.py results`.
 
+![Wall time per step for every framework and size](figures/steps_heatmap.png)
+
 ## 100k cells (69,412 after QC)
 
 | step | bixverse mtx | bixverse h5ad | bixverse GPU (native) | Scanpy mtx | Scanpy h5ad | Scanpy dask | scrapper mtx | scrapper h5ad | Seurat std mtx | Seurat std h5ad | Seurat BPCells | OSCA HDF5 |
@@ -70,6 +72,8 @@ Regenerate with `uv run scripts/tables.py results`.
 | peak swap GB | 0.0 | 0.1 | 0.0 | 3.7 | 3.2 | 0.0 | 3.5 | 3.0 | 3.4 | 3.0 | 0.0 | 3.6 |
 
 ## What it shows
+
+![Speed-up per step against in-memory Scanpy at 500k](figures/speedup_vs_scanpy_500k.png)
 
 - **Three frameworks finish the full data set, all out-of-core.** Without
   tSNE: bixverse 3.9 min from h5ad (4.7 min from mtx, 2.1 min on the GPU),
