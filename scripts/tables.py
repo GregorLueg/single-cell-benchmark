@@ -7,6 +7,7 @@
 Usage: tables.py <results_dir> [dataset ...]          per-step tables
        tables.py --summary <results_dir>              one row per framework
        tables.py --long <results_dir>                 tidy CSV for plotting
+       tables.py --warm <results_dir>                 cold vs warm load CSV
 """
 
 import re
@@ -119,6 +120,21 @@ def warm_table(ds_dir):
                       "|---|---|---|---|", *rows])
 
 
+def warm_long(root):
+    rows = ["framework,size,start,seconds,peak_gb"]
+    for ds in ["parse_100k", "parse_500k", "parse_full"]:
+        for name, (cold, warm) in WARM.items():
+            c = next((root / ds / n for n in cold if (root / ds / n / "mem.csv").exists()), None)
+            w = root / ds / warm
+            for start, d in (("cold", c), ("warm", w)):
+                if d is None or not (d / "mem.csv").exists():
+                    continue
+                steps, peak, _, failed = load_run(d)
+                if not failed and "load" in steps:
+                    rows.append(f"{name},{ds},{start},{steps['load']:.2f},{peak:.2f}")
+    return "\n".join(rows)
+
+
 def table(ds_dir):
     runs = collect(ds_dir)
     if not runs:
@@ -188,6 +204,8 @@ def long(root):
 
 if sys.argv[1] == "--long":
     print(long(Path(sys.argv[2])))
+elif sys.argv[1] == "--warm":
+    print(warm_long(Path(sys.argv[2])))
 elif sys.argv[1] == "--summary":
     print(summary(Path(sys.argv[2])))
 else:

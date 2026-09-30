@@ -125,5 +125,6 @@ uv run scripts/tables.py results
 
 # figures in docs/figures (ggplot2, patchwork, ggrepel)
 uv run scripts/tables.py --long results > docs/figures/results_long.csv
+uv run scripts/tables.py --warm results > docs/figures/warm_long.csv
 Rscript scripts/plots.R
 ```

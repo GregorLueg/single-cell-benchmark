@@ -73,7 +73,14 @@ Regenerate with `uv run scripts/tables.py results`.
 
 ## Warm start
 
-Reconnecting to data a cold run already converted (`WARM=1 scripts/run.sh`), load step only. bixverse reopens its two views and the stored cell map, so its object holds the post-QC cells; BPCells reopens the pre-QC matrix and builds the Seurat object.
+Reconnecting to data a cold run already converted (`WARM=1 scripts/run.sh`),
+load step only. bixverse reopens its two views and the stored cell map, so its
+object holds the post-QC cells; BPCells reopens the pre-filtered, pre-QC matrix
+and builds the Seurat object. Each warm run goes straight after its cold run,
+so the files are likely still in the page cache. Warm peak GB is the load only;
+cold load s is the load step of the full cold run.
+
+![Cold against warm load for bixverse and Seurat + BPCells](figures/warm_start.png)
 
 | size | framework | cold load s | warm load s | warm peak GB |
 |---|---|---|---|---|
@@ -107,9 +114,13 @@ Reconnecting to data a cold run already converted (`WARM=1 scripts/run.sh`), loa
 - **scrapper is fast wherever it stays in C++.** Best QC, HVG and default tSNE
   at 100k, but the loaders, the R harmony package and a UMAP that rebuilds the
   kNN cost it, and the in-memory path runs out of room at 500k from mtx.
-- **A warm start is nearly free for bixverse.** Reconnecting to converted data
-  takes 2.3 s on the full data (160 s cold) and 0.5 GB; BPCells takes 20.8 s
-  (143 s cold), since it rebuilds the Seurat object over a million cells.
+- **A warm start removes the conversion cost.** On the full data bixverse
+  reconnects in 2.3 s at 0.5 GB (160 s cold from mtx, 74 s from h5ad), and
+  Seurat + BPCells in 20.8 s at 1.1 GB (143 s cold). At 500k: 0.6 s against
+  10.4 s. So the up-front conversion bixverse pays is a one-off per data set:
+  the load was 74 s of its 235 s without tSNE from h5ad. BPCells' warm load
+  grows with the data (2.3, 10.4, 20.8 s); where that time goes is not timed.
+  The BPCells PCA and UMAP cost above is untouched by a warm start.
 - **The GPU earns its keep from 500k.** 56 s without tSNE at 500k and 127 s on
   the full data. tSNE is now most of every run that has it (three-kernel FFT on the GPU: 19
   s at 500k, 40 s on the full data, against 78 s and 257 s for `fft_3k` on the CPU), so dropping it from a large-data workflow
