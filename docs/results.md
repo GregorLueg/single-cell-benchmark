@@ -100,7 +100,7 @@ Reconnecting to data a cold run already converted (`WARM=1 scripts/run.sh`), loa
   convert into its two views (74 s from h5ad on the full data) and is fast
   after. Dask loads in 42 s but re-reads the file on every forced pass, and
   its UMAP (352 s) and Harmony (138 s) are the stock in-memory ones. BPCells
-  re-evaluates its lazy chain on every pass (PCA 703 s, UMAP 749 s).
+  re-evaluates its lazy chain on every pass (PCA 702 s, UMAP 760 s).
 - **Against baseline in-memory Scanpy** at 500k, the largest size it survives:
   bixverse from h5ad is 2.7x faster without tSNE (110 s against 297 s) at under
   half the memory (6.6 GB against 14.2 GB). Scanpy only wins the load.
