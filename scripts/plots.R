@@ -203,6 +203,7 @@ fig2 <- ggplot(hm, aes(step, factor(column, levels = rev(column_order)))) +
   labs(
     title = "Wall time per step",
     subtitle = "Grey: the step where the run died. Blank: step not available or not reached.",
+    caption = "bixverse CPU tSNE builds its kNN with IVF at 500k and full (kmknn at 100k).",
     x = NULL, y = NULL
   ) +
   theme_bench() +
@@ -274,7 +275,7 @@ speedup_plot(
   subtitle = "The largest size in-memory Scanpy survives. Only runs that completed at 500k.",
   caption = paste(
     "bixverse normalises during load. scrapper's default tSNE runs at theta = 1 and 500 iterations",
-    "(the others 0.5 and 1000); matched, it takes 202 s at 500k."
+    "(the others 0.5 and 1000); matched, it takes 202 s at 500k. bixverse CPU tSNE builds its kNN with IVF."
   ),
   file = "speedup_vs_scanpy_500k",
   height = 4
@@ -284,7 +285,10 @@ speedup_plot(
   "parse_full", "Scanpy dask",
   title = "Speed-up per step against Scanpy with Dask, full data set",
   subtitle = "In-memory Scanpy dies at load here; Dask is the Scanpy path that finishes. Only runs that completed.",
-  caption = "bixverse normalises during load; Dask defers normalisation, so the normalise column carries no fold change.",
+  caption = paste(
+    "bixverse normalises during load; Dask defers normalisation, so the normalise column carries no fold change.",
+    "bixverse CPU tSNE builds its kNN with IVF."
+  ),
   file = "speedup_vs_scanpy_dask_full",
   height = 3.2
 )

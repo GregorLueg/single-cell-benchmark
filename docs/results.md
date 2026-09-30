@@ -34,42 +34,48 @@ Regenerate with `uv run scripts/tables.py results`.
 
 | step | bixverse mtx | bixverse h5ad | bixverse GPU (native) | Scanpy mtx | Scanpy h5ad | Scanpy dask | scrapper mtx | scrapper h5ad | Seurat std mtx | Seurat std h5ad | Seurat BPCells | OSCA HDF5 |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| load | 55.8 | 32.0 | 31.2 | **OOM** | 19.0 | 23.3 | **OOM** | 150.3 | **OOM** | **OOM** | 71.6 | 159.5 |
-| qc | 2.9 | 3.1 | 2.2 | - | 3.8 | 4.2 | - | 2.1 | - | - | 4.7 | 47.2 |
+| load | 73.2 | 30.6 | 31.2 | **OOM** | 19.0 | 23.3 | **OOM** | 150.3 | **OOM** | **OOM** | 71.6 | 159.5 |
+| qc | 2.8 | 3.3 | 2.2 | - | 3.8 | 4.2 | - | 2.1 | - | - | 4.7 | 47.2 |
 | normalise | n/a | n/a | n/a | - | 3.5 | 0.0 | - | 0.4 | - | - | 8.3 | 29.3 |
 | hvg | 1.0 | 1.1 | 0.9 | - | 3.1 | 5.0 | - | 0.9 | - | - | 8.8 | **OOM (worker)** |
-| pca | 3.4 | 3.6 | 2.0 | - | 5.7 | 10.3 | - | 10.2 | - | - | 358.0 | - |
-| harmony | 30.6 | 32.0 | 6.9 | - | 58.3 | 58.4 | - | 95.6 | - | - | 92.0 | - |
-| knn_snn | 8.7 | 9.1 | 4.2 | - | 32.3 | 27.7 | - | 26.2 | - | - | 94.1 | - |
-| cluster | 7.8 | 7.8 | 5.9 | - | 13.4 | 12.9 | - | 83.2 | - | - | 113.3 | - |
-| umap | 20.6 | 20.9 | 2.7 | - | 158.0 | 152.4 | - | 149.8 | - | - | 340.0 | - |
-| tsne_default | 188.5 | 188.5 | 134.2 | - | 840.4 | 813.0 | - | 98.3 | - | - | 639.4 | - |
+| pca | 3.5 | 3.5 | 2.0 | - | 5.7 | 10.3 | - | 10.2 | - | - | 358.0 | - |
+| harmony | 31.1 | 33.2 | 6.9 | - | 58.3 | 58.4 | - | 95.6 | - | - | 92.0 | - |
+| knn_snn | 8.8 | 9.3 | 4.2 | - | 32.3 | 27.7 | - | 26.2 | - | - | 94.1 | - |
+| cluster | 7.8 | 7.9 | 5.9 | - | 13.4 | 12.9 | - | 83.2 | - | - | 113.3 | - |
+| umap | 21.3 | 21.5 | 2.7 | - | 158.0 | 152.4 | - | 149.8 | - | - | 340.0 | - |
+| tsne_default | 156.0 | 153.6 | 134.2 | - | 840.4 | 813.0 | - | 98.3 | - | - | 639.4 | - |
 | tsne_matched | n/a | n/a | n/a | n/a | n/a | n/a | - | 202.2 | n/a | n/a | n/a | n/a |
-| tsne_fft | 77.8 | 77.8 | 18.7 | - | 114.9 | 110.1 | n/a | n/a | - | - | 108.4 | n/a |
-| **total** | **397** | **376** | **209** | failed | **1252** | **1217** | failed | **819** | failed | failed | **1838** | failed |
-| total without tSNE | 131 | 110 | 56 | failed | 297 | 294 | failed | 519 | failed | failed | 1091 | failed |
-| **peak GB** | **6.3** | **6.6** | **10.0** | **22.3** | **14.2** | **6.8** | **22.7** | **22.7** | **22.7** | **22.8** | **5.5** | **22.7** |
+| tsne_fft | 39.9 | 40.3 | 18.7 | - | 114.9 | 110.1 | n/a | n/a | - | - | 108.4 | n/a |
+| **total** | **345** | **304** | **209** | failed | **1252** | **1217** | failed | **819** | failed | failed | **1838** | failed |
+| total without tSNE | 150 | 110 | 56 | failed | 297 | 294 | failed | 519 | failed | failed | 1091 | failed |
+| **peak GB** | **6.3** | **6.5** | **10.0** | **22.3** | **14.2** | **6.8** | **22.7** | **22.7** | **22.7** | **22.8** | **5.5** | **22.7** |
 | peak swap GB | 0.0 | 0.0 | 0.0 | 3.9 | 0.0 | 0.0 | 3.8 | 3.2 | 3.7 | 3.5 | 0.0 | 3.7 |
+
+bixverse CPU tSNE builds its kNN with IVF at this size (kmknn at 100k), on
+bixverse `feat-bonsai`; kmknn runs are in `results/archive_tsne_kmknn`.
 
 ## Full data set (684,932 after QC)
 
 | step | bixverse mtx | bixverse h5ad | bixverse GPU (native) | Scanpy mtx | Scanpy h5ad | Scanpy dask | scrapper mtx | scrapper h5ad | Seurat std mtx | Seurat std h5ad | Seurat BPCells | OSCA HDF5 |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| load | 160.0 | 73.7 | 74.0 | **OOM** | **OOM** | 42.3 | **OOM** | **OOM** | **OOM** | **OOM** | 142.7 | 315.6 |
-| qc | 4.7 | 4.8 | 2.9 | - | - | 7.4 | - | - | - | - | 9.5 | 101.4 |
+| load | 148.2 | 77.9 | 74.0 | **OOM** | **OOM** | 42.3 | **OOM** | **OOM** | **OOM** | **OOM** | 142.7 | 315.6 |
+| qc | 4.5 | 4.9 | 2.9 | - | - | 7.4 | - | - | - | - | 9.5 | 101.4 |
 | normalise | n/a | n/a | n/a | - | - | 0.0 | - | - | - | - | 16.5 | 61.0 |
 | hvg | 1.8 | 1.8 | 1.8 | - | - | 9.0 | - | - | - | - | 16.1 | **OOM (worker)** |
-| pca | 6.4 | 6.2 | 5.6 | - | - | 17.2 | - | - | - | - | 702.3 | - |
-| harmony | 63.9 | 64.7 | 16.4 | - | - | 137.8 | - | - | - | - | 213.1 | - |
-| knn_snn | 17.9 | 18.2 | 8.3 | - | - | 33.1 | - | - | - | - | 201.0 | - |
-| cluster | 16.1 | 16.7 | 11.7 | - | - | 29.9 | - | - | - | - | 249.6 | - |
-| umap | 48.1 | 48.6 | 6.0 | - | - | 352.1 | - | - | - | - | 759.5 | - |
-| tsne_default | 506.8 | 519.7 | 324.6 | - | - | 1955.3 | - | - | - | - | 1645.1 | - |
-| tsne_fft | 257.5 | 257.0 | 39.5 | - | - | 258.4 | n/a | n/a | - | - | 228.9 | n/a |
-| **total** | **1083** | **1011** | **491** | failed | failed | **2843** | failed | failed | failed | failed | **4184** | failed |
-| total without tSNE | 319 | 235 | 127 | failed | failed | 629 | failed | failed | failed | failed | 2310 | failed |
-| **peak GB** | **9.4** | **8.9** | **15.6** | **22.5** | **22.5** | **9.5** | **22.8** | **22.8** | **22.8** | **22.8** | **9.7** | **22.8** |
-| peak swap GB | 0.1 | 0.1 | 0.0 | 3.7 | 3.2 | 0.0 | 3.5 | 3.0 | 3.4 | 3.0 | 0.0 | 3.6 |
+| pca | 6.3 | 6.2 | 5.6 | - | - | 17.2 | - | - | - | - | 702.3 | - |
+| harmony | 64.9 | 62.9 | 16.4 | - | - | 137.8 | - | - | - | - | 213.1 | - |
+| knn_snn | 17.5 | 17.8 | 8.3 | - | - | 33.1 | - | - | - | - | 201.0 | - |
+| cluster | 15.6 | 15.7 | 11.7 | - | - | 29.9 | - | - | - | - | 249.6 | - |
+| umap | 47.9 | 50.9 | 6.0 | - | - | 352.1 | - | - | - | - | 759.5 | - |
+| tsne_default | 372.8 | 371.3 | 324.6 | - | - | 1955.3 | - | - | - | - | 1645.1 | - |
+| tsne_fft | 120.7 | 124.7 | 39.5 | - | - | 258.4 | n/a | n/a | - | - | 228.9 | n/a |
+| **total** | **800** | **734** | **491** | failed | failed | **2843** | failed | failed | failed | failed | **4184** | failed |
+| total without tSNE | 307 | 238 | 127 | failed | failed | 629 | failed | failed | failed | failed | 2310 | failed |
+| **peak GB** | **9.8** | **8.9** | **15.6** | **22.5** | **22.5** | **9.5** | **22.8** | **22.8** | **22.8** | **22.8** | **9.7** | **22.8** |
+| peak swap GB | 0.0 | 0.1 | 0.0 | 3.7 | 3.2 | 0.0 | 3.5 | 3.0 | 3.4 | 3.0 | 0.0 | 3.6 |
+
+bixverse CPU tSNE builds its kNN with IVF at this size (kmknn at 100k), on
+bixverse `feat-bonsai`; kmknn runs are in `results/archive_tsne_kmknn`.
 
 ## Warm start
 
@@ -86,9 +92,9 @@ cold load s is the load step of the full cold run.
 |---|---|---|---|---|
 | 100k | bixverse | 11.1 | 0.3 | 0.2 |
 | 100k | Seurat BPCells | 14.4 | 2.3 | 0.8 |
-| 500k | bixverse | 55.8 | 0.6 | 0.3 |
+| 500k | bixverse | 73.2 | 0.6 | 0.3 |
 | 500k | Seurat BPCells | 71.6 | 10.4 | 0.9 |
-| full | bixverse | 160.0 | 2.3 | 0.5 |
+| full | bixverse | 148.2 | 2.3 | 0.5 |
 | full | Seurat BPCells | 142.7 | 20.8 | 1.1 |
 
 ## What it shows
@@ -98,30 +104,35 @@ cold load s is the load step of the full cold run.
 ![Speed-up per step against Scanpy with Dask on the full data set](figures/speedup_vs_scanpy_dask_full.png)
 
 - **Three frameworks finish the full data set, all out-of-core.** Without
-  tSNE: bixverse 3.9 min from h5ad (5.3 min from mtx, 2.1 min on the GPU),
+  tSNE: bixverse 4.0 min from h5ad (5.1 min from mtx, 2.1 min on the GPU),
   Scanpy Dask 10.5 min, Seurat + BPCells 38.5 min. Everything that holds the
   counts in memory dies at load, and OSCA's HDF5 path dies in HVG.
 - **Memory is now a tie among the survivors.** Full data peaks: bixverse 8.9
-  GB (h5ad) and 9.4 GB (mtx), Scanpy Dask 9.5 GB, Seurat + BPCells 9.7 GB.
+  GB (h5ad) and 9.8 GB (mtx), Scanpy Dask 9.5 GB, Seurat + BPCells 9.7 GB.
 - **Each out-of-core design pays somewhere else.** bixverse pays up front to
-  convert into its two views (74 s from h5ad on the full data) and is fast
+  convert into its two views (78 s from h5ad on the full data) and is fast
   after. Dask loads in 42 s but re-reads the file on every forced pass, and
   its UMAP (352 s) and Harmony (138 s) are the stock in-memory ones. BPCells
   re-evaluates its lazy chain on every pass (PCA 702 s, UMAP 760 s).
 - **Against baseline in-memory Scanpy** at 500k, the largest size it survives:
   bixverse from h5ad is 2.7x faster without tSNE (110 s against 297 s) at under
-  half the memory (6.6 GB against 14.2 GB). Scanpy only wins the load.
+  half the memory (6.5 GB against 14.2 GB). Scanpy only wins the load.
 - **scrapper is fast wherever it stays in C++.** Best QC, HVG and default tSNE
   at 100k, but the loaders, the R harmony package and a UMAP that rebuilds the
   kNN cost it, and the in-memory path runs out of room at 500k from mtx.
 - **A warm start removes the conversion cost.** On the full data bixverse
-  reconnects in 2.3 s at 0.5 GB (160 s cold from mtx, 74 s from h5ad), and
+  reconnects in 2.3 s at 0.5 GB (148 s cold from mtx, 78 s from h5ad), and
   Seurat + BPCells in 20.8 s at 1.1 GB (143 s cold). At 500k: 0.6 s against
   10.4 s. So the up-front conversion bixverse pays is a one-off per data set:
-  the load was 74 s of its 235 s without tSNE from h5ad. BPCells' warm load
+  the load was 78 s of its 238 s without tSNE from h5ad. BPCells' warm load
   grows with the data (2.3, 10.4, 20.8 s); where that time goes is not timed.
   The BPCells PCA and UMAP cost above is untouched by a warm start.
+- **Exact kNN inside tSNE does not scale.** kmknn took 49 s of the 78 s
+  `tsne_fft` at 500k and 182 s of 258 s on the full data. IVF cuts that to 12 s
+  and 45 s, and `tsne_fft` to 40 s and 121 s (mtx). IVF recall against kmknn
+  is not measured here.
 - **The GPU earns its keep from 500k.** 56 s without tSNE at 500k and 127 s on
   the full data. tSNE is now most of every run that has it (three-kernel FFT on the GPU: 19
-  s at 500k, 40 s on the full data, against 78 s and 257 s for `fft_3k` on the CPU), so dropping it from a large-data workflow
+  s at 500k, 40 s on the full data, against 40 s and 121 s for `fft_3k` on the CPU
+  with an IVF kNN), so dropping it from a large-data workflow
   is the smart call.

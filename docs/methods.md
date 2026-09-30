@@ -31,7 +31,7 @@
 
 | framework | version |
 |---|---|
-| bixverse | 0.5.4 (`main` 718bcca6f, bixverse-rs `release-0.5.6` cb90e16), bixverse.gpu 0.3.4 (`feat-gpu-tsne` 0b42e0a), manifoldsR 0.3.5 (`main` 61a55e2) |
+| bixverse | 0.5.4 (`main` 718bcca6f, bixverse-rs `release-0.5.6` cb90e16; CPU runs at 500k and full on `feat-bonsai` 8d5c8d6ba, bixverse-rs `feat-bonsai-wiring`), bixverse.gpu 0.3.4 (`feat-gpu-tsne` 0b42e0a), manifoldsR 0.3.5 (`main` 61a55e2) |
 | Scanpy | 1.12.4 (anndata 0.13.4, dask 2026.8.0, harmonypy 2.0.2, openTSNE 1.0.4, scikit-learn 1.9.1) |
 | scrapper | 1.6.3 |
 | Seurat | 5.5.1 (BPCells 0.3.1, harmony 2.0.5) |
@@ -71,7 +71,10 @@ needs a cold run of the same tool and data set first, and lives in
 
 bixverse's `tsne_fft` uses `fft_3k`; the GPU row uses `fft_3k_gpu`.
 
-bixverse uses nndescent for the sNN kNN and kmknn inside tSNE. Every tSNE
+bixverse uses nndescent for the sNN kNN. Inside tSNE the CPU runs use kmknn at
+100k and IVF (default `n_list`, `n_probes`) at 500k and full
+(`BIX_TSNE_KNN=ivf`). kmknn takes 1.7 s at 100k but 49 s at 500k and 182 s on
+the full data. Every tSNE
 builds its own kNN at k = 3 x perplexity. For UMAP, bixverse and Scanpy reuse
 the graph; Seurat, scrapper and OSCA rebuild it.
 
