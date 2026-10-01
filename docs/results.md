@@ -51,8 +51,8 @@ Regenerate with `uv run scripts/tables.py results`.
 | **peak GB** | **6.3** | **6.5** | **10.0** | **22.3** | **14.2** | **6.8** | **22.7** | **22.7** | **22.7** | **22.8** | **5.5** | **22.7** |
 | peak swap GB | 0.0 | 0.0 | 0.0 | 3.9 | 0.0 | 0.0 | 3.8 | 3.2 | 3.7 | 3.5 | 0.0 | 3.7 |
 
-bixverse CPU tSNE builds its kNN with IVF at this size (kmknn at 100k), on
-bixverse `feat-bonsai`; kmknn runs are in `results/archive_tsne_kmknn`.
+bixverse CPU tSNE builds its kNN with IVF at this size (kmknn at 100k);
+kmknn runs are in `results/archive_tsne_kmknn`.
 
 ## Full data set (684,932 after QC)
 
@@ -74,8 +74,8 @@ bixverse `feat-bonsai`; kmknn runs are in `results/archive_tsne_kmknn`.
 | **peak GB** | **9.8** | **8.9** | **15.6** | **22.5** | **22.5** | **9.5** | **22.8** | **22.8** | **22.8** | **22.8** | **9.7** | **22.8** |
 | peak swap GB | 0.0 | 0.1 | 0.0 | 3.7 | 3.2 | 0.0 | 3.5 | 3.0 | 3.4 | 3.0 | 0.0 | 3.6 |
 
-bixverse CPU tSNE builds its kNN with IVF at this size (kmknn at 100k), on
-bixverse `feat-bonsai`; kmknn runs are in `results/archive_tsne_kmknn`.
+bixverse CPU tSNE builds its kNN with IVF at this size (kmknn at 100k);
+kmknn runs are in `results/archive_tsne_kmknn`.
 
 ## Warm start
 

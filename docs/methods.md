@@ -15,8 +15,8 @@
 - **Memory**: cgroup `anon` sampled once a second (`docker/monitor.sh`). Page
   cache is excluded, so streaming tools are not charged for their files.
 - **Repeats**: one per run. Treat differences of a few seconds as noise.
-- **bixverse**: built from the local checkouts (`scripts/vendor.sh`) ahead of
-  r-universe; loaders use `csc_mem_gb = 8` as in the big data vignette. The GPU
+- **bixverse**: installed from r-universe, in the image and in `rlib/` for the
+  native GPU run; loaders use `csc_mem_gb = 8` as in the big data vignette. The GPU
   row uses GPU NNDescent (`find_neighbours_gpu_sc`) for the kNN. Results for
   0.5.2 and 0.5.3 live in `results/archive_bixverse_*`.
 - **Scanpy Dask**: X read lazily from the h5ad in 50k cell CSR chunks, threaded
@@ -31,7 +31,7 @@
 
 | framework | version |
 |---|---|
-| bixverse | 0.5.4 (`main` 718bcca6f, bixverse-rs `release-0.5.6` cb90e16; CPU runs at 500k and full on `feat-bonsai` 8d5c8d6ba, bixverse-rs `feat-bonsai-wiring`), bixverse.gpu 0.3.4 (`feat-gpu-tsne` 0b42e0a), manifoldsR 0.3.5 (`main` 61a55e2) |
+| bixverse | 0.5.5 (bixverse-rs 0.5.7), bixverse.gpu 0.3.4, manifoldsR 0.3.6, all from r-universe |
 | Scanpy | 1.12.4 (anndata 0.13.4, dask 2026.8.0, harmonypy 2.0.2, openTSNE 1.0.4, scikit-learn 1.9.1) |
 | scrapper | 1.6.3 |
 | Seurat | 5.5.1 (BPCells 0.3.1, harmony 2.0.5) |
@@ -112,7 +112,7 @@ the graph; Seurat, scrapper and OSCA rebuild it.
 ```bash
 uv run scripts/subsample.py ~/Desktop/parse_pbmc_1m data/parse_100k 100000
 uv run scripts/to_h5ad.py data/parse_100k
-REF_bixverse=main REF_bixverse_gpu=feat-gpu-tsne scripts/vendor.sh     # local checkouts, per-package refs
+R_LIBS=rlib Rscript -e 'install.packages(c("manifoldsR", "bixverse", "bixverse.gpu"), lib = "rlib", repos = c("https://gregorlueg.r-universe.dev", "https://cloud.r-project.org"))'   # native GPU run
 docker build -f docker/r.Dockerfile -t scbench-r .
 docker build -f docker/py.Dockerfile -t scbench-py .
 

@@ -19,17 +19,10 @@ RUN Rscript -e 'remotes::install_github("bnprks/BPCells/r", upgrade = "never")'
 RUN apt-get update && apt-get install -y --no-install-recommends libbz2-dev liblzma-dev libzstd-dev \
     && rm -rf /var/lib/apt/lists/*
 RUN Rscript -e 'BiocManager::install(c("scrapper", "rhdf5"), ask = FALSE, update = FALSE, Ncpus = 8)'
-RUN Rscript -e 'install.packages(c("manifoldsR", "bixverse"), repos = c("https://gregorlueg.r-universe.dev", getOption("repos")), type = "source", Ncpus = 8)'
+RUN Rscript -e 'install.packages(c("manifoldsR", "bixverse"), repos = c("https://gregorlueg.r-universe.dev", getOption("repos")), type = "source", Ncpus = 8); stopifnot(packageVersion("bixverse") >= "0.5.5")'
 
 COPY docker/monitor.sh docker/entrypoint.sh /bench/
 ENTRYPOINT ["/bench/entrypoint.sh"]
-
-# manifoldsR and bixverse from the local main checkouts (scripts/vendor.sh),
-# ahead of r-universe
-COPY vendor/manifoldsR /tmp/manifoldsR
-COPY vendor/bixverse /tmp/bixverse
-RUN Rscript -e 'for (p in c("/tmp/manifoldsR", "/tmp/bixverse")) remotes::install_local(p, dependencies = TRUE, upgrade = "never", force = TRUE, repos = c("https://gregorlueg.r-universe.dev", getOption("repos")))' \
-    && rm -rf /tmp/manifoldsR /tmp/bixverse
 
 # OSCA: Bioconductor's HDF5-backed out-of-core path
 RUN Rscript -e 'BiocManager::install(c("SingleCellExperiment", "HDF5Array", "DelayedArray", "scuttle", "scran", "scater", "BiocSingular", "bluster", "BiocParallel", "beachmat.hdf5"), ask = FALSE, update = FALSE, Ncpus = 8)'

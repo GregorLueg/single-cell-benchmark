@@ -75,7 +75,6 @@ Details in [methods](docs/methods.md).
 ```bash
 uv run scripts/subsample.py ~/Desktop/parse_pbmc_1m data/parse_100k 100000
 uv run scripts/to_h5ad.py data/parse_100k
-scripts/vendor.sh
 docker build -f docker/r.Dockerfile -t scbench-r .
 docker build -f docker/py.Dockerfile -t scbench-py .
 scripts/run.sh <tool> parse_100k       # bixverse | scanpy | scrapper | seurat_standard | seurat_bpcells | osca
