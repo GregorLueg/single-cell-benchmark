@@ -203,6 +203,7 @@ fig2 <- ggplot(hm, aes(step, factor(column, levels = rev(column_order)))) +
   labs(
     title = "Wall time per step",
     subtitle = "Grey: the step where the run died. Blank: step not available or not reached.",
+    caption = "bixverse CPU tSNE builds its kNN with IVF at 500k and full (kmknn at 100k).",
     x = NULL, y = NULL
   ) +
   theme_bench() +
@@ -274,7 +275,7 @@ speedup_plot(
   subtitle = "The largest size in-memory Scanpy survives. Only runs that completed at 500k.",
   caption = paste(
     "bixverse normalises during load. scrapper's default tSNE runs at theta = 1 and 500 iterations",
-    "(the others 0.5 and 1000); matched, it takes 202 s at 500k."
+    "(the others 0.5 and 1000); matched, it takes 202 s at 500k. bixverse CPU tSNE builds its kNN with IVF."
   ),
   file = "speedup_vs_scanpy_500k",
   height = 4
@@ -284,7 +285,42 @@ speedup_plot(
   "parse_full", "Scanpy dask",
   title = "Speed-up per step against Scanpy with Dask, full data set",
   subtitle = "In-memory Scanpy dies at load here; Dask is the Scanpy path that finishes. Only runs that completed.",
-  caption = "bixverse normalises during load; Dask defers normalisation, so the normalise column carries no fold change.",
+  caption = paste(
+    "bixverse normalises during load; Dask defers normalisation, so the normalise column carries no fold change.",
+    "bixverse CPU tSNE builds its kNN with IVF."
+  ),
   file = "speedup_vs_scanpy_dask_full",
   height = 3.2
 )
+
+#### figure 4: cold vs warm load ------------------------------------------------
+
+# warm_long.csv: uv run scripts/tables.py --warm results > docs/figures/warm_long.csv
+wl <- fread(file.path(fig_dir, "warm_long.csv"))
+wl[, size_label := factor(size_labels[size], levels = size_labels)]
+wl[, start := factor(start, levels = c("cold", "warm"))]
+wl[, family := sub(" .*", "", framework)]
+
+fig4 <- ggplot(wl, aes(size_label, seconds, fill = start)) +
+  geom_col(position = position_dodge(width = 0.8), width = 0.75) +
+  geom_text(
+    aes(label = sprintf(ifelse(seconds < 10, "%.1f s", "%.0f s"), seconds)),
+    position = position_dodge(width = 0.8), vjust = -0.4, size = 2.8, colour = ink
+  ) +
+  facet_wrap(~framework) +
+  scale_fill_manual(values = c(cold = seq_ramp[2], warm = seq_ramp[6]), name = NULL) +
+  scale_y_continuous(
+    labels = scales::label_number(suffix = " s"),
+    expand = expansion(mult = c(0, 0.1))
+  ) +
+  labs(
+    title = "Load: cold conversion against a warm reconnect",
+    subtitle = "Warm reopens what the cold run wrote to disk. One repeat each, run straight after the cold run.",
+    caption = "bixverse cold load from mtx. BPCells warm reopens the pre-filtered, pre-QC matrix.",
+    x = NULL, y = NULL
+  ) +
+  theme_bench() +
+  theme(panel.grid.major.x = element_blank())
+
+ggsave(file.path(fig_dir, "warm_start.png"), fig4, width = 8, height = 3.6, dpi = 200, bg = surface)
+ggsave(file.path(fig_dir, "warm_start.pdf"), fig4, width = 8, height = 3.6, bg = surface)

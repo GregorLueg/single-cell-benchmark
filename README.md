@@ -1,10 +1,13 @@
 # single-cell-benchmark
 
+## Description
+
 How far do the big single cell frameworks get on a MacBook Air class machine?
 The Parse Biosciences 1M PBMC data set (987,585 cells), random 100k and 500k
 subsamples, the same ten step workflow in every framework (load, QC,
 normalise, HVG, PCA, Harmony, kNN/sNN, Leiden, UMAP, tSNE), in Docker capped at
-24 GB and 8 cores.
+24 GB and 8 cores to mimic a small laptop situation. The benchmarks here were
+run within Docker on a MacBook M1 Max.
 
 ## Headline
 
@@ -29,7 +32,7 @@ died. One repeat each.
 | OSCA HDF5 | 807 s, 22.7 GB | OOM (worker) at hvg | OOM (worker) at hvg |
 
 \* Native macOS on Metal, no memory cap, peak is process RSS: not comparable to
-the Docker rows.
+the Docker rows!
 
 - **Only the out-of-core designs finish the full data set.** bixverse (3.9 min
   from h5ad, 2.1 min on the GPU), Scanpy with Dask (10.5 min) and Seurat with

@@ -105,7 +105,7 @@ step("tsne_fft", {
     embd_to_use = "harmony_v2",
     slot_name = "tsne_fft",
     perplexity = 30,
-    approx_type = "fft",
+    approx_type = "fft_3k",
     knn_method = tsne_knn_method
   )
 })
