@@ -91,10 +91,11 @@ step("tsne_matched", {
   )
 })
 
+step("dge", {
+  markers <- scoreMarkers(logn, groups = md[[dge_col]], num.threads = threads)
+})
+
 if (truth) {
-  step("dge", {
-    markers <- scoreMarkers(logn, groups = md$Group, num.threads = threads)
-  })
   cells_named <- function(m) `rownames<-`(m, md$bc_wells)
   write_truth_outputs(
     hvg = rownames(logn)[hvgs],

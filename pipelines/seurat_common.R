@@ -52,11 +52,12 @@ step("tsne_fft", {
   )
 })
 
+step("dge", {
+  Idents(obj) <- dge_col
+  markers <- as.data.table(FindAllMarkers(obj, verbose = FALSE))
+})
+
 if (truth) {
-  step("dge", {
-    Idents(obj) <- "Group"
-    markers <- as.data.table(FindAllMarkers(obj, verbose = FALSE))
-  })
   emb <- function(r) Embeddings(obj, reduction = r)
   write_truth_outputs(
     hvg = VariableFeatures(obj),

@@ -112,10 +112,11 @@ step("tsne_default", {
   sce <- runTSNE(sce, dimred = "harmony", perplexity = 30, num_threads = threads)
 })
 
+step("dge", {
+  markers <- scoreMarkers(sce, groups = sce[[dge_col]], BPPARAM = bpparam)
+})
+
 if (truth) {
-  step("dge", {
-    markers <- scoreMarkers(sce, groups = sce$Group, BPPARAM = bpparam)
-  })
   write_truth_outputs(
     hvg = hvgs,
     embs = list(

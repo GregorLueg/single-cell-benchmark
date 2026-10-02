@@ -33,8 +33,11 @@ def step(name):
 
 
 INPUT = os.environ.get("INPUT", "mtx")
-# simulated data: also time DGE on the true groups and dump what score.py needs
+# simulated data: DGE on the true groups, plus the outputs score.py needs.
+# Real data: DGE one-vs-rest over samples, a workload that is the same for
+# every tool, unlike their clusters.
 TRUTH = (data / "cells_truth.tsv.gz").exists()
+DGE_COL = "Group" if TRUTH else "sample"
 
 with step("load"):
     if INPUT == "h5ad":
@@ -124,13 +127,18 @@ with step("tsne_fft"):
     )
     adata.obsm["X_tsne_fft"] = np.asarray(emb)
 
-if TRUTH:
+# Wilcoxon fails on dask arrays in scanpy 1.12.4 (numba TypingError in
+# _select_top_n); only the t-test runs, which we do not use, so no DGE there
+if INPUT != "dask":
     with step("dge"):
-        sc.tl.rank_genes_groups(adata, "Group", method="wilcoxon", n_genes=adata.n_vars)
-    df = sc.get.rank_genes_groups_df(adata, group=None)
-    df.rename(columns={"names": "gene", "scores": "score"})[["group", "gene", "score"]].to_csv(
-        out / "markers.csv", index=False
-    )
+        sc.tl.rank_genes_groups(adata, DGE_COL, method="wilcoxon", n_genes=adata.n_vars)
+
+if TRUTH:
+    if INPUT != "dask":
+        df = sc.get.rank_genes_groups_df(adata, group=None)
+        df.rename(columns={"names": "gene", "scores": "score"})[["group", "gene", "score"]].to_csv(
+            out / "markers.csv", index=False
+        )
     pd.Series(adata.var_names[adata.var["highly_variable"].values], name="gene").to_csv(
         out / "hvg.csv", index=False
     )

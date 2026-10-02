@@ -113,10 +113,12 @@ step("tsne_fft", {
   )
 })
 
+# bixverse lowercases obs column names on load
+step("dge", {
+  markers <- find_all_markers_sc(sce, column_of_interest = tolower(dge_col), .verbose = FALSE)
+})
+
 if (truth) {
-  step("dge", {
-    markers <- find_all_markers_sc(sce, column_of_interest = "group", .verbose = FALSE)
-  })
   write_truth_outputs(
     hvg = get_gene_names_from_idx(sce, get_hvg(sce), rust_based = TRUE),
     embs = list(

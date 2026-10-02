@@ -87,6 +87,10 @@ the graph; Seurat, scrapper and OSCA rebuild it.
 - **Harness code.** The R pre-filter for scrapper and Seurat standard makes
   copies (`counts > 0`, column subsetting); part of their in-memory OOMs may
   be ours. The Scanpy Dask QC is hand-written (see Setup).
+- **No DGE for Scanpy Dask.** Wilcoxon `rank_genes_groups` fails on Dask
+  arrays in Scanpy 1.12.4 (numba `TypingError` in `_select_top_n`). Only the
+  t-test runs, and a t-test on zero-inflated counts is not a like-for-like
+  substitute, so the Dask row has no DGE step.
 - **OSCA: OOMs in parallel, impractical serially.** The documented path
   (`MulticoreParam(8)`) takes 609 s for HVG at 100k at 22.7 GB plus 3.7 GB
   swap; at 500k and on the full data the kernel kills a forked worker there.
