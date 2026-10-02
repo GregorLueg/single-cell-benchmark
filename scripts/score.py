@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["polars>=1.30", "numpy", "scikit-learn", "igraph", "leidenalg"]
+# dependencies = ["polars>=1.30", "numpy", "scikit-learn", "igraph", "leidenalg", "h5py"]
 # ///
 """Score every tool's output on a simulated data set against the Splat truth.
 
@@ -12,6 +12,7 @@ Writes <results/dataset>/quality.csv and prints it as markdown.
 import sys
 from pathlib import Path
 
+import h5py
 import igraph as ig
 import leidenalg
 import numpy as np
@@ -20,6 +21,8 @@ from sklearn.metrics import adjusted_rand_score, normalized_mutual_info_score, r
 from sklearn.neighbors import NearestNeighbors
 
 K = 15
+# a true marker counts as detectable if seen in this share of its own group
+MIN_DETECTED = 0.1
 MAX_CELLS = 50_000
 results, data = Path(sys.argv[1]), Path(sys.argv[2])
 
@@ -28,6 +31,29 @@ genes = pl.read_csv(data / "genes_truth.tsv.gz", separator="\t", infer_schema_le
 de_cols = [c for c in genes.columns if c.startswith("DEFacGroup")]
 de_any = set(genes.filter(pl.any_horizontal(pl.col(c) != 1 for c in de_cols))["Gene"])
 rarest = cells.group_by("Group").len().sort("len")["Group"][0]
+
+
+def group_detection() -> dict[str, set]:
+    """Genes detected in >= MIN_DETECTED of each group's cells, from the raw
+    counts in DGE.h5ad, streamed in row blocks. Rows follow cells_truth."""
+    groups = cells["Group"].to_numpy()
+    names, codes = np.unique(groups, return_inverse=True)
+    with h5py.File(data / "DGE.h5ad") as f:
+        x = f["X"]
+        n_genes = int(x.attrs["shape"][1])
+        gene_names = f["var"][f["var"].attrs["_index"]][:].astype(str)
+        indptr = x["indptr"][:]
+        hits = np.zeros(len(names) * n_genes, dtype=np.int64)
+        for lo in range(0, len(indptr) - 1, 100_000):
+            hi = min(lo + 100_000, len(indptr) - 1)
+            idx = x["indices"][indptr[lo]:indptr[hi]]
+            row_grp = np.repeat(codes[lo:hi], np.diff(indptr[lo:hi + 1]))
+            hits += np.bincount(row_grp * n_genes + idx, minlength=hits.size)
+    frac = hits.reshape(len(names), n_genes) / np.bincount(codes)[:, None]
+    return {g: set(gene_names[frac[i] >= MIN_DETECTED]) for i, g in enumerate(names)}
+
+
+detectable = group_detection()
 
 
 def first_col_as_cell(df: pl.DataFrame) -> pl.DataFrame:
@@ -99,8 +125,11 @@ def rank_scores(s: pl.DataFrame) -> tuple[float, float]:
 def dge_scores(m: pl.DataFrame, shared: dict[str, set]) -> dict:
     """Up-regulated markers only, as bixverse tests one-sided by default. On
     all genes, genes a tool filtered out rank last, so its thresholds count;
-    on the genes every tool reported, only the ranking does."""
-    out = {k: [] for k in ["auroc", "rprec", "reported", "true_reported", "auroc_shared", "rprec_shared"]}
+    on the genes every tool reported, only the ranking does. The _det
+    variants only count markers detectable in their own group as true, so a
+    filter dropping genes nobody could use as markers is not penalised."""
+    out = {k: [] for k in ["auroc", "rprec", "reported", "true_reported", "auroc_shared", "rprec_shared",
+                           "auroc_det", "rprec_det", "true_reported_det"]}
     for k, col in enumerate(de_cols, start=1):
         g = f"Group{k}"
         s = genes.select("Gene", (pl.col(col) > 1).alias("de")).join(
@@ -109,8 +138,11 @@ def dge_scores(m: pl.DataFrame, shared: dict[str, set]) -> dict:
         hit = s.filter(pl.col("score").is_not_null())
         out["reported"].append(hit.height)
         out["true_reported"].append(hit["de"].sum())
+        out["true_reported_det"].append(hit.filter(pl.col("de") & pl.col("Gene").is_in(detectable[g])).height)
+        det = s.with_columns(pl.col("de") & pl.col("Gene").is_in(detectable[g]))
         for suffix, d in [("", s.with_columns(pl.col("score").fill_null(-1e300))),
-                          ("_shared", hit.filter(pl.col("Gene").is_in(shared[g])))]:
+                          ("_shared", hit.filter(pl.col("Gene").is_in(shared[g]))),
+                          ("_det", det.with_columns(pl.col("score").fill_null(-1e300)))]:
             auc, rprec = rank_scores(d)
             out["auroc" + suffix].append(auc)
             out["rprec" + suffix].append(rprec)
