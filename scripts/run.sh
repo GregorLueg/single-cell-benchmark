@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Usage: [INPUT=h5ad] [BIX_KNN=nndescent] [BIX_TSNE_KNN=nndescent] [TAG=suffix] [STEP_TIMEOUT=900] scripts/run.sh <tool> <dataset>
+# Usage: [INPUT=h5ad] [BIX_KNN=nndescent] [BIX_TSNE_KNN=nndescent] [TAG=suffix] [STEP_TIMEOUT=900] [R_IMAGE=scbench-r] scripts/run.sh <tool> <dataset>
 #   tool: scanpy | seurat_bpcells | seurat_standard | scrapper | bixverse
 # WARM=1 reconnects to the on-disk data the last cold run left in the scratch
 # volume (bixverse | seurat_bpcells only), so run the cold run first.
@@ -15,7 +15,7 @@ rm -rf "$out"; mkdir -p "$out"
 
 case "$tool" in
   scanpy) image=scbench-py; cmd=(python /bench/pipelines/scanpy_pipeline.py /data /out) ;;
-  *)      image=scbench-r;  cmd=(Rscript "/bench/pipelines/${tool}${suffix}.R" /data /out /scratch) ;;
+  *)      image="${R_IMAGE:-scbench-r}";  cmd=(Rscript "/bench/pipelines/${tool}${suffix}.R" /data /out /scratch) ;;
 esac
 
 # on-disk scratch lives in a volume inside the VM, not a slow bind mount
