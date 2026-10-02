@@ -73,25 +73,47 @@ def embedding_scores(path: Path, name: str, full: bool) -> dict:
     }
 
 
-def dge_scores(path: Path) -> dict:
-    m = pl.read_csv(path, schema_overrides={"group": pl.String, "gene": pl.String})
-    auc, rprec = [], []
-    for k, col in enumerate(de_cols, start=1):
-        # up-regulated markers only: bixverse tests one-sided by default.
-        # Genes a tool filtered out or did not report rank last.
-        s = genes.select("Gene", (pl.col(col) > 1).alias("de")).join(
-            m.filter(pl.col("group") == f"Group{k}").select(pl.col("gene").alias("Gene"), "score"),
-            on="Gene",
-            how="left",
-        ).with_columns(pl.col("score").fill_nan(None).fill_null(-1e300))
-        auc.append(roc_auc_score(s["de"], s["score"]))
-        # R-precision: precision in the top n, n = number of true markers
-        rprec.append(s.sort("score", descending=True).head(int(s["de"].sum()))["de"].mean())
-    return {"dge_auroc": float(np.mean(auc)), "dge_rprec": float(np.mean(rprec))}
+def rank_scores(s: pl.DataFrame) -> tuple[float, float]:
+    # R-precision: precision in the top n, n = number of true markers
+    top = s.sort("score", descending=True).head(int(s["de"].sum()))
+    return roc_auc_score(s["de"], s["score"]), top["de"].mean()
 
+
+def dge_scores(m: pl.DataFrame, shared: dict[str, set]) -> dict:
+    """Up-regulated markers only, as bixverse tests one-sided by default. On
+    all genes, genes a tool filtered out rank last, so its thresholds count;
+    on the genes every tool reported, only the ranking does."""
+    out = {k: [] for k in ["auroc", "rprec", "reported", "true_reported", "auroc_shared", "rprec_shared"]}
+    for k, col in enumerate(de_cols, start=1):
+        g = f"Group{k}"
+        s = genes.select("Gene", (pl.col(col) > 1).alias("de")).join(
+            m.filter(pl.col("group") == g).select(pl.col("gene").alias("Gene"), "score"), on="Gene", how="left"
+        ).with_columns(pl.col("score").fill_nan(None))
+        hit = s.filter(pl.col("score").is_not_null())
+        out["reported"].append(hit.height)
+        out["true_reported"].append(hit["de"].sum())
+        for suffix, d in [("", s.with_columns(pl.col("score").fill_null(-1e300))),
+                          ("_shared", hit.filter(pl.col("Gene").is_in(shared[g])))]:
+            auc, rprec = rank_scores(d)
+            out["auroc" + suffix].append(auc)
+            out["rprec" + suffix].append(rprec)
+    return {f"dge_{k}": float(np.mean(v)) for k, v in out.items()}
+
+
+tools = sorted(p for p in results.iterdir() if (p / "clusters.csv").exists())
+markers = {
+    t.name: pl.read_csv(t / "markers.csv", schema_overrides={"group": pl.String, "gene": pl.String})
+    .filter(pl.col("score").is_not_null() & pl.col("score").is_not_nan())
+    for t in tools
+    if (t / "markers.csv").exists()
+}
+shared = {
+    f"Group{k}": set.intersection(*(set(m.filter(pl.col("group") == f"Group{k}")["gene"]) for m in markers.values()))
+    for k in range(1, len(de_cols) + 1)
+} if markers else {}
 
 rows = []
-for tool in sorted(p for p in results.iterdir() if (p / "clusters.csv").exists()):
+for tool in tools:
     row = {"tool": tool.name}
     cl = first_col_as_cell(pl.read_csv(tool / "clusters.csv")).join(cells, on="Cell")
     lab = cl[cl.columns[1]].cast(pl.String)
@@ -108,8 +130,8 @@ for tool in sorted(p for p in results.iterdir() if (p / "clusters.csv").exists()
     for name in ["pca", "harmony", "umap", "tsne"]:
         if (tool / f"emb_{name}.csv.gz").exists():
             row |= embedding_scores(tool / f"emb_{name}.csv.gz", name, full=name in ("pca", "harmony"))
-    if (tool / "markers.csv").exists():
-        row |= dge_scores(tool / "markers.csv")
+    if tool.name in markers:
+        row |= dge_scores(markers[tool.name], shared)
     rows.append(row)
 
 df = pl.DataFrame(rows).with_columns(pl.selectors.float().round(3))
