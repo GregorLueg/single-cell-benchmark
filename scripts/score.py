@@ -27,6 +27,7 @@ cells = pl.read_csv(data / "cells_truth.tsv.gz", separator="\t").select("Cell", 
 genes = pl.read_csv(data / "genes_truth.tsv.gz", separator="\t", infer_schema_length=None)
 de_cols = [c for c in genes.columns if c.startswith("DEFacGroup")]
 de_any = set(genes.filter(pl.any_horizontal(pl.col(c) != 1 for c in de_cols))["Gene"])
+rarest = cells.group_by("Group").len().sort("len")["Group"][0]
 
 
 def first_col_as_cell(df: pl.DataFrame) -> pl.DataFrame:
@@ -44,6 +45,18 @@ def entropy(labels: np.ndarray) -> float:
     return float(-(p * np.log(p)).sum())
 
 
+def group_f1(cl: pl.DataFrame, lab: str) -> pl.DataFrame:
+    """Per true group, F1 of its best-matching cluster."""
+    n = cl.group_by("Group", lab).len("n")
+    return (
+        n.join(cl.group_by("Group").len("n_group"), on="Group")
+        .join(cl.group_by(lab).len("n_cluster"), on=lab)
+        .with_columns(f1=2 * pl.col("n") / (pl.col("n_group") + pl.col("n_cluster")))
+        .group_by("Group")
+        .agg(pl.col("f1").max())
+    )
+
+
 def embedding_scores(path: Path, name: str, full: bool) -> dict:
     emb = first_col_as_cell(pl.read_csv(path)).join(cells, on="Cell")
     if emb.height > MAX_CELLS:
@@ -51,7 +64,11 @@ def embedding_scores(path: Path, name: str, full: bool) -> dict:
     x = emb.drop("Cell", "Batch", "Group").to_numpy()
     group, batch = emb["Group"].to_numpy(), emb["Batch"].to_numpy()
     nn = knn(x)
-    out = {f"{name}_knn_purity": float((group[nn] == group[:, None]).mean())}
+    same = group[nn] == group[:, None]
+    out = {
+        f"{name}_knn_purity": float(same.mean()),
+        f"{name}_knn_purity_rarest": float(same[group == rarest].mean()),
+    }
     if not full:
         return out
     # batch entropy among neighbours, relative to that of K random cells of
@@ -123,6 +140,12 @@ for tool in tools:
         "ari": adjusted_rand_score(cl["Group"], lab),
         "nmi": normalized_mutual_info_score(cl["Group"], lab),
         "ari_batch": adjusted_rand_score(cl["Batch"], lab),
+    }
+    f1 = group_f1(cl.with_columns(lab), cl.columns[1])
+    row |= {
+        "f1_mean": f1["f1"].mean(),
+        "f1_min": f1["f1"].min(),
+        "f1_rarest": f1.filter(pl.col("Group") == rarest)["f1"][0],
     }
     if (tool / "hvg.csv").exists():
         hvg = set(pl.read_csv(tool / "hvg.csv")["gene"].cast(pl.String))
