@@ -33,6 +33,8 @@ def step(name):
 
 
 INPUT = os.environ.get("INPUT", "mtx")
+# simulated data: also time DGE on the true groups and dump what score.py needs
+TRUTH = (data / "cells_truth.tsv.gz").exists()
 
 with step("load"):
     if INPUT == "h5ad":
@@ -121,6 +123,22 @@ with step("tsne_fft"):
         adata.obsm["X_pca_harmony"]
     )
     adata.obsm["X_tsne_fft"] = np.asarray(emb)
+
+if TRUTH:
+    with step("dge"):
+        sc.tl.rank_genes_groups(adata, "Group", method="wilcoxon", n_genes=adata.n_vars)
+    df = sc.get.rank_genes_groups_df(adata, group=None)
+    df.rename(columns={"names": "gene", "scores": "score"})[["group", "gene", "score"]].to_csv(
+        out / "markers.csv", index=False
+    )
+    pd.Series(adata.var_names[adata.var["highly_variable"].values], name="gene").to_csv(
+        out / "hvg.csv", index=False
+    )
+    for name, key in [("pca", "X_pca"), ("harmony", "X_pca_harmony"), ("umap", "X_umap"),
+                      ("tsne", "X_tsne")]:
+        pd.DataFrame(np.asarray(adata.obsm[key]), index=adata.obs_names).to_csv(
+            out / f"emb_{name}.csv.gz", index_label="cell_id"
+        )
 
 adata.obs[["leiden"]].to_csv(out / "clusters.csv")
 print(f"cells after QC: {adata.n_obs}, clusters: {adata.obs['leiden'].nunique()}")

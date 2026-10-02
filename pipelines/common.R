@@ -22,3 +22,19 @@ step <- function(name, expr) {
 genes <- fread(file.path(data, "all_genes.csv"))
 meta <- fread(file.path(data, "cell_metadata.csv"))
 mt_ids <- genes[grepl("^MT-", gene_name), gene_id]
+
+# simulated data: also time DGE on the true groups and dump what score.py needs
+truth <- file.exists(file.path(data, "cells_truth.tsv.gz"))
+
+# embs: named list of cells x dims matrices with cell ids as rownames;
+# markers: data.table(group, gene, score), score signed, higher = more up
+write_truth_outputs <- function(hvg, embs, markers) {
+  fwrite(data.table(gene = hvg), file.path(out, "hvg.csv"))
+  for (n in names(embs)) {
+    fwrite(
+      data.table(cell_id = rownames(embs[[n]]), embs[[n]]),
+      file.path(out, sprintf("emb_%s.csv.gz", n))
+    )
+  }
+  fwrite(markers, file.path(out, "markers.csv"))
+}

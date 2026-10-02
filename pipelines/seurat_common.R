@@ -52,6 +52,19 @@ step("tsne_fft", {
   )
 })
 
+if (truth) {
+  step("dge", {
+    Idents(obj) <- "Group"
+    markers <- as.data.table(FindAllMarkers(obj, verbose = FALSE))
+  })
+  emb <- function(r) Embeddings(obj, reduction = r)
+  write_truth_outputs(
+    hvg = VariableFeatures(obj),
+    embs = list(pca = emb("pca"), harmony = emb("harmony"), umap = emb("umap"), tsne = emb("tsne")),
+    markers = markers[, .(group = cluster, gene, score = sign(avg_log2FC) * -log10(pmax(p_val, 1e-300)))]
+  )
+}
+
 clusters <- data.table(cell_id = colnames(obj), cluster = obj$seurat_clusters)
 fwrite(clusters, file.path(out, "clusters.csv"))
 message(sprintf("cells after QC: %d, clusters: %d", nrow(clusters), uniqueN(clusters$cluster)))

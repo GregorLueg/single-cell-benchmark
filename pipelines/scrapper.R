@@ -91,6 +91,25 @@ step("tsne_matched", {
   )
 })
 
+if (truth) {
+  step("dge", {
+    markers <- scoreMarkers(logn, groups = md$Group, num.threads = threads)
+  })
+  cells_named <- function(m) `rownames<-`(m, md$bc_wells)
+  write_truth_outputs(
+    hvg = rownames(logn)[hvgs],
+    embs = list(
+      pca = cells_named(t(pca$components)),
+      harmony = cells_named(emb),
+      umap = cells_named(umap),
+      tsne = cells_named(tsne)
+    ),
+    markers = rbindlist(lapply(names(markers$auc), function(g) {
+      data.table(group = g, gene = rownames(logn), score = markers$auc[[g]]$mean - 0.5)
+    }))
+  )
+}
+
 res <- data.table(cell_id = md$bc_wells, cluster = clusters$membership)
 fwrite(res, file.path(out, "clusters.csv"))
 message(sprintf("cells after QC: %d, clusters: %d", nrow(res), uniqueN(res$cluster)))

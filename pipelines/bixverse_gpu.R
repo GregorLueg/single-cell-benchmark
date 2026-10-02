@@ -36,11 +36,14 @@ step("load", {
 
 step("qc", {
   var <- get_sc_var(object = sce)
-  sce <- gene_set_proportions_sc(
-    object = sce,
-    gene_set_list = list(MT = var[grepl("^MT-", gene_name), gene_id])
-  )
-  qc_df <- sce[[c("cell_id", "lib_size", "nnz", "MT")]]
+  mt <- var[grepl("^MT-", gene_name), gene_id]
+  # simulated data has no MT genes, and an empty gene set is an error
+  if (length(mt) > 0) {
+    sce <- gene_set_proportions_sc(object = sce, gene_set_list = list(MT = mt))
+    qc_df <- sce[[c("cell_id", "lib_size", "nnz", "MT")]]
+  } else {
+    qc_df <- sce[[c("cell_id", "lib_size", "nnz")]][, MT := 0]
+  }
   mt_cut <- if (max(qc_df$MT, na.rm = TRUE) <= 1) 0.05 else 5
   keep <- qc_df[MT < mt_cut & lib_size >= 750 & nnz >= 250, cell_id]
   sce <- set_cells_to_keep(sce, keep)
@@ -95,6 +98,22 @@ step("tsne_fft", {
     approx_type = "fft_3k_gpu"
   )
 })
+
+if (truth) {
+  step("dge", {
+    markers <- find_all_markers_sc(sce, column_of_interest = "group", .verbose = FALSE)
+  })
+  write_truth_outputs(
+    hvg = get_gene_names_from_idx(sce, get_hvg(sce), rust_based = TRUE),
+    embs = list(
+      pca = get_embedding(sce, "pca"),
+      harmony = get_embedding(sce, "harmony_gpu"),
+      umap = get_embedding(sce, "umap"),
+      tsne = get_embedding(sce, "tsne")
+    ),
+    markers = markers[, .(group = grp, gene = gene_id, score = z_scores)]
+  )
+}
 
 clusters <- sce[[c("cell_id", "leiden")]]
 fwrite(clusters, file.path(out, "clusters.csv"))

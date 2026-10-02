@@ -112,6 +112,24 @@ step("tsne_default", {
   sce <- runTSNE(sce, dimred = "harmony", perplexity = 30, num_threads = threads)
 })
 
+if (truth) {
+  step("dge", {
+    markers <- scoreMarkers(sce, groups = sce$Group, BPPARAM = bpparam)
+  })
+  write_truth_outputs(
+    hvg = hvgs,
+    embs = list(
+      pca = reducedDim(sce, "PCA"),
+      harmony = reducedDim(sce, "harmony"),
+      umap = reducedDim(sce, "UMAP"),
+      tsne = reducedDim(sce, "TSNE")
+    ),
+    markers = rbindlist(lapply(names(markers), function(g) {
+      data.table(group = g, gene = rownames(markers[[g]]), score = markers[[g]]$mean.AUC - 0.5)
+    }))
+  )
+}
+
 res <- data.table(cell_id = colnames(sce), cluster = clusters)
 fwrite(res, file.path(out, "clusters.csv"))
 message(sprintf("cells after QC: %d, clusters: %d", nrow(res), uniqueN(res$cluster)))
