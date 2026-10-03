@@ -51,6 +51,8 @@ docker run --rm --name scbench-run --cpus=8 --memory="$mem" --memory-swap="$mems
   -v scbench-scratch:/scratch \
   "$image" /out "${cmd[@]}" || status=$?
 kill "$watchdog" 2> /dev/null || true
+# what the tool left on disk (bixverse's store, BPCells' matrix dirs); input data excluded
+docker run --rm -v scbench-scratch:/s --entrypoint du "$image" -sk /s 2> /dev/null | cut -f1 > "$out/scratch_kb" || true
 # docker kill takes the entrypoint with it, so it never writes the exit line
 [ -f "$out/TIMEOUT" ] && echo "exit=124" >> "$out/log.txt"
 exit "$status"

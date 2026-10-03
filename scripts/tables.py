@@ -168,6 +168,11 @@ def table(ds_dir):
         (f"{sum(v for k, v in runs[c][1].items() if not k.startswith('tsne')):.0f}" if not runs[c][4] else "failed") for c in cols) + " |")
     out.append("| **peak GB** | " + " | ".join(f"**{runs[c][2]:.1f}**" for c in cols) + " |")
     out.append("| peak swap GB | " + " | ".join(f"{runs[c][3]:.1f}" for c in cols) + " |")
+    scratch = {c: ds_dir / runs[c][0] / "scratch_kb" for c in cols}
+    if any(p.exists() and p.read_text().strip() for p in scratch.values()):
+        out.append("| on-disk store GB | " + " | ".join(
+            f"{int(p.read_text()) / 1024**2:.1f}" if p.exists() and p.read_text().strip() else "-"
+            for p in scratch.values()) + " |")
     if any("tsne_quick" in runs[c][1] for c in cols):
         out += ["", "\\* quick-and-dirty Barnes-Hut (qdtsne: theta 1, 500 iterations, depth-capped "
                 "tree), not a standard Barnes-Hut tSNE"]

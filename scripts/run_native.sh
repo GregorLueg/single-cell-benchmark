@@ -22,4 +22,5 @@ while kill -0 "$pid" 2> /dev/null; do
 done
 wait "$pid"; status=$?
 echo "exit=$status" >> "$out/log.txt"
+du -sk "$scratch" | cut -f1 > "$out/scratch_kb"
 rm -rf "$scratch"
