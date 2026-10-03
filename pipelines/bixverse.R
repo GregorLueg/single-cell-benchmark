@@ -48,6 +48,9 @@ step("load", {
   }
 })
 
+# LOAD_ONLY=1: stop once the on-disk store is written, to measure its size
+if (Sys.getenv("LOAD_ONLY") == "1") quit(save = "no")
+
 step("qc", {
   var <- get_sc_var(object = sce)
   mt <- intersect(mt_ids, var$gene_id)
