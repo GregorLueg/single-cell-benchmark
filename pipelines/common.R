@@ -31,13 +31,13 @@ dge_col <- if (truth) "Group" else "sample"
 
 # embs: named list of cells x dims matrices with cell ids as rownames;
 # markers: data.table(group, gene, score), score signed, higher = more up
-write_truth_outputs <- function(hvg, embs, markers) {
-  fwrite(data.table(gene = hvg), file.path(out, "hvg.csv"))
+write_truth_outputs <- function(hvg = NULL, embs = list(), markers = NULL) {
+  if (!is.null(hvg)) fwrite(data.table(gene = hvg), file.path(out, "hvg.csv"))
   for (n in names(embs)) {
     fwrite(
       data.table(cell_id = rownames(embs[[n]]), embs[[n]]),
       file.path(out, sprintf("emb_%s.csv.gz", n))
     )
   }
-  fwrite(markers, file.path(out, "markers.csv"))
+  if (!is.null(markers)) fwrite(markers, file.path(out, "markers.csv"))
 }

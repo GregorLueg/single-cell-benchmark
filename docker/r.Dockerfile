@@ -29,3 +29,6 @@ RUN Rscript -e 'BiocManager::install(c("SingleCellExperiment", "HDF5Array", "Del
 
 # presto: Seurat 5 FindAllMarkers switches to its fast Wilcoxon when installed
 RUN Rscript -e 'remotes::install_github("immunogenomics/presto", upgrade = "never"); stopifnot(requireNamespace("presto"))'
+
+# Seurat 5.6.0: threaded C++ kernels (NormalizeData, VST, ScaleData, PCA, Annoy, FindAllMarkers via one presto call)
+RUN Rscript -e 'install.packages(c("Seurat", "uwot"), repos = "https://cloud.r-project.org", Ncpus = 8); stopifnot(packageVersion("Seurat") >= "5.6.0")'

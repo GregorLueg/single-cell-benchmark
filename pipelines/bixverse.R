@@ -92,6 +92,26 @@ step("umap", {
   sce <- umap_sc(object = sce, embd_to_use = "harmony_v2")
 })
 
+# bixverse lowercases obs column names on load
+step("dge", {
+  markers <- find_all_markers_sc(sce, column_of_interest = tolower(dge_col), .verbose = FALSE)
+})
+
+# all score.py inputs before the tSNE steps, so a tSNE timeout only loses its rows
+clusters <- sce[[c("cell_id", "leiden")]]
+fwrite(clusters, file.path(out, "clusters.csv"))
+if (truth) {
+  write_truth_outputs(
+    hvg = get_gene_names_from_idx(sce, get_hvg(sce), rust_based = TRUE),
+    embs = list(
+      pca = get_embedding(sce, "pca"),
+      harmony = get_embedding(sce, "harmony_v2"),
+      umap = get_embedding(sce, "umap")
+    ),
+    markers = markers[, .(group = grp, gene = gene_id, score = z_scores)]
+  )
+}
+
 step("tsne_default", {
   sce <- tsne_sc(
     object = sce,
@@ -101,6 +121,7 @@ step("tsne_default", {
     knn_method = tsne_knn_method
   )
 })
+if (truth) write_truth_outputs(embs = list(tsne = get_embedding(sce, "tsne")))
 
 step("tsne_fft", {
   sce <- tsne_sc(
@@ -129,28 +150,8 @@ step("tsne_quick", {
   )
   rownames(tsne_quick) <- rownames(harmony)
 })
+if (truth) write_truth_outputs(embs = list(tsne_quick = tsne_quick))
 
-# bixverse lowercases obs column names on load
-step("dge", {
-  markers <- find_all_markers_sc(sce, column_of_interest = tolower(dge_col), .verbose = FALSE)
-})
-
-if (truth) {
-  write_truth_outputs(
-    hvg = get_gene_names_from_idx(sce, get_hvg(sce), rust_based = TRUE),
-    embs = list(
-      pca = get_embedding(sce, "pca"),
-      harmony = get_embedding(sce, "harmony_v2"),
-      umap = get_embedding(sce, "umap"),
-      tsne = get_embedding(sce, "tsne"),
-      tsne_quick = tsne_quick
-    ),
-    markers = markers[, .(group = grp, gene = gene_id, score = z_scores)]
-  )
-}
-
-clusters <- sce[[c("cell_id", "leiden")]]
-fwrite(clusters, file.path(out, "clusters.csv"))
 message(sprintf(
   "cells after QC: %d, clusters: %d",
   nrow(clusters),

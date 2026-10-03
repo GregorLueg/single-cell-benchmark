@@ -18,7 +18,7 @@ import polars as pl
 
 GB = 1024**3
 STEPS = ["load", "qc", "normalise", "hvg", "pca", "harmony", "knn_snn", "cluster",
-         "umap", "tsne_default", "tsne_quick", "tsne_fft", "dge"]
+         "umap", "dge", "tsne_default", "tsne_fft", "tsne_quick"]
 TOOL_STEPS = {
     "bixverse": [s for s in STEPS if s != "normalise"],
     "scanpy": [s for s in STEPS if s != "tsne_quick"],

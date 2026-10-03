@@ -106,24 +106,20 @@ step("umap", {
   sce <- runUMAP(sce, dimred = "harmony", n_threads = threads)
 })
 
-# scater's use_fitsne goes through snifter (Python via basilisk), so only the
-# default Barnes-Hut row
-step("tsne_default", {
-  sce <- runTSNE(sce, dimred = "harmony", perplexity = 30, num_threads = threads)
-})
-
 step("dge", {
   markers <- scoreMarkers(sce, groups = sce[[dge_col]], BPPARAM = bpparam)
 })
 
+# all score.py inputs before the tSNE steps, so a tSNE timeout only loses its rows
+res <- data.table(cell_id = colnames(sce), cluster = clusters)
+fwrite(res, file.path(out, "clusters.csv"))
 if (truth) {
   write_truth_outputs(
     hvg = hvgs,
     embs = list(
       pca = reducedDim(sce, "PCA"),
       harmony = reducedDim(sce, "harmony"),
-      umap = reducedDim(sce, "UMAP"),
-      tsne = reducedDim(sce, "TSNE")
+      umap = reducedDim(sce, "UMAP")
     ),
     markers = rbindlist(lapply(names(markers), function(g) {
       data.table(group = g, gene = rownames(markers[[g]]), score = markers[[g]]$mean.AUC - 0.5)
@@ -131,7 +127,12 @@ if (truth) {
   )
 }
 
-res <- data.table(cell_id = colnames(sce), cluster = clusters)
-fwrite(res, file.path(out, "clusters.csv"))
+# scater's use_fitsne goes through snifter (Python via basilisk), so only the
+# default Barnes-Hut row
+step("tsne_default", {
+  sce <- runTSNE(sce, dimred = "harmony", perplexity = 30, num_threads = threads)
+})
+if (truth) write_truth_outputs(embs = list(tsne = reducedDim(sce, "TSNE")))
+
 message(sprintf("cells after QC: %d, clusters: %d", nrow(res), uniqueN(res$cluster)))
 print(sessionInfo())

@@ -120,21 +120,21 @@ with step("cluster"):
 with step("umap"):
     sc.tl.umap(adata)
 
-with step("tsne_default"):
-    sc.tl.tsne(adata, use_rep="X_pca_harmony", perplexity=30, n_jobs=THREADS)
-
-with step("tsne_fft"):
-    emb = TSNE(perplexity=30, negative_gradient_method="fft", n_jobs=THREADS, random_state=42).fit(
-        adata.obsm["X_pca_harmony"]
-    )
-    adata.obsm["X_tsne_fft"] = np.asarray(emb)
-
 # Wilcoxon fails on dask arrays in scanpy 1.12.4 (numba TypingError in
 # _select_top_n); only the t-test runs, which we do not use, so no DGE there
 if INPUT != "dask":
     with step("dge"):
         sc.tl.rank_genes_groups(adata, DGE_COL, method="wilcoxon", n_genes=adata.n_vars)
 
+
+def write_emb(name, key):
+    pd.DataFrame(np.asarray(adata.obsm[key]), index=adata.obs_names).to_csv(
+        out / f"emb_{name}.csv.gz", index_label="cell_id"
+    )
+
+
+# all score.py inputs before the tSNE steps, so a tSNE timeout only loses its rows
+adata.obs[["leiden"]].to_csv(out / "clusters.csv")
 if TRUTH:
     if INPUT != "dask":
         df = sc.get.rank_genes_groups_df(adata, group=None)
@@ -144,11 +144,18 @@ if TRUTH:
     pd.Series(adata.var_names[adata.var["highly_variable"].values], name="gene").to_csv(
         out / "hvg.csv", index=False
     )
-    for name, key in [("pca", "X_pca"), ("harmony", "X_pca_harmony"), ("umap", "X_umap"),
-                      ("tsne", "X_tsne")]:
-        pd.DataFrame(np.asarray(adata.obsm[key]), index=adata.obs_names).to_csv(
-            out / f"emb_{name}.csv.gz", index_label="cell_id"
-        )
+    for name, key in [("pca", "X_pca"), ("harmony", "X_pca_harmony"), ("umap", "X_umap")]:
+        write_emb(name, key)
 
-adata.obs[["leiden"]].to_csv(out / "clusters.csv")
+with step("tsne_default"):
+    sc.tl.tsne(adata, use_rep="X_pca_harmony", perplexity=30, n_jobs=THREADS)
+if TRUTH:
+    write_emb("tsne", "X_tsne")
+
+with step("tsne_fft"):
+    emb = TSNE(perplexity=30, negative_gradient_method="fft", n_jobs=THREADS, random_state=42).fit(
+        adata.obsm["X_pca_harmony"]
+    )
+    adata.obsm["X_tsne_fft"] = np.asarray(emb)
+
 print(f"cells after QC: {adata.n_obs}, clusters: {adata.obs['leiden'].nunique()}")
