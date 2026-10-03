@@ -73,22 +73,11 @@ step("umap", {
   umap <- runUmap(t(emb), num.threads = threads)
 })
 
-# scrapper has no FFT tSNE, so only the default Barnes-Hut row
-step("tsne_default", {
+# tsne_quick: the quick-and-dirty Barnes-Hut of qdtsne (depth-capped tree,
+# repulsion per leaf), at scrapper's defaults: theta = 1, 500 iterations, 250
+# early exaggeration at 12, max depth 7. Not a standard Barnes-Hut tSNE.
+step("tsne_quick", {
   tsne <- runTsne(t(emb), perplexity = 30, num.threads = threads)
-})
-
-# qdtsne defaults to theta = 1 and 500 iterations; this row matches the usual
-# theta = 0.5, 1000 iterations, 250 early exaggeration
-step("tsne_matched", {
-  tsne_matched <- runTsne(
-    t(emb),
-    perplexity = 30,
-    theta = 0.5,
-    max.iterations = 1000,
-    early.exaggeration.iterations = 250,
-    num.threads = threads
-  )
 })
 
 step("dge", {
@@ -103,7 +92,7 @@ if (truth) {
       pca = cells_named(t(pca$components)),
       harmony = cells_named(emb),
       umap = cells_named(umap),
-      tsne = cells_named(tsne)
+      tsne_quick = cells_named(tsne)
     ),
     markers = rbindlist(lapply(names(markers$auc), function(g) {
       data.table(group = g, gene = rownames(logn), score = markers$auc[[g]]$mean - 0.5)

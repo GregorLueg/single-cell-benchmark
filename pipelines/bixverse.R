@@ -113,6 +113,23 @@ step("tsne_fft", {
   )
 })
 
+# tsne_quick: the quick-and-dirty Barnes-Hut of qdtsne (depth-capped tree,
+# repulsion per leaf), at scrapper's defaults: theta = 1, 500 iterations, 250
+# early exaggeration at 12, max depth 7. Not a standard Barnes-Hut tSNE.
+# tsne_sc does not take "bh_qd" yet, so call the manifoldsR function it wraps
+step("tsne_quick", {
+  harmony <- get_embedding(sce, "harmony_v2")
+  tsne_quick <- manifoldsR::tsne(
+    data = harmony,
+    perplexity = 30,
+    approx_type = "bh_qd",
+    knn_method = tsne_knn_method,
+    tsne_params = manifoldsR::params_tsne(n_epochs = 500L, theta = 1, max_depth = 7L),
+    .verbose = FALSE
+  )
+  rownames(tsne_quick) <- rownames(harmony)
+})
+
 # bixverse lowercases obs column names on load
 step("dge", {
   markers <- find_all_markers_sc(sce, column_of_interest = tolower(dge_col), .verbose = FALSE)
@@ -125,7 +142,8 @@ if (truth) {
       pca = get_embedding(sce, "pca"),
       harmony = get_embedding(sce, "harmony_v2"),
       umap = get_embedding(sce, "umap"),
-      tsne = get_embedding(sce, "tsne")
+      tsne = get_embedding(sce, "tsne"),
+      tsne_quick = tsne_quick
     ),
     markers = markers[, .(group = grp, gene = gene_id, score = z_scores)]
   )

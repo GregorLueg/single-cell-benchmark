@@ -182,7 +182,7 @@ for tool in tools:
     if (tool / "hvg.csv").exists():
         hvg = set(pl.read_csv(tool / "hvg.csv")["gene"].cast(pl.String))
         row |= {"hvg_precision": len(hvg & de_any) / len(hvg)}
-    for name in ["pca", "harmony", "umap", "tsne"]:
+    for name in ["pca", "harmony", "umap", "tsne", "tsne_quick"]:
         if (tool / f"emb_{name}.csv.gz").exists():
             row |= embedding_scores(tool / f"emb_{name}.csv.gz", name, full=name in ("pca", "harmony"))
     if tool.name in markers:

@@ -18,13 +18,13 @@ import polars as pl
 
 GB = 1024**3
 STEPS = ["load", "qc", "normalise", "hvg", "pca", "harmony", "knn_snn", "cluster",
-         "umap", "tsne_default", "tsne_matched", "tsne_fft", "dge"]
+         "umap", "tsne_default", "tsne_quick", "tsne_fft", "dge"]
 TOOL_STEPS = {
-    "bixverse": [s for s in STEPS if s not in ("normalise", "tsne_matched")],
-    "scanpy": [s for s in STEPS if s != "tsne_matched"],
-    "scrapper": [s for s in STEPS if s != "tsne_fft"],
-    "seurat": [s for s in STEPS if s != "tsne_matched"],
-    "osca": [s for s in STEPS if s not in ("tsne_matched", "tsne_fft")],
+    "bixverse": [s for s in STEPS if s != "normalise"],
+    "scanpy": [s for s in STEPS if s != "tsne_quick"],
+    "scrapper": [s for s in STEPS if s not in ("tsne_default", "tsne_fft")],
+    "seurat": [s for s in STEPS if s != "tsne_quick"],
+    "osca": [s for s in STEPS if s not in ("tsne_quick", "tsne_fft")],
 }
 # column -> result dir name, in display order
 COLUMNS = {
@@ -56,6 +56,11 @@ def load_run(d):
     if (d / "steps.csv").stat().st_size > 20:
         for r in pl.read_csv(d / "steps.csv").iter_rows(named=True):
             steps[r["step"]] = r["end"] - r["start"]
+    # older scrapper runs: its default (qdtsne) tSNE was tsne_default, plus a
+    # tsne_matched rerun that the benchmark no longer reports
+    if family(d.name) == "scrapper" and "tsne_default" in steps:
+        steps["tsne_quick"] = steps.pop("tsne_default")
+        steps.pop("tsne_matched", None)
     peak = mem["anon_bytes"].max() / GB
     swap = mem["swap_bytes"].max() / GB
     failed_at = None
@@ -155,13 +160,16 @@ def table(ds_dir):
             else:
                 cells.append("-")
         if any(x not in ("n/a", "-") for x in cells):
-            out.append(f"| {s} | " + " | ".join(cells) + " |")
+            out.append(f"| {s + '*' if s == 'tsne_quick' else s} | " + " | ".join(cells) + " |")
     out.append("| **total** | " + " | ".join(
         (f"**{sum(runs[c][1].values()):.0f}**" if not runs[c][4] else "failed") for c in cols) + " |")
     out.append("| total without tSNE | " + " | ".join(
         (f"{sum(v for k, v in runs[c][1].items() if not k.startswith('tsne')):.0f}" if not runs[c][4] else "failed") for c in cols) + " |")
     out.append("| **peak GB** | " + " | ".join(f"**{runs[c][2]:.1f}**" for c in cols) + " |")
     out.append("| peak swap GB | " + " | ".join(f"{runs[c][3]:.1f}" for c in cols) + " |")
+    if any("tsne_quick" in runs[c][1] for c in cols):
+        out += ["", "\\* quick-and-dirty Barnes-Hut (qdtsne: theta 1, 500 iterations, depth-capped "
+                "tree), not a standard Barnes-Hut tSNE"]
     return "\n".join(out)
 
 
