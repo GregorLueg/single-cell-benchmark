@@ -164,8 +164,10 @@ def table(ds_dir):
             out.append(f"| {s + '*' if s == 'tsne_quick' else s} | " + " | ".join(cells) + " |")
     out.append("| **total** | " + " | ".join(
         (f"**{sum(runs[c][1].values()):.0f}**" if not runs[c][4] else "failed") for c in cols) + " |")
+    # a run that only failed in a tSNE step still has a total without tSNE
     out.append("| total without tSNE | " + " | ".join(
-        (f"{sum(v for k, v in runs[c][1].items() if not k.startswith('tsne')):.0f}" if not runs[c][4] else "failed") for c in cols) + " |")
+        (f"{sum(v for k, v in runs[c][1].items() if not k.startswith('tsne')):.0f}"
+         if not runs[c][4] or runs[c][4][0].startswith("tsne") else "failed") for c in cols) + " |")
     out.append("| **peak GB** | " + " | ".join(f"**{runs[c][2]:.1f}**" for c in cols) + " |")
     out.append("| peak swap GB | " + " | ".join(f"{runs[c][3]:.1f}" for c in cols) + " |")
     scratch = {c: ds_dir / runs[c][0] / "scratch_kb" for c in cols}
@@ -192,7 +194,7 @@ def summary(root):
                 cells.append("-")
                 continue
             _, steps, peak, _, failed = run
-            if failed:
+            if failed and not failed[0].startswith("tsne"):
                 cells.append(f"{failed[1]} at {failed[0]}")
             else:
                 no_tsne = sum(v for k, v in steps.items() if not k.startswith("tsne"))
