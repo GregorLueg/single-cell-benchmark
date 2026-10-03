@@ -36,7 +36,7 @@ step("load", {
 
 step("qc", {
   var <- get_sc_var(object = sce)
-  mt <- var[grepl("^MT-", gene_name), gene_id]
+  mt <- intersect(mt_ids, var$gene_id)
   # simulated data has no MT genes, and an empty gene set is an error
   if (length(mt) > 0) {
     sce <- gene_set_proportions_sc(object = sce, gene_set_list = list(MT = mt))

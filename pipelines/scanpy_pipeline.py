@@ -58,7 +58,9 @@ with step("load"):
     sc.pp.filter_cells(adata, min_counts=250)
 
 with step("qc"):
-    adata.var["mt"] = adata.var["gene_name"].str.startswith("MT-")
+    # the simulated h5ad has no gene_name column; its ids are the names
+    names = adata.var["gene_name"] if "gene_name" in adata.var else adata.var_names.to_series()
+    adata.var["mt"] = names.str.startswith("MT-").values
     if INPUT == "dask":
         # calculate_qc_metrics peaks at 16.6 GB transiently on 500k cells under
         # dask (independent of chunk size); the three per-cell sums QC needs,
