@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Usage: [INPUT=h5ad] [BIX_KNN=nndescent] [BIX_TSNE_KNN=nndescent] [TAG=suffix] [STEP_TIMEOUT=900] [R_IMAGE=scbench-r] scripts/run.sh <tool> <dataset>
+# Usage: [INPUT=h5ad] [BIX_KNN=nndescent] [BIX_TSNE_KNN=nndescent] [TAG=suffix] [STEP_TIMEOUT=1800] [R_IMAGE=scbench-r] scripts/run.sh <tool> <dataset>
 #   tool: scanpy | seurat_bpcells | seurat_standard | scrapper | bixverse
 # WARM=1 reconnects to the on-disk data the last cold run left in the scratch
 # volume (bixverse | seurat_bpcells only), so run the cold run first.
@@ -28,7 +28,7 @@ docker rm -f scbench-run > /dev/null 2>&1 || true
 
 # watchdog: steps.csv gains a line per finished step, so its mtime is the end
 # of the last step (or the pipeline start)
-step_timeout="${STEP_TIMEOUT:-900}"
+step_timeout="${STEP_TIMEOUT:-1800}"
 (
   start=$(date +%s)
   while sleep 10; do
