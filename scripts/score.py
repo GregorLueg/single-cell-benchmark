@@ -151,7 +151,7 @@ def dge_scores(m: pl.DataFrame, shared: dict[str, set]) -> dict:
 
 tools = sorted(p for p in results.iterdir() if (p / "clusters.csv").exists())
 markers = {
-    t.name: pl.read_csv(t / "markers.csv", schema_overrides={"group": pl.String, "gene": pl.String})
+    t.name: pl.read_csv(t / "markers.csv", schema_overrides={"group": pl.String, "gene": pl.String, "score": pl.Float64})
     .filter(pl.col("score").is_not_null() & pl.col("score").is_not_nan())
     for t in tools
     if (t / "markers.csv").exists()
