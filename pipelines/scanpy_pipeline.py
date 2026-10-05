@@ -108,7 +108,7 @@ with step("pca"):
 with step("harmony"):
     # sc.external.pp.harmony_integrate transposes the output, which breaks on
     # harmonypy 2.x (Z_corr is already cells x PCs)
-    z = harmonypy.run_harmony(adata.obsm["X_pca"], adata.obs, "sample").Z_corr
+    z = harmonypy.run_harmony(adata.obsm["X_pca"], adata.obs, "sample", ncores=THREADS).Z_corr
     adata.obsm["X_pca_harmony"] = np.asarray(z if z.shape[0] == adata.n_obs else z.T)
 
 with step("knn_snn"):
