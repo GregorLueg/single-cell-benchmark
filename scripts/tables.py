@@ -161,7 +161,7 @@ def table(ds_dir):
             else:
                 cells.append("-")
         if any(x not in ("n/a", "-") for x in cells):
-            out.append(f"| {s + '*' if s == 'tsne_quick' else s} | " + " | ".join(cells) + " |")
+            out.append(f"| {'tsne_quick (qd)' if s == 'tsne_quick' else s} | " + " | ".join(cells) + " |")
     out.append("| **total** | " + " | ".join(
         (f"**{sum(runs[c][1].values()):.0f}**" if not runs[c][4] else "failed") for c in cols) + " |")
     # a run that only failed in a tSNE step still has a total without tSNE
@@ -176,7 +176,7 @@ def table(ds_dir):
             f"{int(p.read_text()) / 1024**2:.1f}" if p.exists() and p.read_text().strip() else "-"
             for p in scratch.values()) + " |")
     if any("tsne_quick" in runs[c][1] for c in cols):
-        out += ["", "\\* quick-and-dirty Barnes-Hut (qdtsne: theta 1, 500 iterations, depth-capped "
+        out += ["", "qd: quick-and-dirty Barnes-Hut (qdtsne: theta 1, 500 iterations, depth-capped "
                 "tree), not a standard Barnes-Hut tSNE"]
     return "\n".join(out)
 
