@@ -5,20 +5,18 @@
 How far do the big single cell frameworks get on a MacBook Air class machine,
 and do they still get the right answer? The same eleven step workflow in every
 framework (load, QC, normalise, HVG, PCA, Harmony, kNN/sNN, Leiden, UMAP, DGE,
-tSNE), in Docker capped at 24 GB and 8 cores to mimic a small laptop. Two data
-sets:
+tSNE), in Docker capped at 24 GB and 8 cores to mimic a small laptop.
 
-- **Parse Biosciences 1M PBMC** (987,585 cells) plus random 100k and 500k
-  subsamples: real data, speed and memory only.
-- **Splat simulations** of 100k, 500k and 1M cells with
-  [splatter-sc](https://github.com/GregorLueg/splatter-sc), fitted to the PBMC
-  data: 24 batches, 12 groups, a rare group in a quarter of the batches. The
-  truth is known, so every run is also scored on clustering, embeddings,
-  batch integration, HVGs and markers.
+The main data are Splat simulations of 100k, 500k and 1M cells with
+[splatter-sc](https://github.com/GregorLueg/splatter-sc), fitted to real PBMC
+data: 24 batches, 12 groups, a rare group in a quarter of the batches. The
+truth is known, so every run is scored on clustering, embeddings, batch
+integration, HVGs and markers, not just timed. The Parse Biosciences 1M PBMC
+data set (987,585 cells) is the real-data check on speed and memory.
 
 The benchmarks ran within Docker on a MacBook M1 Max.
 
-## Headline: simulation
+## Headline
 
 Seconds without tSNE and peak memory from h5ad, or where the run died, plus
 quality against the truth across the three sizes. Current stack: bixverse
@@ -55,13 +53,12 @@ to the Docker rows!
 - **Disk is the price.** bixverse keeps two on-disk views: 13.2 GB at 1M,
   against 3.7 GB for BPCells.
 
-## Headline: PBMC
+## Real data check: PBMC
 
-![Scaling: time and peak memory against cells](docs/figures/scaling.png)
-
-Seconds from load to UMAP (tSNE excluded) and peak memory, or where the run
-died. Older stack: bixverse 0.5.5, Seurat 5.5.1, harmonypy 2.0.2 (TODO: rerun
-on the released versions).
+Seconds from load to UMAP (tSNE excluded) and peak memory on the Parse 1M PBMC
+data and random subsamples, or where the run died. Older stack: bixverse
+0.5.5, Seurat 5.5.1, harmonypy 2.0.2, no DGE step (TODO: rerun on the released
+versions).
 
 | framework | 100k | 500k | full |
 |---|---|---|---|
@@ -78,19 +75,11 @@ on the released versions).
 | Seurat BPCells | 196 s, 1.9 GB | 1091 s, 5.5 GB | 2310 s, 9.7 GB |
 | OSCA HDF5 | 807 s, 22.7 GB | OOM (worker) at hvg | OOM (worker) at hvg |
 
-- **Only the out-of-core designs finish the full data set.** bixverse (4.0 min
-  from h5ad, 2.1 min on the GPU), Scanpy with Dask (10.5 min) and Seurat with
-  BPCells (38.5 min), all at 9 to 10 GB. Every in-memory path dies at load;
-  OSCA's HDF5 path dies in HVG.
-- **Each design pays somewhere.** bixverse converts up front into two on-disk
-  views, then runs fast kernels. Dask loads fast but re-reads the file on every
-  forced pass and uses stock in-memory UMAP and Harmony. BPCells re-evaluates
-  its lazy chain on every pass (PCA 702 s, UMAP 760 s on the full data).
-- **Against in-memory Scanpy** at 500k, the largest size it survives, bixverse
-  from h5ad is 2.7x faster at under half the memory.
-- **scrapper is the fastest in-memory tool** (65 s at 100k) and wins QC, HVG
-  and its quick tSNE, but its in-memory path runs out of room by 500k.
-- **tSNE dominates every run that has it.** Drop it for large data.
+The real data agree with the simulation: only the out-of-core designs finish
+the full set (bixverse in 4.0 min from h5ad, Scanpy with Dask in 10.5 min,
+Seurat with BPCells in 38.5 min, all at 9 to 10 GB), and every in-memory path
+dies at load. Per-step tables, the warm start and the scaling figures are in
+[results](docs/results.md#pbmc).
 
 ## Caveats
 
@@ -130,12 +119,12 @@ Details in [methods](docs/methods.md).
 ## Running it
 
 ```bash
-# PBMC
-uv run scripts/subsample.py ~/Desktop/parse_pbmc_1m data/parse_100k 100000
-uv run scripts/to_h5ad.py data/parse_100k
 # simulation (splatter-sc 0.1.0)
 python3 scripts/sim_params.py sim/splat_fit.json 100000 data/splat_100k > sim/splat_100k.json
 splatter-sc sim/splat_100k.json
+# PBMC
+uv run scripts/subsample.py ~/Desktop/parse_pbmc_1m data/parse_100k 100000
+uv run scripts/to_h5ad.py data/parse_100k
 
 docker build -f docker/r.Dockerfile -t scbench-r .
 docker build -f docker/py.Dockerfile -t scbench-py .

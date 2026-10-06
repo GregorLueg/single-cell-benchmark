@@ -195,6 +195,8 @@ Older stack: bixverse 0.5.5, Seurat 5.5.1, harmonypy 2.0.2, manifoldsR 0.3.6,
 no DGE step (TODO: rerun on the released versions). bixverse had no
 quick-and-dirty tSNE then; scrapper's default tSNE is that row.
 
+![Scaling: time and peak memory against cells](figures/scaling.png)
+
 ![Wall time per step for every framework and size](figures/steps_heatmap.png)
 
 ### 100k cells (69,412 after QC)

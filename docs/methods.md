@@ -34,10 +34,6 @@
 
 ## Data
 
-**Parse 1M PBMC**: 987,585 cells, 60,664 genes, 24 samples, plus random 100k
-and 500k cell subsamples (`scripts/subsample.py`, seed 42). The mtx rows read
-the Parse mtx; the h5ad rows read `scripts/to_h5ad.py` output.
-
 **Simulation**: [splatter-sc](https://github.com/GregorLueg/splatter-sc)
 v0.1.0, a streaming Rust port of splatter's Splat simulator. It writes the
 Parse layout and an h5ad, plus the truth (`cells_truth.tsv.gz`: batch and
@@ -56,6 +52,10 @@ group per cell; `genes_truth.tsv.gz`: DE factors per group).
 3. Three sizes, the same parameters: 100k, 500k and 1M cells (96,342, 482,409
    and 964,763 after QC). The simulation has no MT genes, so the MT filter
    is a no-op there.
+
+**Parse 1M PBMC**: 987,585 cells, 60,664 genes, 24 samples, plus random 100k
+and 500k cell subsamples (`scripts/subsample.py`, seed 42). The mtx rows read
+the Parse mtx; the h5ad rows read `scripts/to_h5ad.py` output.
 
 ## Versions
 
