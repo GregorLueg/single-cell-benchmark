@@ -22,3 +22,22 @@ step <- function(name, expr) {
 genes <- fread(file.path(data, "all_genes.csv"))
 meta <- fread(file.path(data, "cell_metadata.csv"))
 mt_ids <- genes[grepl("^MT-", gene_name), gene_id]
+
+# simulated data: DGE on the true groups, plus the outputs score.py needs.
+# Real data: DGE one-vs-rest over samples, a workload that is the same for
+# every tool, unlike their clusters.
+truth <- file.exists(file.path(data, "cells_truth.tsv.gz"))
+dge_col <- if (truth) "Group" else "sample"
+
+# embs: named list of cells x dims matrices with cell ids as rownames;
+# markers: data.table(group, gene, score), score signed, higher = more up
+write_truth_outputs <- function(hvg = NULL, embs = list(), markers = NULL) {
+  if (!is.null(hvg)) fwrite(data.table(gene = hvg), file.path(out, "hvg.csv"))
+  for (n in names(embs)) {
+    fwrite(
+      data.table(cell_id = rownames(embs[[n]]), embs[[n]]),
+      file.path(out, sprintf("emb_%s.csv.gz", n))
+    )
+  }
+  if (!is.null(markers)) fwrite(markers, file.path(out, "markers.csv"))
+}

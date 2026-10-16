@@ -73,25 +73,35 @@ step("umap", {
   umap <- runUmap(t(emb), num.threads = threads)
 })
 
-# scrapper has no FFT tSNE, so only the default Barnes-Hut row
-step("tsne_default", {
-  tsne <- runTsne(t(emb), perplexity = 30, num.threads = threads)
+step("dge", {
+  markers <- scoreMarkers(logn, groups = md[[dge_col]], num.threads = threads)
 })
 
-# qdtsne defaults to theta = 1 and 500 iterations; this row matches the usual
-# theta = 0.5, 1000 iterations, 250 early exaggeration
-step("tsne_matched", {
-  tsne_matched <- runTsne(
-    t(emb),
-    perplexity = 30,
-    theta = 0.5,
-    max.iterations = 1000,
-    early.exaggeration.iterations = 250,
-    num.threads = threads
-  )
-})
-
+# all score.py inputs before the tSNE steps, so a tSNE timeout only loses its rows
 res <- data.table(cell_id = md$bc_wells, cluster = clusters$membership)
 fwrite(res, file.path(out, "clusters.csv"))
+cells_named <- function(m) `rownames<-`(m, md$bc_wells)
+if (truth) {
+  write_truth_outputs(
+    hvg = rownames(logn)[hvgs],
+    embs = list(
+      pca = cells_named(t(pca$components)),
+      harmony = cells_named(emb),
+      umap = cells_named(umap)
+    ),
+    markers = rbindlist(lapply(names(markers$auc), function(g) {
+      data.table(group = g, gene = rownames(logn), score = markers$auc[[g]]$mean - 0.5)
+    }))
+  )
+}
+
+# tsne_quick: the quick-and-dirty Barnes-Hut of qdtsne (depth-capped tree,
+# repulsion per leaf), at scrapper's defaults: theta = 1, 500 iterations, 250
+# early exaggeration at 12, max depth 7. Not a standard Barnes-Hut tSNE.
+step("tsne_quick", {
+  tsne <- runTsne(t(emb), perplexity = 30, num.threads = threads)
+})
+if (truth) write_truth_outputs(embs = list(tsne_quick = cells_named(tsne)))
+
 message(sprintf("cells after QC: %d, clusters: %d", nrow(res), uniqueN(res$cluster)))
 print(sessionInfo())

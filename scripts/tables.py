@@ -18,13 +18,13 @@ import polars as pl
 
 GB = 1024**3
 STEPS = ["load", "qc", "normalise", "hvg", "pca", "harmony", "knn_snn", "cluster",
-         "umap", "tsne_default", "tsne_matched", "tsne_fft"]
+         "umap", "dge", "tsne_default", "tsne_fft", "tsne_quick"]
 TOOL_STEPS = {
-    "bixverse": [s for s in STEPS if s not in ("normalise", "tsne_matched")],
-    "scanpy": [s for s in STEPS if s != "tsne_matched"],
-    "scrapper": [s for s in STEPS if s != "tsne_fft"],
-    "seurat": [s for s in STEPS if s != "tsne_matched"],
-    "osca": [s for s in STEPS if s not in ("tsne_matched", "tsne_fft")],
+    "bixverse": [s for s in STEPS if s != "normalise"],
+    "scanpy": [s for s in STEPS if s != "tsne_quick"],
+    "scrapper": [s for s in STEPS if s not in ("tsne_default", "tsne_fft")],
+    "seurat": [s for s in STEPS if s != "tsne_quick"],
+    "osca": [s for s in STEPS if s not in ("tsne_quick", "tsne_fft")],
 }
 # column -> result dir name, in display order
 COLUMNS = {
@@ -56,11 +56,17 @@ def load_run(d):
     if (d / "steps.csv").stat().st_size > 20:
         for r in pl.read_csv(d / "steps.csv").iter_rows(named=True):
             steps[r["step"]] = r["end"] - r["start"]
+    # older scrapper runs: its default (qdtsne) tSNE was tsne_default, plus a
+    # tsne_matched rerun that the benchmark no longer reports
+    if family(d.name) == "scrapper" and "tsne_default" in steps:
+        steps["tsne_quick"] = steps.pop("tsne_default")
+        steps.pop("tsne_matched", None)
     peak = mem["anon_bytes"].max() / GB
     swap = mem["swap_bytes"].max() / GB
     failed_at = None
     if status not in (0, None):
-        order = TOOL_STEPS[family(d.name)]
+        # Scanpy on dask has no DGE step (Wilcoxon is unsupported there)
+        order = [s for s in TOOL_STEPS[family(d.name)] if not (s == "dge" and d.name.endswith("dask"))]
         failed_at = next((s for s in order if s not in steps), order[-1])
         if (d / "TIMEOUT").exists():
             kind = "TIMEOUT"
@@ -155,13 +161,23 @@ def table(ds_dir):
             else:
                 cells.append("-")
         if any(x not in ("n/a", "-") for x in cells):
-            out.append(f"| {s} | " + " | ".join(cells) + " |")
+            out.append(f"| {'tsne_quick (qd)' if s == 'tsne_quick' else s} | " + " | ".join(cells) + " |")
     out.append("| **total** | " + " | ".join(
         (f"**{sum(runs[c][1].values()):.0f}**" if not runs[c][4] else "failed") for c in cols) + " |")
+    # a run that only failed in a tSNE step still has a total without tSNE
     out.append("| total without tSNE | " + " | ".join(
-        (f"{sum(v for k, v in runs[c][1].items() if not k.startswith('tsne')):.0f}" if not runs[c][4] else "failed") for c in cols) + " |")
+        (f"{sum(v for k, v in runs[c][1].items() if not k.startswith('tsne')):.0f}"
+         if not runs[c][4] or runs[c][4][0].startswith("tsne") else "failed") for c in cols) + " |")
     out.append("| **peak GB** | " + " | ".join(f"**{runs[c][2]:.1f}**" for c in cols) + " |")
     out.append("| peak swap GB | " + " | ".join(f"{runs[c][3]:.1f}" for c in cols) + " |")
+    scratch = {c: ds_dir / runs[c][0] / "scratch_kb" for c in cols}
+    if any(p.exists() and p.read_text().strip() for p in scratch.values()):
+        out.append("| on-disk store GB | " + " | ".join(
+            f"{int(p.read_text()) / 1024**2:.1f}" if p.exists() and p.read_text().strip() else "-"
+            for p in scratch.values()) + " |")
+    if any("tsne_quick" in runs[c][1] for c in cols):
+        out += ["", "qd: quick-and-dirty Barnes-Hut (qdtsne: theta 1, 500 iterations, depth-capped "
+                "tree), not a standard Barnes-Hut tSNE"]
     return "\n".join(out)
 
 
@@ -178,7 +194,7 @@ def summary(root):
                 cells.append("-")
                 continue
             _, steps, peak, _, failed = run
-            if failed:
+            if failed and not failed[0].startswith("tsne"):
                 cells.append(f"{failed[1]} at {failed[0]}")
             else:
                 no_tsne = sum(v for k, v in steps.items() if not k.startswith("tsne"))

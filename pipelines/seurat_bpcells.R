@@ -29,4 +29,7 @@ step("load", {
   obj <- CreateSeuratObject(counts = mat, meta.data = md)
 })
 
+# LOAD_ONLY=1: stop once the on-disk store is written, to measure its size
+if (Sys.getenv("LOAD_ONLY") == "1") quit(save = "no")
+
 source("/bench/pipelines/seurat_common.R")

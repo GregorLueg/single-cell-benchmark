@@ -48,13 +48,19 @@ step("load", {
   }
 })
 
+# LOAD_ONLY=1: stop once the on-disk store is written, to measure its size
+if (Sys.getenv("LOAD_ONLY") == "1") quit(save = "no")
+
 step("qc", {
   var <- get_sc_var(object = sce)
-  sce <- gene_set_proportions_sc(
-    object = sce,
-    gene_set_list = list(MT = var[grepl("^MT-", gene_name), gene_id])
-  )
-  qc_df <- sce[[c("cell_id", "lib_size", "nnz", "MT")]]
+  mt <- intersect(mt_ids, var$gene_id)
+  # simulated data has no MT genes, and an empty gene set is an error
+  if (length(mt) > 0) {
+    sce <- gene_set_proportions_sc(object = sce, gene_set_list = list(MT = mt))
+    qc_df <- sce[[c("cell_id", "lib_size", "nnz", "MT")]]
+  } else {
+    qc_df <- sce[[c("cell_id", "lib_size", "nnz")]][, MT := 0]
+  }
   # MT comes back as a proportion or a percentage depending on version
   mt_cut <- if (max(qc_df$MT, na.rm = TRUE) <= 1) 0.05 else 5
   keep <- qc_df[MT < mt_cut & lib_size >= 750 & nnz >= 250, cell_id]
@@ -89,6 +95,26 @@ step("umap", {
   sce <- umap_sc(object = sce, embd_to_use = "harmony_v2")
 })
 
+# bixverse lowercases obs column names on load
+step("dge", {
+  markers <- find_all_markers_sc(sce, column_of_interest = tolower(dge_col), .verbose = FALSE)
+})
+
+# all score.py inputs before the tSNE steps, so a tSNE timeout only loses its rows
+clusters <- sce[[c("cell_id", "leiden")]]
+fwrite(clusters, file.path(out, "clusters.csv"))
+if (truth) {
+  write_truth_outputs(
+    hvg = get_gene_names_from_idx(sce, get_hvg(sce), rust_based = TRUE),
+    embs = list(
+      pca = get_embedding(sce, "pca"),
+      harmony = get_embedding(sce, "harmony_v2"),
+      umap = get_embedding(sce, "umap")
+    ),
+    markers = markers[, .(group = grp, gene = gene_id, score = z_scores)]
+  )
+}
+
 step("tsne_default", {
   sce <- tsne_sc(
     object = sce,
@@ -98,6 +124,7 @@ step("tsne_default", {
     knn_method = tsne_knn_method
   )
 })
+if (truth) write_truth_outputs(embs = list(tsne = get_embedding(sce, "tsne")))
 
 step("tsne_fft", {
   sce <- tsne_sc(
@@ -110,8 +137,24 @@ step("tsne_fft", {
   )
 })
 
-clusters <- sce[[c("cell_id", "leiden")]]
-fwrite(clusters, file.path(out, "clusters.csv"))
+# tsne_quick: the quick-and-dirty Barnes-Hut of qdtsne (depth-capped tree,
+# repulsion per leaf), at scrapper's defaults: theta = 1, 500 iterations, 250
+# early exaggeration at 12, max depth 7. Not a standard Barnes-Hut tSNE.
+# tsne_sc does not take "bh_qd" yet, so call the manifoldsR function it wraps
+step("tsne_quick", {
+  harmony <- get_embedding(sce, "harmony_v2")
+  tsne_quick <- manifoldsR::tsne(
+    data = harmony,
+    perplexity = 30,
+    approx_type = "bh_qd",
+    knn_method = tsne_knn_method,
+    tsne_params = manifoldsR::params_tsne(n_epochs = 500L, theta = 1, max_depth = 7L),
+    .verbose = FALSE
+  )
+  rownames(tsne_quick) <- rownames(harmony)
+})
+if (truth) write_truth_outputs(embs = list(tsne_quick = tsne_quick))
+
 message(sprintf(
   "cells after QC: %d, clusters: %d",
   nrow(clusters),

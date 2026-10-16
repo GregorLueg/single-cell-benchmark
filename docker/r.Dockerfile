@@ -26,3 +26,9 @@ ENTRYPOINT ["/bench/entrypoint.sh"]
 
 # OSCA: Bioconductor's HDF5-backed out-of-core path
 RUN Rscript -e 'BiocManager::install(c("SingleCellExperiment", "HDF5Array", "DelayedArray", "scuttle", "scran", "scater", "BiocSingular", "bluster", "BiocParallel", "beachmat.hdf5"), ask = FALSE, update = FALSE, Ncpus = 8)'
+
+# presto: Seurat 5 FindAllMarkers switches to its fast Wilcoxon when installed
+RUN Rscript -e 'remotes::install_github("immunogenomics/presto", upgrade = "never"); stopifnot(requireNamespace("presto"))'
+
+# Seurat 5.6.0: threaded C++ kernels (NormalizeData, VST, ScaleData, PCA, Annoy, FindAllMarkers via one presto call)
+RUN Rscript -e 'install.packages(c("Seurat", "uwot"), repos = "https://cloud.r-project.org", Ncpus = 8); stopifnot(packageVersion("Seurat") >= "5.6.0")'

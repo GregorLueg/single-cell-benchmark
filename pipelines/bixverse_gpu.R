@@ -36,11 +36,14 @@ step("load", {
 
 step("qc", {
   var <- get_sc_var(object = sce)
-  sce <- gene_set_proportions_sc(
-    object = sce,
-    gene_set_list = list(MT = var[grepl("^MT-", gene_name), gene_id])
-  )
-  qc_df <- sce[[c("cell_id", "lib_size", "nnz", "MT")]]
+  mt <- intersect(mt_ids, var$gene_id)
+  # simulated data has no MT genes, and an empty gene set is an error
+  if (length(mt) > 0) {
+    sce <- gene_set_proportions_sc(object = sce, gene_set_list = list(MT = mt))
+    qc_df <- sce[[c("cell_id", "lib_size", "nnz", "MT")]]
+  } else {
+    qc_df <- sce[[c("cell_id", "lib_size", "nnz")]][, MT := 0]
+  }
   mt_cut <- if (max(qc_df$MT, na.rm = TRUE) <= 1) 0.05 else 5
   keep <- qc_df[MT < mt_cut & lib_size >= 750 & nnz >= 250, cell_id]
   sce <- set_cells_to_keep(sce, keep)
@@ -77,6 +80,26 @@ step("umap", {
   sce <- umap_gpu_sc(object = sce, embd_to_use = "harmony_gpu")
 })
 
+# bixverse lowercases obs column names on load
+step("dge", {
+  markers <- find_all_markers_sc(sce, column_of_interest = tolower(dge_col), .verbose = FALSE)
+})
+
+# all score.py inputs before the tSNE steps, so a tSNE timeout only loses its rows
+clusters <- sce[[c("cell_id", "leiden")]]
+fwrite(clusters, file.path(out, "clusters.csv"))
+if (truth) {
+  write_truth_outputs(
+    hvg = get_gene_names_from_idx(sce, get_hvg(sce), rust_based = TRUE),
+    embs = list(
+      pca = get_embedding(sce, "pca"),
+      harmony = get_embedding(sce, "harmony_gpu"),
+      umap = get_embedding(sce, "umap")
+    ),
+    markers = markers[, .(group = grp, gene = gene_id, score = z_scores)]
+  )
+}
+
 step("tsne_default", {
   sce <- tsne_gpu_sc(
     object = sce,
@@ -85,6 +108,7 @@ step("tsne_default", {
     approx_type = "bh"
   )
 })
+if (truth) write_truth_outputs(embs = list(tsne = get_embedding(sce, "tsne")))
 
 step("tsne_fft", {
   sce <- tsne_gpu_sc(
@@ -96,7 +120,20 @@ step("tsne_fft", {
   )
 })
 
-clusters <- sce[[c("cell_id", "leiden")]]
-fwrite(clusters, file.path(out, "clusters.csv"))
+# tsne_quick: the quick-and-dirty Barnes-Hut of qdtsne (depth-capped tree,
+# repulsion per leaf), at scrapper's defaults: theta = 1, 500 iterations, 250
+# early exaggeration at 12, max depth 7. Not a standard Barnes-Hut tSNE.
+step("tsne_quick", {
+  sce <- tsne_gpu_sc(
+    object = sce,
+    embd_to_use = "harmony_gpu",
+    slot_name = "tsne_quick",
+    perplexity = 30,
+    approx_type = "bh_qd",
+    tsne_params = params_tsne_gpu(n_epochs = 500L, theta = 1, max_depth = 7L)
+  )
+})
+if (truth) write_truth_outputs(embs = list(tsne_quick = get_embedding(sce, "tsne_quick")))
+
 message(sprintf("cells after QC: %d, clusters: %d", nrow(clusters), uniqueN(clusters$leiden)))
 print(sessionInfo())

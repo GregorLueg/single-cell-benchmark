@@ -33,6 +33,11 @@ def step(name):
 
 
 INPUT = os.environ.get("INPUT", "mtx")
+# simulated data: DGE on the true groups, plus the outputs score.py needs.
+# Real data: DGE one-vs-rest over samples, a workload that is the same for
+# every tool, unlike their clusters.
+TRUTH = (data / "cells_truth.tsv.gz").exists()
+DGE_COL = "Group" if TRUTH else "sample"
 
 with step("load"):
     if INPUT == "h5ad":
@@ -53,7 +58,9 @@ with step("load"):
     sc.pp.filter_cells(adata, min_counts=250)
 
 with step("qc"):
-    adata.var["mt"] = adata.var["gene_name"].str.startswith("MT-")
+    # the simulated h5ad has no gene_name column; its ids are the names
+    names = adata.var["gene_name"] if "gene_name" in adata.var else adata.var_names.to_series()
+    adata.var["mt"] = names.str.startswith("MT-").values
     if INPUT == "dask":
         # calculate_qc_metrics peaks at 16.6 GB transiently on 500k cells under
         # dask (independent of chunk size); the three per-cell sums QC needs,
@@ -101,7 +108,7 @@ with step("pca"):
 with step("harmony"):
     # sc.external.pp.harmony_integrate transposes the output, which breaks on
     # harmonypy 2.x (Z_corr is already cells x PCs)
-    z = harmonypy.run_harmony(adata.obsm["X_pca"], adata.obs, "sample").Z_corr
+    z = harmonypy.run_harmony(adata.obsm["X_pca"], adata.obs, "sample", ncores=THREADS).Z_corr
     adata.obsm["X_pca_harmony"] = np.asarray(z if z.shape[0] == adata.n_obs else z.T)
 
 with step("knn_snn"):
@@ -113,8 +120,37 @@ with step("cluster"):
 with step("umap"):
     sc.tl.umap(adata)
 
+# Wilcoxon fails on dask arrays in scanpy 1.12.4 (numba TypingError in
+# _select_top_n); only the t-test runs, which we do not use, so no DGE there
+if INPUT != "dask":
+    with step("dge"):
+        sc.tl.rank_genes_groups(adata, DGE_COL, method="wilcoxon", n_genes=adata.n_vars)
+
+
+def write_emb(name, key):
+    pd.DataFrame(np.asarray(adata.obsm[key]), index=adata.obs_names).to_csv(
+        out / f"emb_{name}.csv.gz", index_label="cell_id"
+    )
+
+
+# all score.py inputs before the tSNE steps, so a tSNE timeout only loses its rows
+adata.obs[["leiden"]].to_csv(out / "clusters.csv")
+if TRUTH:
+    if INPUT != "dask":
+        df = sc.get.rank_genes_groups_df(adata, group=None)
+        df.rename(columns={"names": "gene", "scores": "score"})[["group", "gene", "score"]].to_csv(
+            out / "markers.csv", index=False
+        )
+    pd.Series(adata.var_names[adata.var["highly_variable"].values], name="gene").to_csv(
+        out / "hvg.csv", index=False
+    )
+    for name, key in [("pca", "X_pca"), ("harmony", "X_pca_harmony"), ("umap", "X_umap")]:
+        write_emb(name, key)
+
 with step("tsne_default"):
     sc.tl.tsne(adata, use_rep="X_pca_harmony", perplexity=30, n_jobs=THREADS)
+if TRUTH:
+    write_emb("tsne", "X_tsne")
 
 with step("tsne_fft"):
     emb = TSNE(perplexity=30, negative_gradient_method="fft", n_jobs=THREADS, random_state=42).fit(
@@ -122,5 +158,4 @@ with step("tsne_fft"):
     )
     adata.obsm["X_tsne_fft"] = np.asarray(emb)
 
-adata.obs[["leiden"]].to_csv(out / "clusters.csv")
 print(f"cells after QC: {adata.n_obs}, clusters: {adata.obs['leiden'].nunique()}")
