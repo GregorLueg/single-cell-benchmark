@@ -164,8 +164,8 @@ shared = {
 rows = []
 for tool in tools:
     row = {"tool": tool.name}
-    # clusters_fast.csv: the k-means coarsened clustering (cluster_fast step)
-    for prefix, file in [("", "clusters.csv"), ("fast_", "clusters_fast.csv")]:
+    # clusters_fast*.csv: the k-means coarsened clustering (cluster_fast step), resolutions 1 and 2
+    for prefix, file in [("", "clusters.csv"), ("fast_", "clusters_fast.csv"), ("fast_r2_", "clusters_fast_r2.csv")]:
         if not (tool / file).exists():
             continue
         cl = first_col_as_cell(pl.read_csv(tool / file)).join(cells, on="Cell")

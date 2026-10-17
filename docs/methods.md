@@ -24,7 +24,7 @@
   size as after a full run (BPCells on 1M simulated cells: 3,747 against
   3,748 MB).
 - **Watchdog**: a run is killed when no step finishes for `STEP_TIMEOUT`
-  seconds (30 min by default). The tables mark it as **TIMEOUT**.
+  seconds (45 min by default). The tables mark it as **TIMEOUT**.
 - **Repeats**: one per run. Treat differences of a few seconds as noise.
 - **bixverse**: loaders use `csc_mem_gb = 8` as in the big data vignette; the
   sNN kNN is nndescent (`BIX_KNN=nndescent`). The GPU and MLX rows use GPU
@@ -105,8 +105,13 @@ path.
    Jaccard sNN pruned at 1/15 and 1/12, scrapper and OSCA a rank-weighted sNN
    without pruning.
    - `cluster_fast (qd)`: k-means on the Harmony embedding down to
-     floor(sqrt(n)) centroids, a graph over the centroids (k = 15), Leiden at
-     resolution 1, and each cell takes its centroid's label. bixverse
+     4 x sqrt(n) centroids, a graph over the centroids (k = 15), Leiden at
+     resolutions 1 and 2 on the same k-means, and each cell takes its
+     centroid's label. The step time covers k-means and both Leiden runs.
+     sqrt(n), the IVF and bluster `TwoStepParam` default, left the rare group
+     merged with three neighbours at 100k (rare F1 0.09); 4 x sqrt(n) separates
+     it (0.25, as plain Leiden). Coarsening still trades resolution for speed:
+     a group needs a few centroids of its own to survive. bixverse
      `fast_cluster_sc` (`fast_cluster_gpu_sc` on the GPU and MLX rows, k-means
      on the device); the centroid graph and k-means settings are each
      package's defaults otherwise. scrapper has no single call for it, so the
@@ -251,7 +256,7 @@ BIXVERSE_GPU_MLX=true R_LIBS=rlib R CMD INSTALL -l rlib bixverse.gpu
 
 # tool: bixverse | scanpy | scrapper | seurat_standard | seurat_bpcells | osca
 # INPUT: mtx | h5ad | dask (scanpy only)
-[INPUT=h5ad] [BIX_KNN=nndescent] [BIX_TSNE_KNN=ivf] [TAG=suffix] [STEP_TIMEOUT=1800] [R_IMAGE=scbench-r:local] scripts/run.sh <tool> <dataset>
+[INPUT=h5ad] [BIX_KNN=nndescent] [BIX_TSNE_KNN=ivf] [TAG=suffix] [STEP_TIMEOUT=2700] [R_IMAGE=scbench-r:local] scripts/run.sh <tool> <dataset>
 [BACKEND=mlx] scripts/run_native.sh <dataset>       # bixverse.gpu on Metal: wgpu, or MLX
 LOAD_ONLY=1 TAG=disk scripts/run.sh bixverse <dataset>   # on-disk store only
 

@@ -69,15 +69,17 @@ step("cluster", {
   clusters <- clusterGraph(graph, method = "leiden", leiden.resolution = 1)
 })
 
-# cluster_fast: k-means to floor(sqrt(n)) centroids, sNN graph (k = 15) over
-# the centroids, Leiden at resolution 1, labels handed back to the cells.
+# cluster_fast: k-means to 4 x sqrt(n) centroids, sNN graph (k = 15) over the
+# centroids, Leiden at resolutions 1 and 2 on the same k-means, labels handed
+# back to the cells.
 # scrapper has no single call for this; composed from its primitives as in
 # bluster's TwoStepParam
 step("cluster_fast", {
-  km <- clusterKmeans(t(emb), k = floor(sqrt(nrow(emb))), num.threads = threads)
+  km <- clusterKmeans(t(emb), k = as.integer(4 * sqrt(nrow(emb))), num.threads = threads)
   centroid_graph <- buildSnnGraph(km$centers, num.neighbors = 15, num.threads = threads)
-  centroid_clusters <- clusterGraph(centroid_graph, method = "leiden", leiden.resolution = 1)
-  clusters_fast <- centroid_clusters$membership[as.integer(km$clusters)]
+  clusters_fast <- lapply(c(1, 2), function(res) {
+    clusterGraph(centroid_graph, method = "leiden", leiden.resolution = res)$membership[as.integer(km$clusters)]
+  })
 })
 
 step("umap", {
@@ -91,7 +93,8 @@ step("dge", {
 # all score.py inputs before the tSNE steps, so a tSNE timeout only loses its rows
 res <- data.table(cell_id = md$bc_wells, cluster = clusters$membership)
 fwrite(res, file.path(out, "clusters.csv"))
-fwrite(data.table(cell_id = md$bc_wells, cluster = clusters_fast), file.path(out, "clusters_fast.csv"))
+fwrite(data.table(cell_id = md$bc_wells, cluster = clusters_fast[[1]]), file.path(out, "clusters_fast.csv"))
+fwrite(data.table(cell_id = md$bc_wells, cluster = clusters_fast[[2]]), file.path(out, "clusters_fast_r2.csv"))
 cells_named <- function(m) `rownames<-`(m, md$bc_wells)
 if (truth) {
   write_truth_outputs(
@@ -116,9 +119,10 @@ step("tsne_quick", {
 if (truth) write_truth_outputs(embs = list(tsne_quick = cells_named(tsne)))
 
 message(sprintf(
-  "cells after QC: %d, clusters: %d, fast clusters: %d",
+  "cells after QC: %d, clusters: %d, fast clusters: %d (res 1), %d (res 2)",
   nrow(res),
   uniqueN(res$cluster),
-  uniqueN(clusters_fast)
+  uniqueN(clusters_fast[[1]]),
+  uniqueN(clusters_fast[[2]])
 ))
 print(sessionInfo())
