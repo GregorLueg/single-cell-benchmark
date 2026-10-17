@@ -5,10 +5,17 @@
 - **Machine**: M1 Max, Docker Desktop, containers capped at
   `--cpus=8 --memory=24g`. The VM itself has ~23.4 GB plus ~4 GB swap, and that
   is the limit that actually bites. Slightly stricter than an Air.
-- **GPU**: Docker has no Metal access, so the bixverse GPU row runs natively on
+- **GPU**: Docker has no Metal access, so the bixverse GPU rows run natively on
   macOS (`scripts/run_native.sh`). No memory cap there, and its peak is process
   RSS including resident memory-mapped files. Not comparable to the Docker
-  numbers, and its disk I/O skips the VM, so its load is faster too.
+  numbers, and its disk I/O skips the VM, so its load is faster too. Two
+  backends of bixverse.gpu: wgpu (the GPU row) and MLX (the MLX row).
+- **MLX**: experimental, and not what a user gets from a plain install. The
+  MLX backend is opt-in at build time: it needs mlx-c installed as a system
+  library (`brew install mlx-c`, here mlx-c 0.7.0 against MLX 0.32.3) and
+  bixverse.gpu built with `BIXVERSE_GPU_MLX=true`. Apple Silicon only. PCA,
+  Harmony, the kNN, the fast clustering's k-means, UMAP and tSNE run on MLX;
+  Leiden, DGE and the loaders are the same CPU code as the GPU row.
 - **Memory**: cgroup `anon` sampled once a second (`docker/monitor.sh`). Page
   cache is excluded, so streaming tools are not charged for their files.
 - **Disk**: `run.sh` records what a run leaves in its scratch volume
@@ -20,9 +27,8 @@
   seconds (30 min by default). The tables mark it as **TIMEOUT**.
 - **Repeats**: one per run. Treat differences of a few seconds as noise.
 - **bixverse**: loaders use `csc_mem_gb = 8` as in the big data vignette; the
-  sNN kNN is nndescent (`BIX_KNN=nndescent`). The GPU row uses GPU NNDescent
-  (`find_neighbours_gpu_sc`). Older bixverse results live in
-  `results/archive_bixverse_*`.
+  sNN kNN is nndescent (`BIX_KNN=nndescent`). The GPU and MLX rows use GPU
+  NNDescent (`find_neighbours_gpu_sc`).
 - **Scanpy Dask**: X read lazily from the h5ad in 50k cell CSR chunks, threaded
   scheduler. `sc.pp.calculate_qc_metrics` peaks at 16.6 GB transiently on 500k
   cells under Dask, whatever the chunk size, and kills the full data set. The
@@ -59,31 +65,21 @@ the Parse mtx; the h5ad rows read `scripts/to_h5ad.py` output.
 
 ## Versions
 
-The PBMC tables ran on the older stack; the simulation ran on the current one.
+Every row, PBMC and simulation, runs on the same stack.
 
-| framework | PBMC runs | simulation runs |
-|---|---|---|
-| bixverse | 0.5.5 (bixverse-rs 0.5.7), bixverse.gpu 0.3.4, manifoldsR 0.3.6, from r-universe | 0.6.0 (bixverse-rs 0.6.0), bixverse.gpu 0.3.6, manifoldsR 0.3.7 |
-| Scanpy | 1.12.4 (anndata 0.13.4, dask 2026.8.0, harmonypy 2.0.2, openTSNE 1.0.4, scikit-learn 1.9.1) | the same, with harmonypy 2.1.0 |
-| scrapper | 1.6.3 | 1.6.3 |
-| Seurat | 5.5.1 (BPCells 0.3.1, harmony 2.0.5) | 5.6.0 (SeuratObject 5.4.0, BPCells 0.3.1, harmony 2.0.5, presto 1.1.0, uwot 0.2.5) |
-| OSCA | scran 1.40.0, scater 1.40.2, scuttle 1.22.0, HDF5Array 1.40.0, BiocSingular 1.28.0, bluster 1.22.0 | the same |
+| framework | versions |
+|---|---|
+| bixverse | bixverse 0.8.0, bixverse.gpu 0.5.0, manifoldsR 0.5.0 (local builds, see below) |
+| Scanpy | 1.12.4 (anndata 0.13.4, dask 2026.8.0, harmonypy 2.1.0, openTSNE 1.0.4, scikit-learn 1.9.1) |
+| scrapper | 1.6.3 |
+| Seurat | 5.6.0 (SeuratObject 5.4.0, BPCells 0.3.1, harmony 2.0.5, presto 1.1.0, uwot 0.2.5) |
+| OSCA | scran 1.40.0, scater 1.40.2, scuttle 1.22.0, HDF5Array 1.40.0, BiocSingular 1.28.0, bluster 1.22.0 |
 
-TODO, before this goes public:
-
-- **bixverse 0.6.0** is a local build: the `feat-archive` working tree,
-  bixverse-rs from the `release-0.6.0` branch on GitHub (`23530c4`), via
-  `docker/r-local.Dockerfile`. One local patch: `verbose = 0` added to the
-  `cellphonedb_statistical` call in `r_sc_analysis.rs`, until the CellPhoneDB
-  verbosity is wired through. Switch to the r-universe release once it is out.
-- **bixverse.gpu** is the local `feat-fast-mnn` working tree, installed into
-  `rlib/`. r-universe has an older 0.3.6.
-- **PBMC tables** still run on the old stack (above), with no DGE step. Rerun
-  them on the released versions.
-
-Released and pinned: harmonypy 2.1.0 (PyPI), manifoldsR 0.3.7 (r-universe),
-Seurat 5.6.0 (CRAN), splatter-sc 0.1.0 (crates.io). The harmonypy rows ran on
-commit `6994444`, which is 2.1.0 minus the version bump.
+bixverse 0.8.0, bixverse.gpu 0.5.0 and manifoldsR 0.5.0 are pre-releases, built
+from local checkouts (branches and commits in `vendor/SHAS`, bixverse-r from
+the bixverse-rs checkout next to them). Docker: `docker/r-local.Dockerfile`
+on top of `scbench-r`. Native: installed into `rlib/`, bixverse.gpu with the
+MLX backend. Switch to the r-universe releases once they are out.
 
 ## Workflow
 
@@ -108,6 +104,15 @@ path.
    do not compare: Scanpy clusters the UMAP fuzzy graph, Seurat and bixverse a
    Jaccard sNN pruned at 1/15 and 1/12, scrapper and OSCA a rank-weighted sNN
    without pruning.
+   - `cluster_fast (qd)`: k-means on the Harmony embedding down to
+     floor(sqrt(n)) centroids, a graph over the centroids (k = 15), Leiden at
+     resolution 1, and each cell takes its centroid's label. bixverse
+     `fast_cluster_sc` (`fast_cluster_gpu_sc` on the GPU and MLX rows, k-means
+     on the device); the centroid graph and k-means settings are each
+     package's defaults otherwise. scrapper has no single call for it, so the
+     harness composes `clusterKmeans`, `buildSnnGraph` on the centroids and
+     `clusterGraph`, as bluster's `TwoStepParam` does. An extra row: not in
+     the totals.
 9. **umap**: defaults.
 10. **dge**: one-vs-rest markers, each framework's default test: bixverse
     `find_all_markers_sc` (Wilcoxon, `min_prop = 0.05`), Scanpy
@@ -166,7 +171,7 @@ the same code. Purity and batch mixing are the stable scores.
 ## Same-input Harmony
 
 `scripts/harmony_bench/` times Harmony on its own: every implementation gets
-the same input, bixverse 0.6.0's 30 PC PCA of the 100k and 1M simulations plus
+the same input, bixverse's 30 PC PCA of the 100k and 1M simulations plus
 the true batch labels. Each run is its own process, 8 threads (Rayon for
 bixverse, `ncores = 8` for harmonypy), native, 3 repeats. The time covers the
 Harmony call only; extra memory is the peak RSS over a load-only run.
@@ -227,21 +232,27 @@ harmonypy.
 uv run scripts/subsample.py ~/Desktop/parse_pbmc_1m data/parse_100k 100000
 uv run scripts/to_h5ad.py data/parse_100k
 
-# simulation (splatter-sc 0.1.0: cargo install splatter-sc --version 0.1.0)
+# simulation (splatter-sc 0.1.0: cargo install splatter-sc --version 0.1.0).
+# The configs in sim/ are committed; they came from these two lines
 Rscript scripts/estimate_splat.R data/parse_100k sim/splat_fit.json   # needs splatter
 python3 scripts/sim_params.py sim/splat_fit.json 100000 data/splat_100k > sim/splat_100k.json
-splatter-sc sim/splat_100k.json
+splatter-sc sim/splat_100k.json   # and splat_10k (smoke test), splat_500k, splat_1m
 
 # images, and the native library for the GPU row
 docker build -f docker/r.Dockerfile -t scbench-r .
 docker build -f docker/py.Dockerfile -t scbench-py .
-R_LIBS=rlib Rscript -e 'install.packages(c("manifoldsR", "bixverse", "bixverse.gpu"), lib = "rlib", repos = c("https://gregorlueg.r-universe.dev", "https://cloud.r-project.org"))'
-# TODO: bixverse 0.6.0 from a local checkout until it is released, see docker/r-local.Dockerfile
+# pre-releases from local checkouts, packed into vendor/ (see the header of
+# docker/r-local.Dockerfile)
+docker build -f docker/r-local.Dockerfile -t scbench-r:local .
+# native library: the same checkouts, bixverse.gpu with the MLX backend (needs mlx-c)
+R_LIBS=rlib R CMD INSTALL -l rlib manifoldsR
+R_LIBS=rlib R CMD INSTALL -l rlib bixverse
+BIXVERSE_GPU_MLX=true R_LIBS=rlib R CMD INSTALL -l rlib bixverse.gpu
 
 # tool: bixverse | scanpy | scrapper | seurat_standard | seurat_bpcells | osca
 # INPUT: mtx | h5ad | dask (scanpy only)
 [INPUT=h5ad] [BIX_KNN=nndescent] [BIX_TSNE_KNN=ivf] [TAG=suffix] [STEP_TIMEOUT=1800] [R_IMAGE=scbench-r:local] scripts/run.sh <tool> <dataset>
-scripts/run_native.sh <dataset>       # bixverse.gpu on Metal
+[BACKEND=mlx] scripts/run_native.sh <dataset>       # bixverse.gpu on Metal: wgpu, or MLX
 LOAD_ONLY=1 TAG=disk scripts/run.sh bixverse <dataset>   # on-disk store only
 
 # warm start: reconnect to what the last cold run left in the scratch volume

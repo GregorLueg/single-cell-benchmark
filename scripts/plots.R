@@ -32,7 +32,7 @@ div_mid <- "#f0efec"
 div_high <- "#eb6834"
 
 column_order <- c(
-  "bixverse mtx", "bixverse h5ad", "bixverse GPU*",
+  "bixverse mtx", "bixverse h5ad", "bixverse GPU*", "bixverse MLX*",
   "Scanpy mtx", "Scanpy h5ad", "Scanpy dask",
   "scrapper mtx", "scrapper h5ad",
   "Seurat std mtx", "Seurat std h5ad", "Seurat BPCells",
@@ -40,7 +40,7 @@ column_order <- c(
 )
 step_order <- c(
   "load", "qc", "normalise", "hvg", "pca", "harmony", "knn_snn", "cluster",
-  "umap", "tsne_default", "tsne_matched", "tsne_fft"
+  "cluster_fast", "umap", "dge", "tsne_default", "tsne_fft", "tsne_quick"
 )
 size_labels <- c(
   parse_100k = "100k (69,412 cells)",
@@ -52,7 +52,7 @@ dt[, family := sub(" .*", "", column)]
 dt[, column := factor(column, levels = column_order)]
 dt[, step := factor(step, levels = step_order)]
 dt[, design := fcase(
-  column == "bixverse GPU*", "out-of-core, native GPU (uncapped)",
+  column %in% c("bixverse GPU*", "bixverse MLX*"), "out-of-core, native GPU (uncapped)",
   family == "bixverse" | column %in% c("Scanpy dask", "Seurat BPCells", "OSCA HDF5"), "out-of-core",
   default = "in-memory"
 )]
@@ -81,8 +81,8 @@ runs <- dt[, .(
   family = family[1],
   design = design[1],
   status = if (any(status != "ok")) status[status != "ok"][1] else "ok",
-  no_tsne = sum(seconds[!grepl("^tsne", step)], na.rm = TRUE),
-  total = sum(seconds, na.rm = TRUE),
+  no_tsne = sum(seconds[!grepl("^tsne|^cluster_fast", step)], na.rm = TRUE),
+  total = sum(seconds[step != "cluster_fast"], na.rm = TRUE),
   peak_gb = peak_gb[1]
 ), by = .(column, size)]
 runs[status != "ok", c("no_tsne", "total") := NA_real_]

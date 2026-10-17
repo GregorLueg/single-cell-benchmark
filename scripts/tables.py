@@ -18,19 +18,23 @@ import polars as pl
 
 GB = 1024**3
 STEPS = ["load", "qc", "normalise", "hvg", "pca", "harmony", "knn_snn", "cluster",
-         "umap", "dge", "tsne_default", "tsne_fft", "tsne_quick"]
+         "cluster_fast", "umap", "dge", "tsne_default", "tsne_fft", "tsne_quick"]
 TOOL_STEPS = {
     "bixverse": [s for s in STEPS if s != "normalise"],
-    "scanpy": [s for s in STEPS if s != "tsne_quick"],
+    "scanpy": [s for s in STEPS if s not in ("cluster_fast", "tsne_quick")],
     "scrapper": [s for s in STEPS if s not in ("tsne_default", "tsne_fft")],
-    "seurat": [s for s in STEPS if s != "tsne_quick"],
-    "osca": [s for s in STEPS if s not in ("tsne_quick", "tsne_fft")],
+    "seurat": [s for s in STEPS if s not in ("cluster_fast", "tsne_quick")],
+    "osca": [s for s in STEPS if s not in ("cluster_fast", "tsne_quick", "tsne_fft")],
 }
+# alternative takes on a step: listed, but not in the totals
+EXTRA = ("tsne", "cluster_fast")
+LABELS = {"cluster_fast": "cluster_fast (qd)", "tsne_quick": "tsne_quick (qd)"}
 # column -> result dir name, in display order
 COLUMNS = {
     "bixverse mtx": ["bixverse_mtx_snn_nndescent", "bixverse_mtx", "bixverse"],
     "bixverse h5ad": ["bixverse_h5ad"],
     "bixverse GPU*": ["bixverse_gpu"],
+    "bixverse MLX*": ["bixverse_mlx"],
     "Scanpy mtx": ["scanpy_mtx", "scanpy"],
     "Scanpy h5ad": ["scanpy_h5ad"],
     "Scanpy dask": ["scanpy_dask"],
@@ -56,11 +60,6 @@ def load_run(d):
     if (d / "steps.csv").stat().st_size > 20:
         for r in pl.read_csv(d / "steps.csv").iter_rows(named=True):
             steps[r["step"]] = r["end"] - r["start"]
-    # older scrapper runs: its default (qdtsne) tSNE was tsne_default, plus a
-    # tsne_matched rerun that the benchmark no longer reports
-    if family(d.name) == "scrapper" and "tsne_default" in steps:
-        steps["tsne_quick"] = steps.pop("tsne_default")
-        steps.pop("tsne_matched", None)
     peak = mem["anon_bytes"].max() / GB
     swap = mem["swap_bytes"].max() / GB
     failed_at = None
@@ -89,13 +88,6 @@ def collect(ds_dir):
         d = next((ds_dir / n for n in names if (ds_dir / n / "mem.csv").exists()), None)
         if d:
             runs[col] = (d.name, *load_run(d))
-            continue
-        # fall back to an archived bixverse run, labelled with its version
-        for arch in sorted(ds_dir.parent.glob("archive_bixverse_*")):
-            d = next((arch / ds_dir.name / n for n in names if (arch / ds_dir.name / n / "mem.csv").exists()), None)
-            if d:
-                runs[f"{col} ({arch.name.removeprefix('archive_bixverse_')})"] = (d.name, *load_run(d))
-                break
     return runs
 
 
@@ -161,12 +153,13 @@ def table(ds_dir):
             else:
                 cells.append("-")
         if any(x not in ("n/a", "-") for x in cells):
-            out.append(f"| {'tsne_quick (qd)' if s == 'tsne_quick' else s} | " + " | ".join(cells) + " |")
+            out.append(f"| {LABELS.get(s, s)} | " + " | ".join(cells) + " |")
     out.append("| **total** | " + " | ".join(
-        (f"**{sum(runs[c][1].values()):.0f}**" if not runs[c][4] else "failed") for c in cols) + " |")
+        (f"**{sum(v for k, v in runs[c][1].items() if k != 'cluster_fast'):.0f}**" if not runs[c][4] else "failed")
+        for c in cols) + " |")
     # a run that only failed in a tSNE step still has a total without tSNE
     out.append("| total without tSNE | " + " | ".join(
-        (f"{sum(v for k, v in runs[c][1].items() if not k.startswith('tsne')):.0f}"
+        (f"{sum(v for k, v in runs[c][1].items() if not k.startswith(EXTRA)):.0f}"
          if not runs[c][4] or runs[c][4][0].startswith("tsne") else "failed") for c in cols) + " |")
     out.append("| **peak GB** | " + " | ".join(f"**{runs[c][2]:.1f}**" for c in cols) + " |")
     out.append("| peak swap GB | " + " | ".join(f"{runs[c][3]:.1f}" for c in cols) + " |")
@@ -175,9 +168,10 @@ def table(ds_dir):
         out.append("| on-disk store GB | " + " | ".join(
             f"{int(p.read_text()) / 1024**2:.1f}" if p.exists() and p.read_text().strip() else "-"
             for p in scratch.values()) + " |")
-    if any("tsne_quick" in runs[c][1] for c in cols):
-        out += ["", "qd: quick-and-dirty Barnes-Hut (qdtsne: theta 1, 500 iterations, depth-capped "
-                "tree), not a standard Barnes-Hut tSNE"]
+    if any("tsne_quick" in runs[c][1] or "cluster_fast" in runs[c][1] for c in cols):
+        out += ["", "qd: quick and dirty. tsne_quick is the qdtsne Barnes-Hut (theta 1, 500 iterations, "
+                "depth-capped tree), not a standard Barnes-Hut tSNE. cluster_fast is Leiden on k-means "
+                "centroids, labels handed back to the cells. Neither counts towards the totals."]
     return "\n".join(out)
 
 
@@ -197,7 +191,7 @@ def summary(root):
             if failed and not failed[0].startswith("tsne"):
                 cells.append(f"{failed[1]} at {failed[0]}")
             else:
-                no_tsne = sum(v for k, v in steps.items() if not k.startswith("tsne"))
+                no_tsne = sum(v for k, v in steps.items() if not k.startswith(EXTRA))
                 cells.append(f"{no_tsne:.0f} s, {peak:.1f} GB")
         out.append(f"| {c} | " + " | ".join(cells) + " |")
     return "\n".join(out)

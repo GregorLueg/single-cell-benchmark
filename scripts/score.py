@@ -164,21 +164,24 @@ shared = {
 rows = []
 for tool in tools:
     row = {"tool": tool.name}
-    cl = first_col_as_cell(pl.read_csv(tool / "clusters.csv")).join(cells, on="Cell")
-    lab = cl[cl.columns[1]].cast(pl.String)
-    row |= {
-        "cells": cl.height,
-        "n_clusters": lab.n_unique(),
-        "ari": adjusted_rand_score(cl["Group"], lab),
-        "nmi": normalized_mutual_info_score(cl["Group"], lab),
-        "ari_batch": adjusted_rand_score(cl["Batch"], lab),
-    }
-    f1 = group_f1(cl.with_columns(lab), cl.columns[1])
-    row |= {
-        "f1_mean": f1["f1"].mean(),
-        "f1_min": f1["f1"].min(),
-        "f1_rarest": f1.filter(pl.col("Group") == rarest)["f1"][0],
-    }
+    # clusters_fast.csv: the k-means coarsened clustering (cluster_fast step)
+    for prefix, file in [("", "clusters.csv"), ("fast_", "clusters_fast.csv")]:
+        if not (tool / file).exists():
+            continue
+        cl = first_col_as_cell(pl.read_csv(tool / file)).join(cells, on="Cell")
+        lab = cl[cl.columns[1]].cast(pl.String)
+        f1 = group_f1(cl.with_columns(lab), cl.columns[1])
+        if not prefix:
+            row["cells"] = cl.height
+        row |= {prefix + k: v for k, v in {
+            "n_clusters": lab.n_unique(),
+            "ari": adjusted_rand_score(cl["Group"], lab),
+            "nmi": normalized_mutual_info_score(cl["Group"], lab),
+            "ari_batch": adjusted_rand_score(cl["Batch"], lab),
+            "f1_mean": f1["f1"].mean(),
+            "f1_min": f1["f1"].min(),
+            "f1_rarest": f1.filter(pl.col("Group") == rarest)["f1"][0],
+        }.items()}
     if (tool / "hvg.csv").exists():
         hvg = set(pl.read_csv(tool / "hvg.csv")["gene"].cast(pl.String))
         row |= {"hvg_precision": len(hvg & de_any) / len(hvg)}

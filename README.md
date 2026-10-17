@@ -113,8 +113,6 @@ Details in [methods](docs/methods.md).
   size, the same-input Harmony comparison, and what they show.
 - [Methods](docs/methods.md): setup, versions, the simulation, workflow
   parameters, how the scores work, full caveats, how to run it.
-- [bixverse across versions](docs/bixverse-versions.md): 0.5.2 to 0.6.0 on the
-  same workflow, and open items.
 
 ## Running it
 
