@@ -10,5 +10,5 @@ FROM scbench-r
 COPY vendor/bixverse.tar.gz vendor/bixverse-rs.tar.gz vendor/manifoldsR.tar.gz /tmp/
 RUN cd /tmp && for p in bixverse bixverse-rs manifoldsR; do tar xzf $p.tar.gz; done \
     && sed -i 's#path = "[^"]*/bixverse-rs/#path = "/tmp/bixverse-rs/#' bixverse/src/rust/Cargo.toml \
-    && Rscript -e 'install.packages(c("/tmp/manifoldsR", "/tmp/bixverse"), repos = NULL, type = "source", Ncpus = 8); stopifnot(packageVersion("bixverse") >= "0.8.0")' \
+    && Rscript -e 'install.packages(c("/tmp/manifoldsR", "/tmp/bixverse"), repos = NULL, type = "source", Ncpus = 8); stopifnot(packageVersion("bixverse") >= "0.8.0", packageVersion("manifoldsR") >= "0.5.0")' \
     && rm -rf /tmp/bixverse* /tmp/manifoldsR*
