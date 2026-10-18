@@ -24,7 +24,6 @@ TOOL_STEPS = {
     "scanpy": [s for s in STEPS if s not in ("cluster_fast", "tsne_quick")],
     "scrapper": [s for s in STEPS if s not in ("tsne_default", "tsne_fft")],
     "seurat": [s for s in STEPS if s not in ("cluster_fast", "tsne_quick")],
-    "osca": [s for s in STEPS if s not in ("cluster_fast", "tsne_quick", "tsne_fft")],
 }
 # alternative takes on a step: listed, but not in the totals
 EXTRA = ("tsne", "cluster_fast")
@@ -40,10 +39,10 @@ COLUMNS = {
     "Scanpy dask": ["scanpy_dask"],
     "scrapper mtx": ["scrapper"],
     "scrapper h5ad": ["scrapper_h5ad"],
+    "scrapper HDF5": ["scrapper_hdf5"],
     "Seurat std mtx": ["seurat_standard"],
     "Seurat std h5ad": ["seurat_standard_h5ad"],
     "Seurat BPCells": ["seurat_bpcells"],
-    "OSCA HDF5": ["osca"],
 }
 
 

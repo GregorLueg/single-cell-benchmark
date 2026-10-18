@@ -12,13 +12,12 @@ suppressPackageStartupMessages({
 fig_dir <- "docs/figures"
 dt <- fread(file.path(fig_dir, "results_long.csv"))
 
-# palette: validated categorical slots 1-5, one per framework family
+# palette: validated categorical slots 1-4, one per framework family
 family_cols <- c(
   bixverse = "#2a78d6",
   Scanpy = "#eb6834",
   scrapper = "#1baf7a",
-  Seurat = "#eda100",
-  OSCA = "#e87ba4"
+  Seurat = "#eda100"
 )
 surface <- "#fcfcfb"
 ink <- "#0b0b0b"
@@ -34,9 +33,8 @@ div_high <- "#eb6834"
 column_order <- c(
   "bixverse mtx", "bixverse h5ad", "bixverse GPU*", "bixverse MLX*",
   "Scanpy mtx", "Scanpy h5ad", "Scanpy dask",
-  "scrapper mtx", "scrapper h5ad",
-  "Seurat std mtx", "Seurat std h5ad", "Seurat BPCells",
-  "OSCA HDF5"
+  "scrapper mtx", "scrapper h5ad", "scrapper HDF5",
+  "Seurat std mtx", "Seurat std h5ad", "Seurat BPCells"
 )
 step_order <- c(
   "load", "qc", "normalise", "hvg", "pca", "harmony", "knn_snn", "cluster",
@@ -53,7 +51,7 @@ dt[, column := factor(column, levels = column_order)]
 dt[, step := factor(step, levels = step_order)]
 dt[, design := fcase(
   column %in% c("bixverse GPU*", "bixverse MLX*"), "out-of-core, native GPU (uncapped)",
-  family == "bixverse" | column %in% c("Scanpy dask", "Seurat BPCells", "OSCA HDF5"), "out-of-core",
+  family == "bixverse" | column %in% c("Scanpy dask", "Seurat BPCells", "scrapper HDF5"), "out-of-core",
   default = "in-memory"
 )]
 

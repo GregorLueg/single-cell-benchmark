@@ -24,8 +24,8 @@ RUN Rscript -e 'install.packages(c("manifoldsR", "bixverse"), repos = c("https:/
 COPY docker/monitor.sh docker/entrypoint.sh /bench/
 ENTRYPOINT ["/bench/entrypoint.sh"]
 
-# OSCA: Bioconductor's HDF5-backed out-of-core path
-RUN Rscript -e 'BiocManager::install(c("SingleCellExperiment", "HDF5Array", "DelayedArray", "scuttle", "scran", "scater", "BiocSingular", "bluster", "BiocParallel", "beachmat.hdf5"), ask = FALSE, update = FALSE, Ncpus = 8)'
+# scrapper HDF5: the h5ad read out of core as an HDF5-backed DelayedMatrix
+RUN Rscript -e 'BiocManager::install(c("HDF5Array", "DelayedArray", "beachmat.hdf5"), ask = FALSE, update = FALSE, Ncpus = 8)'
 
 # presto: Seurat 5 FindAllMarkers switches to its fast Wilcoxon when installed
 RUN Rscript -e 'remotes::install_github("immunogenomics/presto", upgrade = "never"); stopifnot(requireNamespace("presto"))'
