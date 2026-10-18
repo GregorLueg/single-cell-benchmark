@@ -102,7 +102,7 @@ path.
 7. **knn_snn**: k = 15.
 8. **cluster**: Leiden, resolution 1. The graphs differ, so the cluster counts
    do not compare: Scanpy clusters the UMAP fuzzy graph, Seurat and bixverse a
-   Jaccard sNN pruned at 1/15 and 1/12, scrapper and OSCA a rank-weighted sNN
+   Jaccard sNN pruned at 1/15 and 1/16, scrapper and OSCA a rank-weighted sNN
    without pruning.
    - `cluster_fast (qd)`: k-means on the Harmony embedding down to
      4 x sqrt(n) centroids, a graph over the centroids (k = 15), Leiden at
@@ -197,11 +197,14 @@ harmonypy.
 - **Uncorrected batch mixing is not a quality score.** HVG selectors that
   keep well-expressed genes (scrapper, OSCA) see more of Splat's per-gene
   batch effect, as well as more of the group signal.
-- **bixverse over-splits.** Its Jaccard sNN pruned at 1/12 keeps about 4% of
-  the full sNN edges at 100k, and Leiden then splits true groups (13 clusters
-  for 12 groups at 100k, ARI about 0.79). 0.6.0 re-attaches the isolated
-  islands the pruning left (1,048 clusters down to 44 to 48 at 1M), but tight
-  cliques of up to 10 cells still come out as their own Leiden communities.
+- **Small islands on the GPU kNN.** The GPU and MLX rows build their kNN with
+  GPU NNDescent; the CPU rows with CPU NNDescent. Graph and Leiden parameters
+  are the same. On the 500k simulation the CPU rows give 12 clusters, the GPU
+  and MLX rows 22 and 23, of which 9 and 11 hold 100 cells or fewer (about 150
+  cells in all). The sizeable clusters match the CPU rows. Most likely the
+  approximate GPU kNN leaves a few cells in islands the sNN rescue does not
+  re-attach; an exhaustive GPU kNN would tell, but is too expensive to be the
+  default here.
 - **Harness code.** The R pre-filter for scrapper and Seurat standard makes
   copies (`counts > 0`, column subsetting); part of their in-memory OOMs may
   be ours. The Scanpy Dask QC is hand-written (see Setup).
