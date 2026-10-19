@@ -210,8 +210,9 @@ step_heatmap <- function(labels, title, file, height) {
     default = format(round(seconds), big.mark = ",", trim = TRUE)
   )]
   d[!is.na(status) & status != "ok", seconds := NA_real_]
-  # 0 = fastest framework on that step, 1 = slowest, linear in seconds
+  # 0 = fastest framework on that step, 1 = slowest, linear in sqrt(seconds)
   d[, scaled := {
+    seconds <- sqrt(seconds)
     r <- suppressWarnings(range(seconds, na.rm = TRUE))
     if (all(is.na(seconds))) NA_real_ else if (r[1] == r[2]) 0 else (seconds - r[1]) / (r[2] - r[1])
   }, by = .(size, step)]
@@ -232,9 +233,10 @@ step_heatmap <- function(labels, title, file, height) {
     facet_wrap(~size_label, ncol = 1, scales = "free_x") +
     labs(
       title = title,
-      subtitle = "Seconds per step. Colour is scaled per step and size: fastest framework 0, slowest 1, linear in between.",
+      subtitle = "Seconds per step. Colour is scaled per step and size: fastest framework 0, slowest 1, on square-root seconds.",
       caption = paste(
         "Black: n/a (step not in that framework), OOM or TIMEOUT where the run died, - not reached.",
+        "Each step is scaled over the runs that finished it: at 1M the bixverse CPU tSNE is red because the others timed out.",
         "Scanpy dask has no DGE step. bixverse GPU and MLX run natively without a memory cap.",
         "bixverse CPU tSNE builds its kNN with IVF from 500k (kmknn at 100k). (qd) steps are not in the total.",
         sep = "\n"
