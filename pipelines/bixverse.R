@@ -91,6 +91,25 @@ step("cluster", {
   sce <- find_clusters_sc(object = sce, res = 1.0, name = "leiden")
 })
 
+# cluster_fast: k-means to 4 x sqrt(n) centroids, kNN graph (k = 15) over the
+# centroids, Leiden at resolutions 1 and 2 on the same k-means, labels handed
+# back to the cells
+step("cluster_fast", {
+  fc <- fast_cluster_sc(
+    object = sce,
+    embd_to_use = "harmony_v2",
+    resolutions = c(1.0, 2.0),
+    fc_params = params_sc_fast_cluster(
+      n_centroids = as.integer(4 * sqrt(nrow(get_embedding(sce, "harmony_v2")))),
+      algorithm = "leiden"
+    ),
+    .verbose = FALSE
+  )
+  fc_dt <- get_data(fc)
+  setnames(fc_dt, c("res_1", "res_2"), c("leiden_fast", "leiden_fast_r2"))
+  sce <- add_sc_new_obs(sce, fc_dt)
+})
+
 step("umap", {
   sce <- umap_sc(object = sce, embd_to_use = "harmony_v2")
 })
@@ -103,6 +122,8 @@ step("dge", {
 # all score.py inputs before the tSNE steps, so a tSNE timeout only loses its rows
 clusters <- sce[[c("cell_id", "leiden")]]
 fwrite(clusters, file.path(out, "clusters.csv"))
+fwrite(sce[[c("cell_id", "leiden_fast")]], file.path(out, "clusters_fast.csv"))
+fwrite(sce[[c("cell_id", "leiden_fast_r2")]], file.path(out, "clusters_fast_r2.csv"))
 if (truth) {
   write_truth_outputs(
     hvg = get_gene_names_from_idx(sce, get_hvg(sce), rust_based = TRUE),
@@ -156,8 +177,10 @@ step("tsne_quick", {
 if (truth) write_truth_outputs(embs = list(tsne_quick = tsne_quick))
 
 message(sprintf(
-  "cells after QC: %d, clusters: %d",
+  "cells after QC: %d, clusters: %d, fast clusters: %d (res 1), %d (res 2)",
   nrow(clusters),
-  uniqueN(clusters$leiden)
+  uniqueN(clusters$leiden),
+  uniqueN(sce[["leiden_fast"]]),
+  uniqueN(sce[["leiden_fast_r2"]])
 ))
 print(sessionInfo())

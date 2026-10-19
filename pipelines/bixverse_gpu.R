@@ -1,5 +1,6 @@
-# bixverse with bixverse.gpu (wgpu/Metal), run natively on macOS: Docker has
-# no Metal access. Same steps and parameters as bixverse.R, GPU where it exists.
+# bixverse with bixverse.gpu, run natively on macOS: Docker has no Metal
+# access. Same steps and parameters as bixverse.R, GPU where it exists.
+# BACKEND=wgpu (default) or mlx; mlx needs a bixverse.gpu built against mlx-c.
 # Usage: Rscript bixverse_gpu.R <data_dir> <out_dir> <scratch_dir>
 
 source(file.path(Sys.getenv("BENCH_DIR"), "pipelines", "common.R"))
@@ -10,6 +11,8 @@ suppressPackageStartupMessages({
 
 # cap on the CSR to CSC conversion buffers, as in the big data vignette
 csc_mem_gb <- as.numeric(Sys.getenv("BIX_CSC_GB", "8"))
+backend <- Sys.getenv("BACKEND", "wgpu")
+if (backend == "mlx") stopifnot(mlx_available())
 
 qc_param <- params_sc_min_quality(
   min_unique_genes = 100L,
@@ -54,11 +57,11 @@ step("hvg", {
 })
 
 step("pca", {
-  sce <- calculate_pca_gpu_sc(object = sce, no_pcs = 30L)
+  sce <- calculate_pca_gpu_sc(object = sce, no_pcs = 30L, backend = backend)
 })
 
 step("harmony", {
-  sce <- harmony_v2_gpu_sc(object = sce, batch_column = "sample")
+  sce <- harmony_v2_gpu_sc(object = sce, batch_column = "sample", backend = backend)
 })
 
 step("knn_snn", {
@@ -68,7 +71,8 @@ step("knn_snn", {
     embd_to_use = "harmony_gpu",
     knn_method = "nndescent",
     k = 15L,
-    nn_params = params_nn_gpu(dist_metric = "euclidean", extract_knn = TRUE)
+    nn_params = params_nn_gpu(dist_metric = "euclidean", extract_knn = TRUE),
+    backend = backend
   )
 })
 
@@ -76,8 +80,28 @@ step("cluster", {
   sce <- find_clusters_sc(object = sce, res = 1.0, name = "leiden")
 })
 
+# cluster_fast: k-means (on the GPU) to 4 x sqrt(n) centroids, kNN graph
+# (k = 15) over the centroids, Leiden at resolutions 1 and 2 on the same
+# k-means, labels handed back
+step("cluster_fast", {
+  fc <- fast_cluster_gpu_sc(
+    object = sce,
+    embd_to_use = "harmony_gpu",
+    resolutions = c(1.0, 2.0),
+    fc_params = params_sc_fast_cluster_gpu(
+      n_centroids = as.integer(4 * sqrt(nrow(get_embedding(sce, "harmony_gpu")))),
+      algorithm = "leiden"
+    ),
+    backend = backend,
+    .verbose = FALSE
+  )
+  fc_dt <- get_data(fc)
+  setnames(fc_dt, c("res_1", "res_2"), c("leiden_fast", "leiden_fast_r2"))
+  sce <- add_sc_new_obs(sce, fc_dt)
+})
+
 step("umap", {
-  sce <- umap_gpu_sc(object = sce, embd_to_use = "harmony_gpu")
+  sce <- umap_gpu_sc(object = sce, embd_to_use = "harmony_gpu", backend = backend)
 })
 
 # bixverse lowercases obs column names on load
@@ -88,6 +112,8 @@ step("dge", {
 # all score.py inputs before the tSNE steps, so a tSNE timeout only loses its rows
 clusters <- sce[[c("cell_id", "leiden")]]
 fwrite(clusters, file.path(out, "clusters.csv"))
+fwrite(sce[[c("cell_id", "leiden_fast")]], file.path(out, "clusters_fast.csv"))
+fwrite(sce[[c("cell_id", "leiden_fast_r2")]], file.path(out, "clusters_fast_r2.csv"))
 if (truth) {
   write_truth_outputs(
     hvg = get_gene_names_from_idx(sce, get_hvg(sce), rust_based = TRUE),
@@ -105,6 +131,7 @@ step("tsne_default", {
     object = sce,
     embd_to_use = "harmony_gpu",
     perplexity = 30,
+    backend = backend,
     approx_type = "bh"
   )
 })
@@ -116,6 +143,7 @@ step("tsne_fft", {
     embd_to_use = "harmony_gpu",
     slot_name = "tsne_fft",
     perplexity = 30,
+    backend = backend,
     approx_type = "fft_3k_gpu"
   )
 })
@@ -129,11 +157,18 @@ step("tsne_quick", {
     embd_to_use = "harmony_gpu",
     slot_name = "tsne_quick",
     perplexity = 30,
+    backend = backend,
     approx_type = "bh_qd",
     tsne_params = params_tsne_gpu(n_epochs = 500L, theta = 1, max_depth = 7L)
   )
 })
 if (truth) write_truth_outputs(embs = list(tsne_quick = get_embedding(sce, "tsne_quick")))
 
-message(sprintf("cells after QC: %d, clusters: %d", nrow(clusters), uniqueN(clusters$leiden)))
+message(sprintf(
+  "cells after QC: %d, clusters: %d, fast clusters: %d (res 1), %d (res 2)",
+  nrow(clusters),
+  uniqueN(clusters$leiden),
+  uniqueN(sce[["leiden_fast"]]),
+  uniqueN(sce[["leiden_fast_r2"]])
+))
 print(sessionInfo())

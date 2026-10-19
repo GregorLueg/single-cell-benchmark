@@ -1,6 +1,8 @@
-data/
-results/
+/data
+/results
 .DS_Store
 vendor/
 rlib/
 scripts/harmony_bench/.venv/
+
+.claude/worktrees/*

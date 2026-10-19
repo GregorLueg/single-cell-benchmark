@@ -7,7 +7,7 @@ PY=${HARMONYPY_PYTHON:-$B/.venv/bin/python}
 echo "size,impl,rep,seconds,max_rss_bytes" > $R/runs.csv
 for ds in splat_100k splat_1m; do
   in=$R/input_$ds.csv
-  for impl in none_r none_py v1 v2 v2_b05 gpu harmonypy; do
+  for impl in none_r none_py v1 v2 v2_b05 gpu mlx harmonypy; do
     for rep in 1 2 3; do
       out=$R/$ds/$impl/rep$rep
       mkdir -p "$(dirname "$out")"

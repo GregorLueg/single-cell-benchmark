@@ -1,4 +1,5 @@
-# scrapper (libscran) pipeline on an in-memory dgCMatrix.
+# scrapper (libscran) pipeline on an in-memory dgCMatrix, or with INPUT=hdf5 on
+# the h5ad read out of core as an HDF5-backed DelayedMatrix.
 # Usage: Rscript scrapper.R <data_dir> <out_dir> <scratch_dir>
 
 source("/bench/pipelines/common.R")
@@ -10,19 +11,43 @@ suppressPackageStartupMessages({
 # pre-filter as in bixverse: genes in >= 5 cells first, then cells with
 # >= 100 genes and >= 250 UMIs
 step("load", {
-  if (Sys.getenv("INPUT", "mtx") == "h5ad") {
-    source("/bench/pipelines/h5ad_io.R")
-    counts <- read_h5ad_counts(file.path(data, "DGE.h5ad"))
-    meta <- meta[match(colnames(counts), bc_wells)]
+  if (Sys.getenv("INPUT", "mtx") == "hdf5") {
+    # out of core: the h5ad stays on disk as an HDF5-backed DelayedMatrix;
+    # beachmat.hdf5 hands scrapper a native tatami matrix, so the later steps
+    # stream from the file without realising it
+    suppressPackageStartupMessages({
+      library(HDF5Array)
+      library(beachmat.hdf5)
+    })
+    path <- file.path(data, "DGE.h5ad")
+    counts <- H5ADMatrix(path)
+    # H5ADMatrix finds no dimnames in our h5ad, whose indices are named
+    var_idx <- rhdf5::h5readAttributes(path, "/var")[["_index"]]
+    obs_idx <- rhdf5::h5readAttributes(path, "/obs")[["_index"]]
+    dimnames(counts) <- list(
+      as.character(rhdf5::h5read(path, file.path("/var", var_idx))),
+      as.character(rhdf5::h5read(path, file.path("/obs", obs_idx)))
+    )
+    rhdf5::h5closeAll()
+    counts <- counts[DelayedArray::rowSums(counts > 0) >= 5, ]
+    keep <- DelayedArray::colSums(counts > 0) >= 100 & DelayedArray::colSums(counts) >= 250
+    counts <- counts[, keep]
+    md <- data.frame(meta[match(colnames(counts), bc_wells)])
   } else {
-    counts <- Matrix::readMM(file.path(data, "DGE.mtx"))
-    counts <- as(Matrix::t(counts), "CsparseMatrix")
-    dimnames(counts) <- list(genes$gene_id, meta$bc_wells)
+    if (Sys.getenv("INPUT", "mtx") == "h5ad") {
+      source("/bench/pipelines/h5ad_io.R")
+      counts <- read_h5ad_counts(file.path(data, "DGE.h5ad"))
+      meta <- meta[match(colnames(counts), bc_wells)]
+    } else {
+      counts <- Matrix::readMM(file.path(data, "DGE.mtx"))
+      counts <- as(Matrix::t(counts), "CsparseMatrix")
+      dimnames(counts) <- list(genes$gene_id, meta$bc_wells)
+    }
+    counts <- counts[Matrix::rowSums(counts > 0) >= 5, ]
+    keep <- Matrix::colSums(counts > 0) >= 100 & Matrix::colSums(counts) >= 250
+    counts <- counts[, keep]
+    md <- data.frame(meta[keep])
   }
-  counts <- counts[Matrix::rowSums(counts > 0) >= 5, ]
-  keep <- Matrix::colSums(counts > 0) >= 100 & Matrix::colSums(counts) >= 250
-  counts <- counts[, keep]
-  md <- data.frame(meta[keep])
   invisible(gc())
 })
 
@@ -69,6 +94,19 @@ step("cluster", {
   clusters <- clusterGraph(graph, method = "leiden", leiden.resolution = 1)
 })
 
+# cluster_fast: k-means to 4 x sqrt(n) centroids, sNN graph (k = 15) over the
+# centroids, Leiden at resolutions 1 and 2 on the same k-means, labels handed
+# back to the cells.
+# scrapper has no single call for this; composed from its primitives as in
+# bluster's TwoStepParam
+step("cluster_fast", {
+  km <- clusterKmeans(t(emb), k = as.integer(4 * sqrt(nrow(emb))), num.threads = threads)
+  centroid_graph <- buildSnnGraph(km$centers, num.neighbors = 15, num.threads = threads)
+  clusters_fast <- lapply(c(1, 2), function(res) {
+    clusterGraph(centroid_graph, method = "leiden", leiden.resolution = res)$membership[as.integer(km$clusters)]
+  })
+})
+
 step("umap", {
   umap <- runUmap(t(emb), num.threads = threads)
 })
@@ -80,6 +118,8 @@ step("dge", {
 # all score.py inputs before the tSNE steps, so a tSNE timeout only loses its rows
 res <- data.table(cell_id = md$bc_wells, cluster = clusters$membership)
 fwrite(res, file.path(out, "clusters.csv"))
+fwrite(data.table(cell_id = md$bc_wells, cluster = clusters_fast[[1]]), file.path(out, "clusters_fast.csv"))
+fwrite(data.table(cell_id = md$bc_wells, cluster = clusters_fast[[2]]), file.path(out, "clusters_fast_r2.csv"))
 cells_named <- function(m) `rownames<-`(m, md$bc_wells)
 if (truth) {
   write_truth_outputs(
@@ -103,5 +143,11 @@ step("tsne_quick", {
 })
 if (truth) write_truth_outputs(embs = list(tsne_quick = cells_named(tsne)))
 
-message(sprintf("cells after QC: %d, clusters: %d", nrow(res), uniqueN(res$cluster)))
+message(sprintf(
+  "cells after QC: %d, clusters: %d, fast clusters: %d (res 1), %d (res 2)",
+  nrow(res),
+  uniqueN(res$cluster),
+  uniqueN(clusters_fast[[1]]),
+  uniqueN(clusters_fast[[2]])
+))
 print(sessionInfo())

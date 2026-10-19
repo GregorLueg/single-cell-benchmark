@@ -2,7 +2,7 @@
 # requires-python = ">=3.12"
 # dependencies = ["polars>=1.30"]
 # ///
-"""Same Harmony input for every implementation: bixverse 0.6.0's PCA (h5ad run)
+"""Same Harmony input for every implementation: bixverse's PCA (h5ad run)
 plus the true batch labels. Usage: prep.py <out_dir>"""
 
 import sys

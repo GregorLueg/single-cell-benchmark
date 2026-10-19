@@ -16,7 +16,7 @@ import polars as pl
 from sklearn.neighbors import NearestNeighbors
 
 R = Path(__file__).resolve().parents[2] / "results/harmony_bench"
-IMPLS = ["v1", "v2", "v2_b05", "gpu", "harmonypy"]
+IMPLS = ["v1", "v2", "v2_b05", "gpu", "mlx", "harmonypy"]
 
 
 def stage():
