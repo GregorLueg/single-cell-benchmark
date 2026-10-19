@@ -24,12 +24,6 @@ surface <- "#fcfcfb"
 ink <- "#0b0b0b"
 ink_2 <- "#52514e"
 grid_col <- "#e4e3df"
-seq_ramp <- c("#cde2fb", "#9ec5f4", "#6da7ec", "#3987e5", "#256abf", "#184f95", "#0d366b")
-# blue for faster, orange for slower: a pair colour-blind readers can separate,
-# and every tile prints its fold change as well
-div_low <- "#2a78d6"
-div_mid <- "#f0efec"
-div_high <- "#eb6834"
 
 column_order <- c(
   "bixverse mtx", "bixverse h5ad", "bixverse GPU*", "bixverse MLX*",
@@ -289,13 +283,14 @@ speedup_plot <- function(size_key, ref_col, title, subtitle, caption, file, heig
   p <- ggplot(fc, aes(step, column)) +
     geom_tile(aes(fill = pmax(pmin(log2(fold), lim), -lim)), colour = surface, linewidth = 0.8) +
     geom_text(
-      aes(label = lab, colour = !is.na(fold) & abs(log2(fold)) > 3.5),
+      aes(label = lab, colour = is.na(fold) | log2(fold) < -2 | log2(fold) > 2.7),
       size = 2.6, show.legend = FALSE
     ) +
     scale_colour_manual(values = c(`FALSE` = ink, `TRUE` = "#ffffff")) +
-    scale_fill_gradient2(
-      low = div_high, mid = div_mid, high = div_low, midpoint = 0,
-      na.value = "#d9d8d4",
+    # the heatmap ramp reversed, beige pinned to "same"
+    scale_fill_gradientn(
+      colours = rev(step_ramp), values = c(0, 0.125, 0.25, 0.375, 0.5, 2 / 3, 5 / 6, 1),
+      na.value = missing_fill,
       limits = c(-lim, lim),
       breaks = log2(c(1 / 16, 1 / 4, 1, 4, 16)),
       labels = c("16x slower", "4x slower", "same", "4x faster", "16x faster"),
@@ -355,7 +350,7 @@ fig4 <- ggplot(wl, aes(size_label, seconds, fill = start)) +
     position = position_dodge(width = 0.8), vjust = -0.4, size = 2.8, colour = ink
   ) +
   facet_wrap(~framework) +
-  scale_fill_manual(values = c(cold = seq_ramp[2], warm = seq_ramp[6]), name = NULL) +
+  scale_fill_manual(values = c(cold = step_ramp[3], warm = step_ramp[1]), name = NULL) +
   scale_y_continuous(
     labels = scales::label_number(suffix = " s"),
     expand = expansion(mult = c(0, 0.1))
