@@ -6,19 +6,18 @@ suppressPackageStartupMessages({
   library(data.table)
   library(ggplot2)
   library(patchwork)
-  library(ggrepel)
 })
 
 fig_dir <- "docs/figures"
 dt_all <- fread(file.path(fig_dir, "results_long.csv"))
 dt <- dt_all[startsWith(size, "parse")]
 
-# palette: validated categorical slots 1-4, one per framework family
+# one per framework family, from the lto "hat" palette
 family_cols <- c(
-  bixverse = "#2a78d6",
-  Scanpy = "#eb6834",
-  scrapper = "#1baf7a",
-  Seurat = "#eda100"
+  bixverse = "#0F8096",
+  Scanpy = "#E8351E",
+  scrapper = "#17A769",
+  Seurat = "#852F88"
 )
 surface <- "#fcfcfb"
 ink <- "#0b0b0b"
@@ -44,11 +43,6 @@ size_labels <- c(
 dt[, family := sub(" .*", "", column)]
 dt[, column := factor(column, levels = column_order)]
 dt[, step := factor(step, levels = step_order)]
-dt[, design := fcase(
-  column %in% c("bixverse GPU*", "bixverse MLX*"), "out-of-core, native GPU (uncapped)",
-  family == "bixverse" | column %in% c("Scanpy dask", "Seurat BPCells", "scrapper HDF5"), "out-of-core",
-  default = "in-memory"
-)]
 
 theme_bench <- function(base_size = 10) {
   theme_minimal(base_size = base_size) +
@@ -67,106 +61,91 @@ theme_bench <- function(base_size = 10) {
     )
 }
 
-#### figure 1: scaling ----------------------------------------------------------
+#### figure 1: time and memory per size ---------------------------------------
 
-runs <- dt[, .(
-  cells = cells[1],
-  family = family[1],
-  design = design[1],
-  status = if (any(status != "ok")) status[status != "ok"][1] else "ok",
-  no_tsne = sum(seconds[!grepl("^tsne|^cluster_fast", step)], na.rm = TRUE),
-  total = sum(seconds[step != "cluster_fast"], na.rm = TRUE),
-  peak_gb = peak_gb[1]
-), by = .(column, size)]
-runs[status != "ok", c("no_tsne", "total") := NA_real_]
-
-ok <- runs[status == "ok"]
-failed <- runs[status != "ok"]
-cell_breaks <- c(69412, 346259, 684932)
-cell_labels <- c("69k", "346k", "685k")
-
-scaling_panel <- function(y, title, label_lines) {
-  d <- ok[, .(column, family, design, cells, y = get(y))]
-  y_fail <- max(d$y) * 2
-  # one cross per failed run, stacked upwards within the "died" band
-  f <- failed[order(cells, column)]
-  f[, y_cross := y_fail * 1.16^(seq_len(.N) - 1), by = cells]
-  last <- d[, .SD[which.max(cells)], by = column]
-  band_low <- y_fail / 1.35
-  y_breaks <- 10^(1:5)
-  p <- ggplot(d, aes(cells, y, group = column, colour = family, linetype = design)) +
-    annotate("rect", xmin = -Inf, xmax = Inf, ymin = band_low, ymax = Inf, fill = "#ecebe6") +
-    geom_hline(yintercept = band_low, colour = ink_2, linewidth = 0.3, linetype = "22") +
-    geom_line(linewidth = 0.7) +
-    geom_point(size = 2, stroke = 0) +
-    geom_point(
-      data = f,
-      aes(cells, y_cross, colour = family),
-      inherit.aes = FALSE,
-      shape = 4, size = 2.6, stroke = 1
-    ) +
-    annotate(
-      "text", x = max(cell_breaks) * 1.12, y = y_fail, label = "died (OOM)",
-      hjust = 0, colour = ink_2, size = 3
-    ) +
-    scale_x_log10(breaks = cell_breaks, labels = cell_labels) +
-    scale_y_log10(
-      breaks = y_breaks[y_breaks < band_low],
-      labels = scales::label_number(suffix = " s", big.mark = ",")
-    ) +
-    scale_colour_manual(values = family_cols, name = NULL) +
-    scale_linetype_manual(
-      values = c("out-of-core" = "solid", "in-memory" = "22", "out-of-core, native GPU (uncapped)" = "13"),
-      name = NULL
-    ) +
-    coord_cartesian(clip = "off") +
-    theme(panel.grid.major.y = element_line(colour = grid_col, linewidth = 0.3)) +
-    labs(title = title, x = "cells after QC", y = NULL) +
-    theme_bench()
-  if (label_lines) {
-    p <- p + geom_text_repel(
-      data = last,
-      aes(label = column),
-      colour = ink_2, size = 2.6, direction = "y", hjust = 0,
-      nudge_x = 0.12, segment.colour = grid_col, min.segment.length = 0,
-      show.legend = FALSE
-    ) +
-      scale_x_log10(breaks = cell_breaks, labels = cell_labels, expand = expansion(mult = c(0.05, 0.45)))
-  }
-  p
+run_summary <- function(d) {
+  d[, .(
+    family = sub(" .*", "", column[1]),
+    # a run that died in a tSNE step still has a time without tSNE
+    died = {
+      bad <- status != "ok" & !grepl("^tsne", step)
+      if (any(bad)) paste(status[bad][1], "at", step[bad][1]) else NA_character_
+    },
+    no_tsne = sum(seconds[!grepl("^tsne|^cluster_fast", step)], na.rm = TRUE),
+    peak_gb = peak_gb[1]
+  ), by = .(column, size)]
 }
 
-p_no_tsne <- scaling_panel("no_tsne", "Without tSNE", TRUE)
-p_total <- scaling_panel("total", "Total, incl. tSNE", FALSE)
+runs <- run_summary(dt)
+runs[, status := fifelse(is.na(died), "ok", "failed")]
+runs[status != "ok", no_tsne := NA_real_]
 
-p_mem <- ggplot(runs, aes(cells, peak_gb, group = column, colour = family, linetype = design)) +
-  geom_hline(yintercept = 24, colour = ink_2, linetype = "22", linewidth = 0.4) +
-  annotate("text", x = min(cell_breaks), y = 24, label = "24 GB cap", vjust = -0.6, hjust = 0, colour = ink_2, size = 3) +
-  geom_line(data = ok, linewidth = 0.7) +
-  geom_point(data = ok, size = 2, stroke = 0) +
-  geom_point(data = failed, shape = 4, size = 2.6, stroke = 1) +
-  scale_x_log10(breaks = cell_breaks, labels = cell_labels) +
-  scale_y_continuous(labels = scales::label_number(suffix = " GB"), limits = c(0, 26)) +
-  scale_colour_manual(values = family_cols, name = NULL) +
-  scale_linetype_manual(
-    values = c("out-of-core" = "solid", "in-memory" = "22", "out-of-core, native GPU (uncapped)" = "13"),
-    name = NULL
-  ) +
-  labs(title = "Peak memory", x = "cells after QC", y = NULL) +
-  theme_bench()
+scaling_bars <- function(labels, title, file) {
+  r <- run_summary(dt_all[size %in% names(labels)])
+  r[!is.na(died), no_tsne := NA_real_]
+  r[, size_label := factor(labels[size], levels = labels)]
+  r[, column := factor(column, levels = rev(column_order))]
+  r[, native := column %in% c("bixverse GPU*", "bixverse MLX*")]
+  x_min <- 5
 
-fig1 <- (p_no_tsne | p_total | p_mem) +
-  plot_layout(guides = "collect", widths = c(1.35, 1, 1)) +
-  plot_annotation(
-    title = "Parse 1M PBMC under a 24 GB, 8 core cap",
-    subtitle = "One repeat per run. Crosses mark the size where a run died (OOM), plotted at the cap on the memory panel.",
-    caption = "bixverse GPU (wgpu) and MLX run natively on Metal without a memory cap; their peak is process RSS. Scanpy dask has no DGE step.",
-    theme = theme_bench()
-  ) &
-  theme(legend.position = "bottom")
+  p_time <- ggplot(r, aes(y = column)) +
+    geom_col(aes(x = no_tsne, fill = family, alpha = native), width = 0.75, na.rm = TRUE) +
+    geom_text(
+      aes(x = no_tsne, label = format(round(no_tsne), big.mark = ",", trim = TRUE)),
+      hjust = -0.15, size = 2.6, colour = ink, na.rm = TRUE
+    ) +
+    geom_text(
+      data = r[!is.na(died)], aes(x = x_min, label = died),
+      hjust = 0, size = 2.6, colour = ink_2, nudge_x = 0.02
+    ) +
+    scale_x_log10(
+      limits = c(x_min, NA), oob = scales::oob_keep, breaks = c(10, 100, 1000), labels = c("10 s", "100 s", "1,000 s"),
+      expand = expansion(mult = c(0, 0.3))
+    ) +
+    facet_wrap(~size_label, nrow = 1) +
+    labs(title = "Without tSNE", x = NULL, y = NULL)
 
-ggsave(file.path(fig_dir, "scaling.png"), fig1, width = 13, height = 5, dpi = 200, bg = surface)
-ggsave(file.path(fig_dir, "scaling.pdf"), fig1, width = 13, height = 5, bg = surface)
+  p_mem <- ggplot(r, aes(y = column)) +
+    geom_col(aes(x = peak_gb, fill = family, alpha = native), width = 0.75) +
+    geom_vline(xintercept = 24, linetype = "dotted", colour = ink_2) +
+    geom_text(
+      aes(
+        x = peak_gb, label = paste0(sprintf("%.1f", peak_gb), fifelse(is.na(died), "", ", died")),
+        hjust = fifelse(peak_gb > 18, 1.1, -0.15), colour = peak_gb > 18
+      ),
+      size = 2.6, show.legend = FALSE
+    ) +
+    scale_colour_manual(values = c(`FALSE` = ink, `TRUE` = "#ffffff")) +
+    scale_x_continuous(breaks = c(0, 8, 16, 24), labels = c("0", "8", "16", "24"),
+                       expand = expansion(mult = c(0, 0.08))) +
+    facet_wrap(~size_label, nrow = 1) +
+    labs(title = "Peak memory (GB); dotted: the 24 GB cap", x = NULL, y = NULL)
+
+  p <- (p_time / p_mem) + plot_layout(guides = "collect") +
+    plot_annotation(
+      title = title,
+      subtitle = "Under a 24 GB, 8 core cap. One repeat per run; a run that died shows where.",
+      caption = paste(
+        "Faded: bixverse GPU (wgpu) and MLX, native on Metal without a memory cap; their peak is process RSS.",
+        "Scanpy dask has no DGE step. A run that timed out in tSNE keeps its time without tSNE.",
+        sep = "\n"
+      ),
+      theme = theme_bench()
+    ) &
+    scale_fill_manual(values = family_cols, name = NULL) &
+    scale_alpha_manual(values = c(`FALSE` = 1, `TRUE` = 0.55), guide = "none") &
+    theme_bench() &
+    theme(panel.grid.major.y = element_blank(), legend.position = "bottom")
+
+  ggsave(file.path(fig_dir, paste0(file, ".png")), p, width = 12, height = 9, dpi = 200, bg = surface)
+  ggsave(file.path(fig_dir, paste0(file, ".pdf")), p, width = 12, height = 9, bg = surface)
+}
+
+scaling_bars(
+  c(splat_100k = "100k (96,342 cells)", splat_500k = "500k (482,409 cells)", splat_1m = "1M (964,763 cells)"),
+  "Splat simulation: time and memory", "scaling_splat"
+)
+scaling_bars(size_labels, "Parse 1M PBMC: time and memory", "scaling_pbmc")
 
 #### figure 2: per-step heatmap, each step scaled across frameworks -----------
 

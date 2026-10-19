@@ -311,7 +311,7 @@ uv run scripts/harmony_bench/summarise.py stage
 uv run scripts/score.py results/harmony_bench/score_splat_100k data/splat_100k   # and score_splat_1m
 uv run scripts/harmony_bench/summarise.py report
 
-# figures in docs/figures (ggplot2, patchwork, ggrepel)
+# figures in docs/figures (ggplot2, patchwork)
 uv run scripts/tables.py --long results > docs/figures/results_long.csv
 uv run scripts/tables.py --warm results > docs/figures/warm_long.csv
 Rscript scripts/plots.R

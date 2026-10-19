@@ -28,6 +28,8 @@ fitted to the PBMC data ([methods](methods.md#data)). Stack: bixverse 0.8.0,
 bixverse.gpu 0.5.0, manifoldsR 0.5.0, Scanpy 1.12.4, scrapper 1.6.3, Seurat
 5.6.0.
 
+![Time without tSNE and peak memory on the simulation](figures/scaling_splat.png)
+
 ![Wall time per step on the simulation, scaled per step](figures/steps_heatmap_splat.png)
 
 ### 100k cells (96,342 after QC)
@@ -234,7 +236,7 @@ wrapper plus the VM, not split further.
 Parse 1M PBMC and random subsamples, the same stack as the simulation. On PBMC
 the DGE groups are the 24 samples.
 
-![Scaling: time and peak memory against cells](figures/scaling.png)
+![Time without tSNE and peak memory on PBMC](figures/scaling_pbmc.png)
 
 ![Wall time per step on PBMC, scaled per step](figures/steps_heatmap_pbmc.png)
 
