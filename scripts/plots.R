@@ -360,5 +360,5 @@ fig4 <- ggplot(wl, aes(size_label, seconds, fill = start)) +
   theme_bench() +
   theme(panel.grid.major.x = element_blank())
 
-ggsave(file.path(fig_dir, "warm_start.png"), fig4, width = 8, height = 3.6, dpi = 200, bg = surface)
+ggsave(file.path(fig_dir, "warm_start.png"), fig4, width = 8, height = 3.6, dpi = 300, bg = surface)
 ggsave(file.path(fig_dir, "warm_start.pdf"), fig4, width = 8, height = 3.6, bg = surface)
