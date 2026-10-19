@@ -141,7 +141,7 @@ scaling_panel <- function(y, title, label_lines) {
   p
 }
 
-p_no_tsne <- scaling_panel("no_tsne", "Load to UMAP (no tSNE)", TRUE)
+p_no_tsne <- scaling_panel("no_tsne", "Without tSNE", TRUE)
 p_total <- scaling_panel("total", "Total, incl. tSNE", FALSE)
 
 p_mem <- ggplot(runs, aes(cells, peak_gb, group = column, colour = family, linetype = design)) +
@@ -165,7 +165,7 @@ fig1 <- (p_no_tsne | p_total | p_mem) +
   plot_annotation(
     title = "Parse 1M PBMC under a 24 GB, 8 core cap",
     subtitle = "One repeat per run. Crosses mark the size where a run died (OOM), plotted at the cap on the memory panel.",
-    caption = "bixverse GPU runs natively on Metal without a memory cap; its peak is process RSS.",
+    caption = "bixverse GPU (wgpu) and MLX run natively on Metal without a memory cap; their peak is process RSS. Scanpy dask has no DGE step.",
     theme = theme_bench()
   ) &
   theme(legend.position = "bottom")
@@ -272,8 +272,9 @@ speedup_plot(
   title = "Speed-up per step against in-memory Scanpy (h5ad), 500k",
   subtitle = "The largest size in-memory Scanpy survives. Only runs that completed at 500k.",
   caption = paste(
-    "bixverse normalises during load. scrapper's default tSNE runs at theta = 1 and 500 iterations",
-    "(the others 0.5 and 1000); matched, it takes 202 s at 500k. bixverse CPU tSNE builds its kNN with IVF."
+    "bixverse normalises during load. Scanpy dask has no DGE step. bixverse CPU tSNE builds its kNN with IVF.",
+    "tsne_quick (qdtsne) and cluster_fast (Leiden on k-means centroids) are not shown and not in the total.",
+    sep = "\n"
   ),
   file = "speedup_vs_scanpy_500k",
   height = 4
@@ -285,7 +286,9 @@ speedup_plot(
   subtitle = "In-memory Scanpy dies at load here; Dask is the Scanpy path that finishes. Only runs that completed.",
   caption = paste(
     "bixverse normalises during load; Dask defers normalisation, so the normalise column carries no fold change.",
-    "bixverse CPU tSNE builds its kNN with IVF."
+    "Dask has no DGE step (Wilcoxon fails on Dask arrays), so its total lacks one; in-memory Scanpy's takes 602 s at 500k.",
+    "bixverse CPU tSNE builds its kNN with IVF.",
+    sep = "\n"
   ),
   file = "speedup_vs_scanpy_dask_full",
   height = 3.2

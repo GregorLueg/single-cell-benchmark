@@ -5,7 +5,7 @@
 """Markdown tables from the benchmark results.
 
 Usage: tables.py <results_dir> [dataset ...]          per-step tables
-       tables.py --summary <results_dir>              one row per framework
+       tables.py --summary <results_dir> [splat]      one row per framework
        tables.py --long <results_dir>                 tidy CSV for plotting
        tables.py --warm <results_dir>                 cold vs warm load CSV
 """
@@ -174,8 +174,9 @@ def table(ds_dir):
     return "\n".join(out)
 
 
-def summary(root):
-    sizes = {"parse_100k": "100k", "parse_500k": "500k", "parse_full": "full"}
+def summary(root, kind):
+    sizes = ({"splat_100k": "100k", "splat_500k": "500k", "splat_1m": "1M"} if kind == "splat"
+             else {"parse_100k": "100k", "parse_500k": "500k", "parse_full": "full"})
     per_size = {label: collect(root / ds) for ds, label in sizes.items()}
     cols = [c for c in COLUMNS if any(c in r for r in per_size.values())]
     out = ["| framework | " + " | ".join(sizes.values()) + " |", "|---" * (len(sizes) + 1) + "|"]
@@ -216,7 +217,7 @@ if sys.argv[1] == "--long":
 elif sys.argv[1] == "--warm":
     print(warm_long(Path(sys.argv[2])))
 elif sys.argv[1] == "--summary":
-    print(summary(Path(sys.argv[2])))
+    print(summary(Path(sys.argv[2]), sys.argv[3] if len(sys.argv) > 3 else "parse"))
 else:
     root = Path(sys.argv[1])
     datasets = sys.argv[2:] or ["parse_100k", "parse_500k", "parse_full"]

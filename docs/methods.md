@@ -214,8 +214,17 @@ harmonypy.
 
 ## Caveats
 
+- **Written by bixverse's author.** The harness, the parameter choices and
+  this text come from the maintainer of bixverse; the caveats below try to
+  name every place that favours it.
 - **One repeat, one machine, one simulation seed.** Apple Silicon under
-  Docker, not a real 24 GB laptop.
+  Docker, not a real 24 GB laptop. Reruns of the same bixverse configuration
+  moved the load step by up to 35 s. A Scanpy h5ad run on PBMC 500k that
+  overlapped a system sleep took 3,233 s; the rerun took 833 s and is the one
+  shown. The bixverse MLX tSNE on the full PBMC data ran across a macOS
+  DarkWake and is kept, as its time matches the wgpu row.
+- **Peak memory includes tSNE.** For bixverse at 1M the tSNE step sets the
+  run peak (10.5 against 8.6 GB before tSNE, h5ad).
 - **Splat is the easy case.** No gene-gene structure beyond the DE, no
   continuous states, convex groups of similar density, and a multiplicative
   batch effect on every gene. The quality scores rank pipelines on that, not
@@ -226,8 +235,9 @@ harmonypy.
 - **Small islands on the GPU kNN.** The GPU and MLX rows build their kNN with
   GPU NNDescent; the CPU rows with CPU NNDescent. Graph and Leiden parameters
   are the same. On the 500k simulation the CPU rows give 12 clusters, the GPU
-  and MLX rows 22 and 23, of which 9 and 11 hold 100 cells or fewer (about 150
-  cells in all). The sizeable clusters match the CPU rows. Most likely the
+  and MLX rows 22 each, of which 10 hold 100 cells or fewer (152 and 143 cells
+  in all); at 1M 13 against 20 and 16 (6 and 1 small ones). The sizeable
+  clusters match the CPU rows. Most likely the
   approximate GPU kNN leaves a few cells in islands the sNN rescue does not
   re-attach; an exhaustive GPU kNN would tell, but is too expensive to be the
   default here.
@@ -237,7 +247,15 @@ harmonypy.
 - **No DGE for Scanpy Dask.** Wilcoxon `rank_genes_groups` fails on Dask
   arrays in Scanpy 1.12.4 (numba `TypingError` in `_select_top_n`). Only the
   t-test runs, and a t-test on zero-inflated counts is not a like-for-like
-  substitute, so the Dask row has no DGE step.
+  substitute, so the Dask row has no DGE step. Its totals are not
+  like-for-like: the same step takes in-memory Scanpy 454 s on the 500k
+  simulation and 602 s on PBMC 500k. Treat the Dask row as experimental.
+- **`cluster_fast` on the CPU is slower than the Leiden it replaces** from
+  500k (bixverse 14 against 4 s at 500k, 45 against 8 s at 1M; scrapper 194
+  against 110 s). It is in the tables as an option, not in the totals.
+- **scrapper HDF5 has only the 100k simulation so far.**
+- **The same-input Harmony agreement scores** (kNN overlap, purity) are not
+  yet recomputed on the 0.8.0 PCA input; only the timings are current.
 - **No OSCA row.** The Bioconductor stack (scuttle, scran, scater) on the
   same HDF5-backed matrix does not finish HVG at any size from 500k up within
   45 min, and its forked workers OOM at 100k in PCA and DGE. Its row-wise
