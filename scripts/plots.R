@@ -92,11 +92,11 @@ scaling_bars <- function(labels, title, file) {
     geom_col(aes(x = no_tsne, fill = family, alpha = native), width = 0.75, na.rm = TRUE) +
     geom_text(
       aes(x = no_tsne, label = format(round(no_tsne), big.mark = ",", trim = TRUE)),
-      hjust = -0.15, size = 2.6, colour = ink, na.rm = TRUE
+      hjust = -0.15, size = 3.6, colour = ink, na.rm = TRUE
     ) +
     geom_text(
       data = r[!is.na(died)], aes(x = x_min, label = died),
-      hjust = 0, size = 2.6, colour = ink_2, nudge_x = 0.02
+      hjust = 0, size = 3.6, colour = ink_2, nudge_x = 0.02
     ) +
     scale_x_log10(
       limits = c(x_min, NA), oob = scales::oob_keep, breaks = c(10, 100, 1000), labels = c("10 s", "100 s", "1,000 s"),
@@ -113,7 +113,7 @@ scaling_bars <- function(labels, title, file) {
         x = peak_gb, label = paste0(sprintf("%.1f", peak_gb), fifelse(is.na(died), "", ", died")),
         hjust = fifelse(peak_gb > 18, 1.1, -0.15), colour = peak_gb > 18
       ),
-      size = 2.6, show.legend = FALSE
+      size = 3.6, show.legend = FALSE
     ) +
     scale_colour_manual(values = c(`FALSE` = ink, `TRUE` = "#ffffff")) +
     scale_x_continuous(breaks = c(0, 8, 16, 24), labels = c("0", "8", "16", "24"),
@@ -130,15 +130,15 @@ scaling_bars <- function(labels, title, file) {
         "Scanpy dask has no DGE step. A run that timed out in tSNE keeps its time without tSNE.",
         sep = "\n"
       ),
-      theme = theme_bench()
+      theme = theme_bench(14)
     ) &
     scale_fill_manual(values = family_cols, name = NULL) &
     scale_alpha_manual(values = c(`FALSE` = 1, `TRUE` = 0.55), guide = "none") &
-    theme_bench() &
+    theme_bench(14) &
     theme(panel.grid.major.y = element_blank(), legend.position = "bottom")
 
-  ggsave(file.path(fig_dir, paste0(file, ".png")), p, width = 12, height = 9, dpi = 200, bg = surface)
-  ggsave(file.path(fig_dir, paste0(file, ".pdf")), p, width = 12, height = 9, bg = surface)
+  ggsave(file.path(fig_dir, paste0(file, ".png")), p, width = 14, height = 11, dpi = 300, bg = surface)
+  ggsave(file.path(fig_dir, paste0(file, ".pdf")), p, width = 14, height = 11, bg = surface)
 }
 
 scaling_bars(
