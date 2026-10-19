@@ -4,3 +4,5 @@
 vendor/
 rlib/
 scripts/harmony_bench/.venv/
+
+.claude/worktrees/*
