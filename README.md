@@ -26,8 +26,8 @@ one seed.
 | framework | 100k | 500k | 1M | Harmony purity | ARI | rare F1 |
 |---|---|---|---|---|---|---|
 | bixverse | 16 s, 1.7 GB | 87 s, 5.8 GB | 204 s, 10.5 GB | 0.969 to 0.970 | 0.79 to 0.98 | 0.26 to 0.35 |
-| bixverse GPU (wgpu, native)\* | 10 s, 3.9 GB | 45 s, 11.1 GB | 100 s, 18.4 GB | 0.963 to 0.964 | 0.81 to 0.97 | 0.23 to 0.29 |
-| bixverse MLX (native)\* | 10 s, 4.0 GB | 41 s, 11.4 GB | 81 s, 18.5 GB | 0.962 to 0.966 | 0.79 to 0.98 | 0.24 to 0.30 |
+| bixverse GPU (wgpu, native)\* | 10 s, 2.0 GB | 45 s, 5.6 GB | 100 s, 10.3 GB | 0.963 to 0.964 | 0.81 to 0.97 | 0.23 to 0.29 |
+| bixverse MLX (native)\* | 10 s, 1.5 GB | 41 s, 6.2 GB | 81 s, 11.0 GB | 0.962 to 0.966 | 0.79 to 0.98 | 0.24 to 0.30 |
 | Scanpy | 122 s, 2.6 GB | 766 s, 14.2 GB | OOM at load | 0.894 to 0.908 | 0.78 to 0.88 | 0.09 to 0.11 |
 | Scanpy dask (experimental, no DGE) | 77 s, 1.8 GB | 317 s, 7.8 GB | 719 s, 10.8 GB | 0.889 to 0.908 | 0.86 to 0.91 | 0.10 to 0.11 |
 | scrapper | 90 s, 5.6 GB | 515 s, 22.7 GB | OOM at load | 0.926 to 0.929 | 0.94 | 0.13 |
@@ -35,8 +35,8 @@ one seed.
 | Seurat std | 124 s, 8.9 GB | OOM at pca | OOM at load | 0.971 | 0.81 | 0.27 |
 | Seurat BPCells | 253 s, 2.6 GB | 1281 s, 6.5 GB | 2662 s, 9.5 GB | 0.968 to 0.971 | 0.70 to 0.79 | 0.27 to 0.35 |
 
-\* Native macOS on Metal, no memory cap, peak is process RSS: not comparable
-to the Docker rows! MLX needs an opt-in build against mlx-c.
+\* Native macOS on Metal, no memory cap, peak is the process memory
+footprint: close to, but not the same metric as, the Docker rows. MLX needs an opt-in build against mlx-c.
 
 - **bixverse is about 6x faster than scrapper at a quarter of its memory, and
   3.5x to 9x faster than Scanpy (Dask to h5ad).** At 1M only the out-of-core
@@ -68,8 +68,8 @@ subsamples, or where the run died. Same stack.
 |---|---|---|---|
 | bixverse mtx | 19 s, 1.6 GB | 102 s, 6.3 GB | 202 s, 9.5 GB |
 | bixverse h5ad | 15 s, 1.7 GB | 75 s, 6.5 GB | 175 s, 8.9 GB |
-| bixverse GPU (wgpu, native)\* | 11 s, 4.4 GB | 48 s, 11.1 GB | 102 s, 16.7 GB |
-| bixverse MLX (native)\* | 10 s, 4.2 GB | 40 s, 11.2 GB | 81 s, 17.4 GB |
+| bixverse GPU (wgpu, native)\* | 11 s, 2.2 GB | 48 s, 6.1 GB | 102 s, 8.8 GB |
+| bixverse MLX (native)\* | 10 s, 1.5 GB | 40 s, 6.1 GB | 81 s, 8.3 GB |
 | Scanpy mtx | 137 s, 6.0 GB | OOM at load | OOM at load |
 | Scanpy h5ad | 116 s, 2.0 GB | 832 s, 14.2 GB | OOM at load |
 | Scanpy dask (experimental, no DGE) | 65 s, 1.6 GB | 237 s, 6.7 GB | 490 s, 10.4 GB |

@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Usage: [BACKEND=mlx] scripts/run_native.sh <dataset>
 # Runs bixverse_gpu.R on the host (Metal), via wgpu or, with BACKEND=mlx, MLX
-# (needs bixverse.gpu built against mlx-c). No memory cap on macOS; RSS of the
-# R process is sampled once a second instead of cgroup anon memory, and it
-# includes resident file-mapped pages.
+# (needs bixverse.gpu built against mlx-c). No memory cap on macOS. RSS of the
+# R process is sampled once a second instead of cgroup anon memory; it includes
+# resident file-mapped pages, so the tables take the peak footprint that
+# /usr/bin/time -l reports instead.
 set -uo pipefail
 dataset="$1"
 root="$(cd "$(dirname "$0")/.." && pwd)"

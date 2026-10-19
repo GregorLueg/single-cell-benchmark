@@ -126,7 +126,7 @@ scaling_bars <- function(labels, title, file) {
       title = title,
       subtitle = "Under a 24 GB, 8 core cap. One repeat per run; a run that died shows where.",
       caption = paste(
-        "Faded: bixverse GPU (wgpu) and MLX, native on Metal without a memory cap; their peak is process RSS.",
+        "Faded: bixverse GPU (wgpu) and MLX, native on Metal without a memory cap; their peak is the macOS memory footprint.",
         "Scanpy dask has no DGE step. A run that timed out in tSNE keeps its time without tSNE.",
         sep = "\n"
       ),

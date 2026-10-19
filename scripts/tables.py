@@ -59,7 +59,9 @@ def load_run(d):
     if (d / "steps.csv").stat().st_size > 20:
         for r in pl.read_csv(d / "steps.csv").iter_rows(named=True):
             steps[r["step"]] = r["end"] - r["start"]
-    peak = mem["anon_bytes"].max() / GB
+    # native runs: /usr/bin/time -l's peak footprint; their sampled RSS counts the mapped store
+    fp = re.search(r"^\s*(\d+)\s+peak memory footprint", log, re.M)
+    peak = (int(fp.group(1)) if fp else mem["anon_bytes"].max()) / GB
     swap = mem["swap_bytes"].max() / GB
     failed_at = None
     if status not in (0, None):

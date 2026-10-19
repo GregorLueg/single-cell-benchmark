@@ -6,9 +6,13 @@
   `--cpus=8 --memory=24g`. The VM itself has ~23.4 GB plus ~4 GB swap, and that
   is the limit that actually bites. Slightly stricter than an Air.
 - **GPU**: Docker has no Metal access, so the bixverse GPU rows run natively on
-  macOS (`scripts/run_native.sh`). No memory cap there, and its peak is process
-  RSS including resident memory-mapped files. Not comparable to the Docker
-  numbers, and its disk I/O skips the VM, so its load is faster too. Two
+  macOS (`scripts/run_native.sh`). No memory cap there. Its peak is the
+  process's peak memory footprint from `/usr/bin/time -l`: dirty anonymous
+  and compressed memory plus the process's Metal allocations, but not clean
+  file-backed pages, so like cgroup anon it does not charge the mapped
+  bixverse store. Max RSS, which does, is about twice as high (1M simulation:
+  19.5 against 10.3 GB on wgpu). Close to the Docker numbers but not the same
+  metric, and its disk I/O skips the VM, so its load is faster too. Two
   backends of bixverse.gpu: wgpu (the GPU row) and MLX (the MLX row).
 - **MLX**: experimental, and not what a user gets from a plain install. The
   MLX backend is opt-in at build time: it needs mlx-c installed as a system
