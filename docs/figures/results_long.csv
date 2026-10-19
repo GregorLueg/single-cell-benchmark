@@ -330,3 +330,363 @@ Seurat BPCells,parse_full,684932,umap,450.70,9.55,ok
 Seurat BPCells,parse_full,684932,dge,1348.12,9.55,ok
 Seurat BPCells,parse_full,684932,tsne_default,1530.90,9.55,ok
 Seurat BPCells,parse_full,684932,tsne_fft,228.86,9.55,ok
+bixverse mtx,splat_100k,96342,load,10.29,1.54,ok
+bixverse mtx,splat_100k,96342,qc,0.11,1.54,ok
+bixverse mtx,splat_100k,96342,hvg,0.35,1.54,ok
+bixverse mtx,splat_100k,96342,pca,1.49,1.54,ok
+bixverse mtx,splat_100k,96342,harmony,0.51,1.54,ok
+bixverse mtx,splat_100k,96342,knn_snn,2.75,1.54,ok
+bixverse mtx,splat_100k,96342,cluster,0.92,1.54,ok
+bixverse mtx,splat_100k,96342,cluster_fast,1.01,1.54,ok
+bixverse mtx,splat_100k,96342,umap,3.79,1.54,ok
+bixverse mtx,splat_100k,96342,dge,0.52,1.54,ok
+bixverse mtx,splat_100k,96342,tsne_default,41.38,1.54,ok
+bixverse mtx,splat_100k,96342,tsne_fft,14.88,1.54,ok
+bixverse mtx,splat_100k,96342,tsne_quick,11.07,1.54,ok
+bixverse h5ad,splat_100k,96342,load,5.81,1.72,ok
+bixverse h5ad,splat_100k,96342,qc,0.12,1.72,ok
+bixverse h5ad,splat_100k,96342,hvg,0.31,1.72,ok
+bixverse h5ad,splat_100k,96342,pca,1.50,1.72,ok
+bixverse h5ad,splat_100k,96342,harmony,0.51,1.72,ok
+bixverse h5ad,splat_100k,96342,knn_snn,2.85,1.72,ok
+bixverse h5ad,splat_100k,96342,cluster,1.17,1.72,ok
+bixverse h5ad,splat_100k,96342,cluster_fast,1.00,1.72,ok
+bixverse h5ad,splat_100k,96342,umap,3.65,1.72,ok
+bixverse h5ad,splat_100k,96342,dge,0.52,1.72,ok
+bixverse h5ad,splat_100k,96342,tsne_default,42.08,1.72,ok
+bixverse h5ad,splat_100k,96342,tsne_fft,15.04,1.72,ok
+bixverse h5ad,splat_100k,96342,tsne_quick,11.10,1.72,ok
+bixverse GPU*,splat_100k,96342,load,5.00,3.94,ok
+bixverse GPU*,splat_100k,96342,qc,0.15,3.94,ok
+bixverse GPU*,splat_100k,96342,hvg,0.34,3.94,ok
+bixverse GPU*,splat_100k,96342,pca,0.57,3.94,ok
+bixverse GPU*,splat_100k,96342,harmony,0.44,3.94,ok
+bixverse GPU*,splat_100k,96342,knn_snn,1.71,3.94,ok
+bixverse GPU*,splat_100k,96342,cluster,0.80,3.94,ok
+bixverse GPU*,splat_100k,96342,cluster_fast,0.41,3.94,ok
+bixverse GPU*,splat_100k,96342,umap,0.91,3.94,ok
+bixverse GPU*,splat_100k,96342,dge,0.49,3.94,ok
+bixverse GPU*,splat_100k,96342,tsne_default,34.74,3.94,ok
+bixverse GPU*,splat_100k,96342,tsne_fft,3.20,3.94,ok
+bixverse GPU*,splat_100k,96342,tsne_quick,3.82,3.94,ok
+bixverse MLX*,splat_100k,96342,load,5.00,3.95,ok
+bixverse MLX*,splat_100k,96342,qc,0.14,3.95,ok
+bixverse MLX*,splat_100k,96342,hvg,0.25,3.95,ok
+bixverse MLX*,splat_100k,96342,pca,0.55,3.95,ok
+bixverse MLX*,splat_100k,96342,harmony,0.26,3.95,ok
+bixverse MLX*,splat_100k,96342,knn_snn,1.47,3.95,ok
+bixverse MLX*,splat_100k,96342,cluster,0.78,3.95,ok
+bixverse MLX*,splat_100k,96342,cluster_fast,0.36,3.95,ok
+bixverse MLX*,splat_100k,96342,umap,0.74,3.95,ok
+bixverse MLX*,splat_100k,96342,dge,0.48,3.95,ok
+bixverse MLX*,splat_100k,96342,tsne_default,34.64,3.95,ok
+bixverse MLX*,splat_100k,96342,tsne_fft,2.80,3.95,ok
+bixverse MLX*,splat_100k,96342,tsne_quick,3.45,3.95,ok
+Scanpy mtx,splat_100k,96342,load,17.76,4.76,ok
+Scanpy mtx,splat_100k,96342,qc,0.55,4.76,ok
+Scanpy mtx,splat_100k,96342,normalise,2.00,4.76,ok
+Scanpy mtx,splat_100k,96342,hvg,1.37,4.76,ok
+Scanpy mtx,splat_100k,96342,pca,2.16,4.76,ok
+Scanpy mtx,splat_100k,96342,harmony,0.52,4.76,ok
+Scanpy mtx,splat_100k,96342,knn_snn,26.94,4.76,ok
+Scanpy mtx,splat_100k,96342,cluster,2.98,4.76,ok
+Scanpy mtx,splat_100k,96342,umap,38.97,4.76,ok
+Scanpy mtx,splat_100k,96342,dge,47.44,4.76,ok
+Scanpy mtx,splat_100k,96342,tsne_default,161.68,4.76,ok
+Scanpy mtx,splat_100k,96342,tsne_fft,37.78,4.76,ok
+Scanpy h5ad,splat_100k,96342,load,2.28,2.64,ok
+Scanpy h5ad,splat_100k,96342,qc,0.57,2.64,ok
+Scanpy h5ad,splat_100k,96342,normalise,1.88,2.64,ok
+Scanpy h5ad,splat_100k,96342,hvg,1.37,2.64,ok
+Scanpy h5ad,splat_100k,96342,pca,2.16,2.64,ok
+Scanpy h5ad,splat_100k,96342,harmony,0.51,2.64,ok
+Scanpy h5ad,splat_100k,96342,knn_snn,26.54,2.64,ok
+Scanpy h5ad,splat_100k,96342,cluster,2.70,2.64,ok
+Scanpy h5ad,splat_100k,96342,umap,37.73,2.64,ok
+Scanpy h5ad,splat_100k,96342,dge,46.15,2.64,ok
+Scanpy h5ad,splat_100k,96342,tsne_default,167.10,2.64,ok
+Scanpy h5ad,splat_100k,96342,tsne_fft,38.36,2.64,ok
+Scanpy dask,splat_100k,96342,load,5.10,1.77,ok
+Scanpy dask,splat_100k,96342,qc,0.89,1.77,ok
+Scanpy dask,splat_100k,96342,normalise,0.00,1.77,ok
+Scanpy dask,splat_100k,96342,hvg,1.45,1.77,ok
+Scanpy dask,splat_100k,96342,pca,3.93,1.77,ok
+Scanpy dask,splat_100k,96342,harmony,0.45,1.77,ok
+Scanpy dask,splat_100k,96342,knn_snn,24.24,1.77,ok
+Scanpy dask,splat_100k,96342,cluster,2.74,1.77,ok
+Scanpy dask,splat_100k,96342,umap,37.75,1.77,ok
+Scanpy dask,splat_100k,96342,tsne_default,154.69,1.77,ok
+Scanpy dask,splat_100k,96342,tsne_fft,35.84,1.77,ok
+scrapper mtx,splat_100k,96342,load,34.40,5.59,ok
+scrapper mtx,splat_100k,96342,qc,0.46,5.59,ok
+scrapper mtx,splat_100k,96342,normalise,0.10,5.59,ok
+scrapper mtx,splat_100k,96342,hvg,0.11,5.59,ok
+scrapper mtx,splat_100k,96342,pca,1.82,5.59,ok
+scrapper mtx,splat_100k,96342,harmony,12.21,5.59,ok
+scrapper mtx,splat_100k,96342,knn_snn,6.43,5.59,ok
+scrapper mtx,splat_100k,96342,cluster,13.20,5.59,ok
+scrapper mtx,splat_100k,96342,cluster_fast,17.54,5.59,ok
+scrapper mtx,splat_100k,96342,umap,43.09,5.59,ok
+scrapper mtx,splat_100k,96342,dge,3.43,5.59,ok
+scrapper mtx,splat_100k,96342,tsne_quick,25.11,5.59,ok
+scrapper h5ad,splat_100k,96342,load,6.08,5.60,ok
+scrapper h5ad,splat_100k,96342,qc,0.45,5.60,ok
+scrapper h5ad,splat_100k,96342,normalise,0.10,5.60,ok
+scrapper h5ad,splat_100k,96342,hvg,0.10,5.60,ok
+scrapper h5ad,splat_100k,96342,pca,1.80,5.60,ok
+scrapper h5ad,splat_100k,96342,harmony,14.40,5.60,ok
+scrapper h5ad,splat_100k,96342,knn_snn,6.38,5.60,ok
+scrapper h5ad,splat_100k,96342,cluster,13.94,5.60,ok
+scrapper h5ad,splat_100k,96342,cluster_fast,17.50,5.60,ok
+scrapper h5ad,splat_100k,96342,umap,43.63,5.60,ok
+scrapper h5ad,splat_100k,96342,dge,3.51,5.60,ok
+scrapper h5ad,splat_100k,96342,tsne_quick,24.76,5.60,ok
+scrapper HDF5,splat_100k,96342,load,47.10,3.36,ok
+scrapper HDF5,splat_100k,96342,qc,1.37,3.36,ok
+scrapper HDF5,splat_100k,96342,normalise,0.01,3.36,ok
+scrapper HDF5,splat_100k,96342,hvg,3.78,3.36,ok
+scrapper HDF5,splat_100k,96342,pca,5.14,3.36,ok
+scrapper HDF5,splat_100k,96342,harmony,14.33,3.36,ok
+scrapper HDF5,splat_100k,96342,knn_snn,6.75,3.36,ok
+scrapper HDF5,splat_100k,96342,cluster,12.64,3.36,ok
+scrapper HDF5,splat_100k,96342,cluster_fast,17.34,3.36,ok
+scrapper HDF5,splat_100k,96342,umap,43.01,3.36,ok
+scrapper HDF5,splat_100k,96342,dge,79.30,3.36,ok
+scrapper HDF5,splat_100k,96342,tsne_quick,23.49,3.36,ok
+Seurat std mtx,splat_100k,96342,load,37.89,8.86,ok
+Seurat std mtx,splat_100k,96342,qc,2.56,8.86,ok
+Seurat std mtx,splat_100k,96342,normalise,0.17,8.86,ok
+Seurat std mtx,splat_100k,96342,hvg,3.73,8.86,ok
+Seurat std mtx,splat_100k,96342,pca,10.55,8.86,ok
+Seurat std mtx,splat_100k,96342,harmony,13.35,8.86,ok
+Seurat std mtx,splat_100k,96342,knn_snn,7.48,8.86,ok
+Seurat std mtx,splat_100k,96342,cluster,18.99,8.86,ok
+Seurat std mtx,splat_100k,96342,umap,45.73,8.86,ok
+Seurat std mtx,splat_100k,96342,dge,11.78,8.86,ok
+Seurat std mtx,splat_100k,96342,tsne_default,125.11,8.86,ok
+Seurat std mtx,splat_100k,96342,tsne_fft,31.63,8.86,ok
+Seurat std h5ad,splat_100k,96342,load,9.44,8.89,ok
+Seurat std h5ad,splat_100k,96342,qc,2.73,8.89,ok
+Seurat std h5ad,splat_100k,96342,normalise,0.17,8.89,ok
+Seurat std h5ad,splat_100k,96342,hvg,3.76,8.89,ok
+Seurat std h5ad,splat_100k,96342,pca,10.56,8.89,ok
+Seurat std h5ad,splat_100k,96342,harmony,13.28,8.89,ok
+Seurat std h5ad,splat_100k,96342,knn_snn,7.59,8.89,ok
+Seurat std h5ad,splat_100k,96342,cluster,19.27,8.89,ok
+Seurat std h5ad,splat_100k,96342,umap,46.26,8.89,ok
+Seurat std h5ad,splat_100k,96342,dge,10.79,8.89,ok
+Seurat std h5ad,splat_100k,96342,tsne_default,122.40,8.89,ok
+Seurat std h5ad,splat_100k,96342,tsne_fft,31.62,8.89,ok
+Seurat BPCells,splat_100k,96342,load,13.29,2.57,ok
+Seurat BPCells,splat_100k,96342,qc,1.12,2.57,ok
+Seurat BPCells,splat_100k,96342,normalise,0.41,2.57,ok
+Seurat BPCells,splat_100k,96342,hvg,2.92,2.57,ok
+Seurat BPCells,splat_100k,96342,pca,58.25,2.57,ok
+Seurat BPCells,splat_100k,96342,harmony,13.82,2.57,ok
+Seurat BPCells,splat_100k,96342,knn_snn,7.77,2.57,ok
+Seurat BPCells,splat_100k,96342,cluster,20.70,2.57,ok
+Seurat BPCells,splat_100k,96342,umap,46.27,2.57,ok
+Seurat BPCells,splat_100k,96342,dge,88.73,2.57,ok
+Seurat BPCells,splat_100k,96342,tsne_default,146.66,2.57,ok
+Seurat BPCells,splat_100k,96342,tsne_fft,32.90,2.57,ok
+bixverse mtx,splat_500k,482409,load,44.16,5.70,ok
+bixverse mtx,splat_500k,482409,qc,0.35,5.70,ok
+bixverse mtx,splat_500k,482409,hvg,0.74,5.70,ok
+bixverse mtx,splat_500k,482409,pca,3.63,5.70,ok
+bixverse mtx,splat_500k,482409,harmony,1.68,5.70,ok
+bixverse mtx,splat_500k,482409,knn_snn,13.68,5.70,ok
+bixverse mtx,splat_500k,482409,cluster,4.04,5.70,ok
+bixverse mtx,splat_500k,482409,cluster_fast,14.09,5.70,ok
+bixverse mtx,splat_500k,482409,umap,33.20,5.70,ok
+bixverse mtx,splat_500k,482409,dge,1.82,5.70,ok
+bixverse mtx,splat_500k,482409,tsne_default,246.51,5.70,ok
+bixverse mtx,splat_500k,482409,tsne_fft,63.50,5.70,ok
+bixverse mtx,splat_500k,482409,tsne_quick,41.06,5.70,ok
+bixverse h5ad,splat_500k,482409,load,27.82,5.80,ok
+bixverse h5ad,splat_500k,482409,qc,0.21,5.80,ok
+bixverse h5ad,splat_500k,482409,hvg,0.78,5.80,ok
+bixverse h5ad,splat_500k,482409,pca,3.75,5.80,ok
+bixverse h5ad,splat_500k,482409,harmony,1.65,5.80,ok
+bixverse h5ad,splat_500k,482409,knn_snn,13.69,5.80,ok
+bixverse h5ad,splat_500k,482409,cluster,3.97,5.80,ok
+bixverse h5ad,splat_500k,482409,cluster_fast,14.86,5.80,ok
+bixverse h5ad,splat_500k,482409,umap,33.44,5.80,ok
+bixverse h5ad,splat_500k,482409,dge,1.87,5.80,ok
+bixverse h5ad,splat_500k,482409,tsne_default,244.86,5.80,ok
+bixverse h5ad,splat_500k,482409,tsne_fft,60.92,5.80,ok
+bixverse h5ad,splat_500k,482409,tsne_quick,41.39,5.80,ok
+bixverse GPU*,splat_500k,482409,load,25.48,11.15,ok
+bixverse GPU*,splat_500k,482409,qc,0.29,11.15,ok
+bixverse GPU*,splat_500k,482409,hvg,0.66,11.15,ok
+bixverse GPU*,splat_500k,482409,pca,1.29,11.15,ok
+bixverse GPU*,splat_500k,482409,harmony,1.12,11.15,ok
+bixverse GPU*,splat_500k,482409,knn_snn,7.28,11.15,ok
+bixverse GPU*,splat_500k,482409,cluster,3.26,11.15,ok
+bixverse GPU*,splat_500k,482409,cluster_fast,3.09,11.15,ok
+bixverse GPU*,splat_500k,482409,umap,3.83,11.15,ok
+bixverse GPU*,splat_500k,482409,dge,1.73,11.15,ok
+bixverse GPU*,splat_500k,482409,tsne_default,216.63,11.15,ok
+bixverse GPU*,splat_500k,482409,tsne_fft,13.28,11.15,ok
+bixverse GPU*,splat_500k,482409,tsne_quick,25.17,11.15,ok
+bixverse MLX*,splat_500k,482409,load,22.87,11.42,ok
+bixverse MLX*,splat_500k,482409,qc,0.29,11.42,ok
+bixverse MLX*,splat_500k,482409,hvg,0.62,11.42,ok
+bixverse MLX*,splat_500k,482409,pca,1.68,11.42,ok
+bixverse MLX*,splat_500k,482409,harmony,0.63,11.42,ok
+bixverse MLX*,splat_500k,482409,knn_snn,6.61,11.42,ok
+bixverse MLX*,splat_500k,482409,cluster,3.23,11.42,ok
+bixverse MLX*,splat_500k,482409,cluster_fast,2.49,11.42,ok
+bixverse MLX*,splat_500k,482409,umap,3.50,11.42,ok
+bixverse MLX*,splat_500k,482409,dge,1.67,11.42,ok
+bixverse MLX*,splat_500k,482409,tsne_default,210.97,11.42,ok
+bixverse MLX*,splat_500k,482409,tsne_fft,19.91,11.42,ok
+bixverse MLX*,splat_500k,482409,tsne_quick,22.82,11.42,ok
+Scanpy mtx,splat_500k,482409,load,,22.05,OOM
+Scanpy h5ad,splat_500k,482409,load,11.40,14.15,ok
+Scanpy h5ad,splat_500k,482409,qc,2.77,14.15,ok
+Scanpy h5ad,splat_500k,482409,normalise,3.56,14.15,ok
+Scanpy h5ad,splat_500k,482409,hvg,3.15,14.15,ok
+Scanpy h5ad,splat_500k,482409,pca,10.38,14.15,ok
+Scanpy h5ad,splat_500k,482409,harmony,2.15,14.15,ok
+Scanpy h5ad,splat_500k,482409,knn_snn,32.68,14.15,ok
+Scanpy h5ad,splat_500k,482409,cluster,19.52,14.15,ok
+Scanpy h5ad,splat_500k,482409,umap,226.19,14.15,ok
+Scanpy h5ad,splat_500k,482409,dge,454.22,14.15,ok
+Scanpy h5ad,splat_500k,482409,tsne_default,1315.18,14.15,ok
+Scanpy h5ad,splat_500k,482409,tsne_fft,152.74,14.15,ok
+Scanpy dask,splat_500k,482409,load,20.68,7.77,ok
+Scanpy dask,splat_500k,482409,qc,3.75,7.77,ok
+Scanpy dask,splat_500k,482409,normalise,0.00,7.77,ok
+Scanpy dask,splat_500k,482409,hvg,4.45,7.77,ok
+Scanpy dask,splat_500k,482409,pca,10.75,7.77,ok
+Scanpy dask,splat_500k,482409,harmony,2.05,7.77,ok
+Scanpy dask,splat_500k,482409,knn_snn,29.49,7.77,ok
+Scanpy dask,splat_500k,482409,cluster,19.81,7.77,ok
+Scanpy dask,splat_500k,482409,umap,226.23,7.77,ok
+Scanpy dask,splat_500k,482409,tsne_default,1319.37,7.77,ok
+Scanpy dask,splat_500k,482409,tsne_fft,155.60,7.77,ok
+scrapper mtx,splat_500k,482409,load,204.75,22.56,ok
+scrapper mtx,splat_500k,482409,qc,2.17,22.56,ok
+scrapper mtx,splat_500k,482409,normalise,0.44,22.56,ok
+scrapper mtx,splat_500k,482409,hvg,0.49,22.56,ok
+scrapper mtx,splat_500k,482409,pca,13.60,22.56,ok
+scrapper mtx,splat_500k,482409,harmony,99.96,22.56,ok
+scrapper mtx,splat_500k,482409,knn_snn,39.77,22.56,ok
+scrapper mtx,splat_500k,482409,cluster,115.72,22.56,ok
+scrapper mtx,splat_500k,482409,cluster_fast,196.07,22.56,ok
+scrapper mtx,splat_500k,482409,umap,212.54,22.56,ok
+scrapper mtx,splat_500k,482409,dge,22.18,22.56,ok
+scrapper mtx,splat_500k,482409,tsne_quick,154.83,22.56,ok
+scrapper h5ad,splat_500k,482409,load,23.00,22.67,ok
+scrapper h5ad,splat_500k,482409,qc,2.19,22.67,ok
+scrapper h5ad,splat_500k,482409,normalise,0.44,22.67,ok
+scrapper h5ad,splat_500k,482409,hvg,0.47,22.67,ok
+scrapper h5ad,splat_500k,482409,pca,13.70,22.67,ok
+scrapper h5ad,splat_500k,482409,harmony,84.03,22.67,ok
+scrapper h5ad,splat_500k,482409,knn_snn,39.63,22.67,ok
+scrapper h5ad,splat_500k,482409,cluster,109.79,22.67,ok
+scrapper h5ad,splat_500k,482409,cluster_fast,194.21,22.67,ok
+scrapper h5ad,splat_500k,482409,umap,219.47,22.67,ok
+scrapper h5ad,splat_500k,482409,dge,22.18,22.67,ok
+scrapper h5ad,splat_500k,482409,tsne_quick,152.09,22.67,ok
+Seurat std mtx,splat_500k,482409,load,224.78,22.78,ok
+Seurat std mtx,splat_500k,482409,qc,13.56,22.78,ok
+Seurat std mtx,splat_500k,482409,normalise,0.87,22.78,ok
+Seurat std mtx,splat_500k,482409,hvg,19.37,22.78,ok
+Seurat std mtx,splat_500k,482409,pca,,22.78,OOM
+Seurat std h5ad,splat_500k,482409,load,41.08,22.81,ok
+Seurat std h5ad,splat_500k,482409,qc,13.43,22.81,ok
+Seurat std h5ad,splat_500k,482409,normalise,0.85,22.81,ok
+Seurat std h5ad,splat_500k,482409,hvg,19.38,22.81,ok
+Seurat std h5ad,splat_500k,482409,pca,,22.81,OOM
+Seurat BPCells,splat_500k,482409,load,66.09,6.54,ok
+Seurat BPCells,splat_500k,482409,qc,4.02,6.54,ok
+Seurat BPCells,splat_500k,482409,normalise,1.93,6.54,ok
+Seurat BPCells,splat_500k,482409,hvg,12.73,6.54,ok
+Seurat BPCells,splat_500k,482409,pca,271.21,6.54,ok
+Seurat BPCells,splat_500k,482409,harmony,87.75,6.54,ok
+Seurat BPCells,splat_500k,482409,knn_snn,45.30,6.54,ok
+Seurat BPCells,splat_500k,482409,cluster,131.77,6.54,ok
+Seurat BPCells,splat_500k,482409,umap,255.53,6.54,ok
+Seurat BPCells,splat_500k,482409,dge,404.34,6.54,ok
+Seurat BPCells,splat_500k,482409,tsne_default,1404.08,6.54,ok
+Seurat BPCells,splat_500k,482409,tsne_fft,156.76,6.54,ok
+bixverse mtx,splat_1m,964763,load,96.81,11.50,ok
+bixverse mtx,splat_1m,964763,qc,0.52,11.50,ok
+bixverse mtx,splat_1m,964763,hvg,1.36,11.50,ok
+bixverse mtx,splat_1m,964763,pca,6.57,11.50,ok
+bixverse mtx,splat_1m,964763,harmony,3.09,11.50,ok
+bixverse mtx,splat_1m,964763,knn_snn,28.71,11.50,ok
+bixverse mtx,splat_1m,964763,cluster,8.03,11.50,ok
+bixverse mtx,splat_1m,964763,cluster_fast,44.66,11.50,ok
+bixverse mtx,splat_1m,964763,umap,79.15,11.50,ok
+bixverse mtx,splat_1m,964763,dge,3.21,11.50,ok
+bixverse mtx,splat_1m,964763,tsne_default,640.88,11.50,ok
+bixverse mtx,splat_1m,964763,tsne_fft,195.40,11.50,ok
+bixverse mtx,splat_1m,964763,tsne_quick,135.98,11.50,ok
+bixverse h5ad,splat_1m,964763,load,72.48,10.51,ok
+bixverse h5ad,splat_1m,964763,qc,1.19,10.51,ok
+bixverse h5ad,splat_1m,964763,hvg,1.57,10.51,ok
+bixverse h5ad,splat_1m,964763,pca,6.79,10.51,ok
+bixverse h5ad,splat_1m,964763,harmony,3.03,10.51,ok
+bixverse h5ad,splat_1m,964763,knn_snn,29.14,10.51,ok
+bixverse h5ad,splat_1m,964763,cluster,8.36,10.51,ok
+bixverse h5ad,splat_1m,964763,cluster_fast,45.70,10.51,ok
+bixverse h5ad,splat_1m,964763,umap,78.27,10.51,ok
+bixverse h5ad,splat_1m,964763,dge,3.29,10.51,ok
+bixverse h5ad,splat_1m,964763,tsne_default,643.47,10.51,ok
+bixverse h5ad,splat_1m,964763,tsne_fft,193.16,10.51,ok
+bixverse h5ad,splat_1m,964763,tsne_quick,133.65,10.51,ok
+bixverse GPU*,splat_1m,964763,load,57.14,18.44,ok
+bixverse GPU*,splat_1m,964763,qc,0.42,18.44,ok
+bixverse GPU*,splat_1m,964763,hvg,1.18,18.44,ok
+bixverse GPU*,splat_1m,964763,pca,2.31,18.44,ok
+bixverse GPU*,splat_1m,964763,harmony,1.92,18.44,ok
+bixverse GPU*,splat_1m,964763,knn_snn,14.88,18.44,ok
+bixverse GPU*,splat_1m,964763,cluster,6.50,18.44,ok
+bixverse GPU*,splat_1m,964763,cluster_fast,8.01,18.44,ok
+bixverse GPU*,splat_1m,964763,umap,10.34,18.44,ok
+bixverse GPU*,splat_1m,964763,dge,5.38,18.44,ok
+bixverse GPU*,splat_1m,964763,tsne_default,525.41,18.44,ok
+bixverse GPU*,splat_1m,964763,tsne_fft,29.15,18.44,ok
+bixverse GPU*,splat_1m,964763,tsne_quick,71.64,18.44,ok
+bixverse MLX*,splat_1m,964763,load,43.60,18.54,ok
+bixverse MLX*,splat_1m,964763,qc,0.41,18.54,ok
+bixverse MLX*,splat_1m,964763,hvg,1.08,18.54,ok
+bixverse MLX*,splat_1m,964763,pca,3.15,18.54,ok
+bixverse MLX*,splat_1m,964763,harmony,1.20,18.54,ok
+bixverse MLX*,splat_1m,964763,knn_snn,13.17,18.54,ok
+bixverse MLX*,splat_1m,964763,cluster,6.16,18.54,ok
+bixverse MLX*,splat_1m,964763,cluster_fast,6.20,18.54,ok
+bixverse MLX*,splat_1m,964763,umap,9.75,18.54,ok
+bixverse MLX*,splat_1m,964763,dge,2.87,18.54,ok
+bixverse MLX*,splat_1m,964763,tsne_default,525.52,18.54,ok
+bixverse MLX*,splat_1m,964763,tsne_fft,45.06,18.54,ok
+bixverse MLX*,splat_1m,964763,tsne_quick,72.81,18.54,ok
+Scanpy mtx,splat_1m,964763,load,,22.30,OOM
+Scanpy h5ad,splat_1m,964763,load,,22.00,OOM
+Scanpy dask,splat_1m,964763,load,39.29,10.83,ok
+Scanpy dask,splat_1m,964763,qc,7.20,10.83,ok
+Scanpy dask,splat_1m,964763,normalise,0.00,10.83,ok
+Scanpy dask,splat_1m,964763,hvg,8.23,10.83,ok
+Scanpy dask,splat_1m,964763,pca,18.16,10.83,ok
+Scanpy dask,splat_1m,964763,harmony,4.24,10.83,ok
+Scanpy dask,splat_1m,964763,knn_snn,39.60,10.83,ok
+Scanpy dask,splat_1m,964763,cluster,46.78,10.83,ok
+Scanpy dask,splat_1m,964763,umap,555.35,10.83,ok
+Scanpy dask,splat_1m,964763,tsne_default,,10.83,TIMEOUT
+scrapper mtx,splat_1m,964763,load,,22.70,OOM
+scrapper h5ad,splat_1m,964763,load,,22.79,OOM
+Seurat std mtx,splat_1m,964763,load,,22.83,OOM
+Seurat std h5ad,splat_1m,964763,load,,22.84,OOM
+Seurat BPCells,splat_1m,964763,load,132.55,9.48,ok
+Seurat BPCells,splat_1m,964763,qc,9.78,9.48,ok
+Seurat BPCells,splat_1m,964763,normalise,4.26,9.48,ok
+Seurat BPCells,splat_1m,964763,hvg,24.75,9.48,ok
+Seurat BPCells,splat_1m,964763,pca,467.87,9.48,ok
+Seurat BPCells,splat_1m,964763,harmony,178.57,9.48,ok
+Seurat BPCells,splat_1m,964763,knn_snn,99.74,9.48,ok
+Seurat BPCells,splat_1m,964763,cluster,367.37,9.48,ok
+Seurat BPCells,splat_1m,964763,umap,554.72,9.48,ok
+Seurat BPCells,splat_1m,964763,dge,822.03,9.48,ok
+Seurat BPCells,splat_1m,964763,tsne_default,,9.48,TIMEOUT

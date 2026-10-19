@@ -28,6 +28,8 @@ fitted to the PBMC data ([methods](methods.md#data)). Stack: bixverse 0.8.0,
 bixverse.gpu 0.5.0, manifoldsR 0.5.0, Scanpy 1.12.4, scrapper 1.6.3, Seurat
 5.6.0.
 
+![Wall time per step on the simulation, scaled per step](figures/steps_heatmap_splat.png)
+
 ### 100k cells (96,342 after QC)
 
 | step | bixverse mtx | bixverse h5ad | bixverse GPU* | bixverse MLX* | Scanpy mtx | Scanpy h5ad | Scanpy dask | scrapper mtx | scrapper h5ad | scrapper HDF5 | Seurat std mtx | Seurat std h5ad | Seurat BPCells |
@@ -234,7 +236,7 @@ the DGE groups are the 24 samples.
 
 ![Scaling: time and peak memory against cells](figures/scaling.png)
 
-![Wall time per step for every framework and size](figures/steps_heatmap.png)
+![Wall time per step on PBMC, scaled per step](figures/steps_heatmap_pbmc.png)
 
 ### 100k cells (69,412 after QC)
 

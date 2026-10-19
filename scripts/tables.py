@@ -198,7 +198,8 @@ def summary(root, kind):
 
 
 def long(root):
-    sizes = {"parse_100k": 69412, "parse_500k": 346259, "parse_full": 684932}
+    sizes = {"parse_100k": 69412, "parse_500k": 346259, "parse_full": 684932,
+             "splat_100k": 96342, "splat_500k": 482409, "splat_1m": 964763}
     mem_rows = ["column,size,cells,step,seconds,peak_gb,status"]
     for ds, cells in sizes.items():
         for col, (name, steps, peak, _, failed) in collect(root / ds).items():

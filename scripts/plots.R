@@ -10,7 +10,8 @@ suppressPackageStartupMessages({
 })
 
 fig_dir <- "docs/figures"
-dt <- fread(file.path(fig_dir, "results_long.csv"))
+dt_all <- fread(file.path(fig_dir, "results_long.csv"))
+dt <- dt_all[startsWith(size, "parse")]
 
 # palette: validated categorical slots 1-4, one per framework family
 family_cols <- c(
@@ -173,46 +174,89 @@ fig1 <- (p_no_tsne | p_total | p_mem) +
 ggsave(file.path(fig_dir, "scaling.png"), fig1, width = 13, height = 5, dpi = 200, bg = surface)
 ggsave(file.path(fig_dir, "scaling.pdf"), fig1, width = 13, height = 5, bg = surface)
 
-#### figure 2: per-step heatmap -------------------------------------------------
+#### figure 2: per-step heatmap, each step scaled across frameworks -----------
 
-hm <- copy(dt)
-hm[, size_label := factor(size_labels[size], levels = size_labels)]
-hm[, lab := fcase(
-  status != "ok", sub(" ", "\n", status),
-  seconds < 10, sprintf("%.1f", seconds),
-  default = format(round(seconds), big.mark = ",", trim = TRUE)
-)]
-hm[, log_s := log10(pmax(seconds, 0.1))]
-hm[, dark_tile := !is.na(log_s) & log_s > 1.9]
+# heatmap0 without its near-black first slot, which marks missing tiles instead
+step_ramp <- c("#005F73", "#0A9396", "#94D2BD", "#E9D8A6", "#EE9B00", "#CA6702", "#AE2012", "#9B2226")
+missing_fill <- "#001219"
+no_step <- list(
+  bixverse = "normalise",
+  Scanpy = c("cluster_fast", "tsne_quick"),
+  Seurat = c("cluster_fast", "tsne_quick"),
+  scrapper = c("tsne_default", "tsne_fft")
+)
+total_step <- "total (no tSNE)"
 
-fig2 <- ggplot(hm, aes(step, factor(column, levels = rev(column_order)))) +
-  geom_tile(aes(fill = log_s), colour = surface, linewidth = 0.8) +
-  geom_tile(data = hm[status != "ok"], fill = "#d9d8d4", colour = surface, linewidth = 0.8) +
-  geom_text(aes(label = lab, colour = dark_tile), size = 2.4, lineheight = 0.85, show.legend = FALSE) +
-  scale_fill_gradientn(
-    colours = seq_ramp,
-    na.value = "#d9d8d4",
-    breaks = log10(c(1, 10, 100, 1000)),
-    labels = c("1 s", "10 s", "100 s", "1,000 s"),
-    name = "wall time"
-  ) +
-  scale_colour_manual(values = c(`FALSE` = ink, `TRUE` = "#ffffff")) +
-  facet_wrap(~size_label, ncol = 1) +
-  labs(
-    title = "Wall time per step",
-    subtitle = "Grey: the step where the run died. Blank: step not available or not reached.",
-    caption = "bixverse CPU tSNE builds its kNN with IVF at 500k and full (kmknn at 100k).",
-    x = NULL, y = NULL
-  ) +
-  theme_bench() +
-  theme(
-    panel.grid.major = element_blank(),
-    axis.text.x = element_text(angle = 35, hjust = 1),
-    legend.key.width = unit(1.6, "cm")
-  )
+step_heatmap <- function(labels, title, file, height) {
+  d <- dt_all[size %in% names(labels)]
+  d[, family := sub(" .*", "", column)]
+  # a run that died in a tSNE step still has a total without tSNE
+  tot <- d[, {
+    died <- any(status != "ok" & !grepl("^tsne", step))
+    .(
+      step = total_step,
+      seconds = if (died) NA_real_ else sum(seconds[!grepl("^tsne|^cluster_fast", step)], na.rm = TRUE),
+      status = if (died) "failed" else "ok"
+    )
+  }, by = .(column, size, family)]
+  d <- rbind(d[, .(column, size, family, step, seconds, status)], tot)
+  grid <- unique(d[, .(column, size, family)])[, .(step = c(step_order, total_step)), by = .(column, size, family)]
+  d <- merge(grid, d, by = c("column", "size", "family", "step"), all.x = TRUE)
+  d[, lab := fcase(
+    mapply(function(f, s) s %in% no_step[[f]], family, step), "n/a",
+    !is.na(status) & status != "ok", sub(" ", "\n", status),
+    is.na(seconds), "-",
+    seconds < 10, sprintf("%.1f", seconds),
+    default = format(round(seconds), big.mark = ",", trim = TRUE)
+  )]
+  d[!is.na(status) & status != "ok", seconds := NA_real_]
+  # 0 = fastest framework on that step, 1 = slowest, linear in seconds
+  d[, scaled := {
+    r <- suppressWarnings(range(seconds, na.rm = TRUE))
+    if (all(is.na(seconds))) NA_real_ else if (r[1] == r[2]) 0 else (seconds - r[1]) / (r[2] - r[1])
+  }, by = .(size, step)]
+  d <- d[, if (any(!is.na(seconds))) .SD, by = .(size, step)]
+  d[, size_label := factor(labels[size], levels = labels)]
+  d[, column := factor(column, levels = column_order)]
+  d[, step := factor(step, levels = rev(c(step_order, total_step)))]
+  d[, light := !is.na(scaled) & scaled > 0.2 & scaled < 0.6]
 
-ggsave(file.path(fig_dir, "steps_heatmap.png"), fig2, width = 10, height = 13, dpi = 200, bg = surface)
-ggsave(file.path(fig_dir, "steps_heatmap.pdf"), fig2, width = 10, height = 13, bg = surface)
+  p <- ggplot(d, aes(column, step)) +
+    geom_tile(aes(fill = scaled), colour = surface, linewidth = 0.8) +
+    geom_text(aes(label = lab, colour = light), size = 2.4, lineheight = 0.85, show.legend = FALSE) +
+    scale_fill_gradientn(
+      colours = step_ramp, limits = c(0, 1), na.value = missing_fill,
+      breaks = c(0, 1), labels = c("fastest", "slowest"), name = "per step"
+    ) +
+    scale_colour_manual(values = c(`FALSE` = "#ffffff", `TRUE` = ink)) +
+    facet_wrap(~size_label, ncol = 1, scales = "free_x") +
+    labs(
+      title = title,
+      subtitle = "Seconds per step. Colour is scaled per step and size: fastest framework 0, slowest 1, linear in between.",
+      caption = paste(
+        "Black: n/a (step not in that framework), OOM or TIMEOUT where the run died, - not reached.",
+        "Scanpy dask has no DGE step. bixverse GPU and MLX run natively without a memory cap.",
+        "bixverse CPU tSNE builds its kNN with IVF from 500k (kmknn at 100k). (qd) steps are not in the total.",
+        sep = "\n"
+      ),
+      x = NULL, y = NULL
+    ) +
+    theme_bench() +
+    theme(
+      panel.grid.major = element_blank(),
+      axis.text.x = element_text(angle = 35, hjust = 1),
+      legend.key.width = unit(1.6, "cm")
+    )
+
+  ggsave(file.path(fig_dir, paste0(file, ".png")), p, width = 11, height = height, dpi = 200, bg = surface)
+  ggsave(file.path(fig_dir, paste0(file, ".pdf")), p, width = 11, height = height, bg = surface)
+}
+
+step_heatmap(
+  c(splat_100k = "100k (96,342 cells)", splat_500k = "500k (482,409 cells)", splat_1m = "1M (964,763 cells)"),
+  "Wall time per step: Splat simulation", "steps_heatmap_splat", 16
+)
+step_heatmap(size_labels, "Wall time per step: Parse 1M PBMC", "steps_heatmap_pbmc", 16)
 
 #### figure 3: speed-up per step against a Scanpy reference ------------------
 
