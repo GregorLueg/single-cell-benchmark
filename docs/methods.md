@@ -257,9 +257,8 @@ harmonypy.
 - **`cluster_fast` on the CPU is slower than the Leiden it replaces** from
   500k (bixverse 14 against 4 s at 500k, 45 against 8 s at 1M; scrapper 194
   against 110 s). It is in the tables as an option, not in the totals.
-- **scrapper HDF5 has only the 100k simulation so far.**
-- **The same-input Harmony agreement scores** (kNN overlap, purity) are not
-  yet recomputed on the 0.8.0 PCA input; only the timings are current.
+- **scrapper HDF5 has the simulation only, not PBMC 100k or full.** It
+  ran on the simulation at every size and on PBMC 500k.
 - **No OSCA row.** The Bioconductor stack (scuttle, scran, scater) on the
   same HDF5-backed matrix does not finish HVG at any size from 500k up within
   45 min, and its forked workers OOM at 100k in PCA and DGE. Its row-wise

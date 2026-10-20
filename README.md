@@ -31,7 +31,7 @@ one seed.
 | Scanpy | 122 s, 2.6 GB | 766 s, 14.2 GB | OOM at load | 0.894 to 0.908 | 0.78 to 0.88 | 0.09 to 0.11 |
 | Scanpy dask (experimental, no DGE) | 77 s, 1.8 GB | 317 s, 7.8 GB | 719 s, 10.8 GB | 0.889 to 0.908 | 0.86 to 0.91 | 0.10 to 0.11 |
 | scrapper | 90 s, 5.6 GB | 515 s, 22.7 GB | OOM at load | 0.926 to 0.929 | 0.94 | 0.13 |
-| scrapper HDF5 | 213 s, 3.4 GB | pending | pending | 0.929 | 0.95 | 0.13 |
+| scrapper HDF5 | 213 s, 3.4 GB | 2426 s, 12.4 GB | TIMEOUT at dge | 0.926 to 0.929 | 0.94 | 0.13 |
 | Seurat std | 124 s, 8.9 GB | OOM at pca | OOM at load | 0.971 | 0.81 | 0.27 |
 | Seurat BPCells | 253 s, 2.6 GB | 1281 s, 6.5 GB | 2662 s, 9.5 GB | 0.968 to 0.971 | 0.70 to 0.79 | 0.27 to 0.35 |
 
@@ -54,8 +54,12 @@ footprint: close to, but not the same metric as, the Docker rows. MLX needs an o
   scrapper and minutes for Scanpy and BPCells. On the shared genes it ranks
   like Seurat's presto; scrapper and Scanpy rank detectable markers slightly
   better.
+- **scrapper out of core saves memory, not time.** On HDF5 it stays under
+  13 GB without swap at 500k, but takes 2,426 s, most of it in DGE, and
+  times out in DGE at 1M.
 - **Harmony on the same input:** bixverse v2 2x faster than harmonypy 2.1.0
-  (2.1 against 4.2 s at 1M), MLX 4.2x, at 1.1 GB more memory for v2.
+  (2.1 against 4.2 s at 1M), MLX 4.2x, with 97% of harmonypy's neighbours
+  kept, at 1.1 GB more memory for v2.
 - **Disk is the price.** bixverse keeps two on-disk views: 13.2 GB at 1M,
   against 3.7 GB for BPCells.
 
@@ -75,6 +79,7 @@ subsamples, or where the run died. Same stack.
 | Scanpy dask (experimental, no DGE) | 65 s, 1.6 GB | 237 s, 6.7 GB | 490 s, 10.4 GB |
 | scrapper mtx | 104 s, 5.3 GB | OOM at load | OOM at load |
 | scrapper h5ad | 73 s, 4.9 GB | 565 s, 22.9 GB | OOM at load |
+| scrapper HDF5 | not run | 2182 s, 8.3 GB | not run |
 | Seurat std mtx | 143 s, 7.7 GB | OOM at load | OOM at load |
 | Seurat std h5ad | 110 s, 7.8 GB | OOM at load | OOM at load |
 | Seurat BPCells | 361 s, 2.6 GB | 1829 s, 5.6 GB | 3231 s, 9.5 GB |

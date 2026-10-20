@@ -235,6 +235,18 @@ scrapper h5ad,parse_500k,346259,cluster_fast,116.98,22.86,ok
 scrapper h5ad,parse_500k,346259,umap,150.33,22.86,ok
 scrapper h5ad,parse_500k,346259,dge,36.10,22.86,ok
 scrapper h5ad,parse_500k,346259,tsne_quick,95.67,22.86,ok
+scrapper HDF5,parse_500k,346259,load,365.55,8.26,ok
+scrapper HDF5,parse_500k,346259,qc,5.59,8.26,ok
+scrapper HDF5,parse_500k,346259,normalise,0.01,8.26,ok
+scrapper HDF5,parse_500k,346259,hvg,13.13,8.26,ok
+scrapper HDF5,parse_500k,346259,pca,21.69,8.26,ok
+scrapper HDF5,parse_500k,346259,harmony,123.62,8.26,ok
+scrapper HDF5,parse_500k,346259,knn_snn,28.18,8.26,ok
+scrapper HDF5,parse_500k,346259,cluster,76.68,8.26,ok
+scrapper HDF5,parse_500k,346259,cluster_fast,118.24,8.26,ok
+scrapper HDF5,parse_500k,346259,umap,151.98,8.26,ok
+scrapper HDF5,parse_500k,346259,dge,1395.80,8.26,ok
+scrapper HDF5,parse_500k,346259,tsne_quick,100.83,8.26,ok
 Seurat std mtx,parse_500k,346259,load,,22.78,OOM
 Seurat std h5ad,parse_500k,346259,load,,22.90,OOM
 Seurat BPCells,parse_500k,346259,load,70.13,5.62,ok
@@ -589,6 +601,18 @@ scrapper h5ad,splat_500k,482409,cluster_fast,194.21,22.67,ok
 scrapper h5ad,splat_500k,482409,umap,219.47,22.67,ok
 scrapper h5ad,splat_500k,482409,dge,22.18,22.67,ok
 scrapper h5ad,splat_500k,482409,tsne_quick,152.09,22.67,ok
+scrapper HDF5,splat_500k,482409,load,224.11,12.41,ok
+scrapper HDF5,splat_500k,482409,qc,6.33,12.41,ok
+scrapper HDF5,splat_500k,482409,normalise,0.01,12.41,ok
+scrapper HDF5,splat_500k,482409,hvg,18.63,12.41,ok
+scrapper HDF5,splat_500k,482409,pca,30.74,12.41,ok
+scrapper HDF5,splat_500k,482409,harmony,82.02,12.41,ok
+scrapper HDF5,splat_500k,482409,knn_snn,40.07,12.41,ok
+scrapper HDF5,splat_500k,482409,cluster,101.58,12.41,ok
+scrapper HDF5,splat_500k,482409,cluster_fast,195.19,12.41,ok
+scrapper HDF5,splat_500k,482409,umap,212.92,12.41,ok
+scrapper HDF5,splat_500k,482409,dge,1709.83,12.41,ok
+scrapper HDF5,splat_500k,482409,tsne_quick,153.38,12.41,ok
 Seurat std mtx,splat_500k,482409,load,224.78,22.78,ok
 Seurat std mtx,splat_500k,482409,qc,13.56,22.78,ok
 Seurat std mtx,splat_500k,482409,normalise,0.87,22.78,ok
@@ -677,6 +701,17 @@ Scanpy dask,splat_1m,964763,umap,555.35,10.83,ok
 Scanpy dask,splat_1m,964763,tsne_default,,10.83,TIMEOUT
 scrapper mtx,splat_1m,964763,load,,22.70,OOM
 scrapper h5ad,splat_1m,964763,load,,22.79,OOM
+scrapper HDF5,splat_1m,964763,load,415.21,22.28,ok
+scrapper HDF5,splat_1m,964763,qc,13.07,22.28,ok
+scrapper HDF5,splat_1m,964763,normalise,0.01,22.28,ok
+scrapper HDF5,splat_1m,964763,hvg,38.39,22.28,ok
+scrapper HDF5,splat_1m,964763,pca,68.30,22.28,ok
+scrapper HDF5,splat_1m,964763,harmony,169.92,22.28,ok
+scrapper HDF5,splat_1m,964763,knn_snn,91.91,22.28,ok
+scrapper HDF5,splat_1m,964763,cluster,275.46,22.28,ok
+scrapper HDF5,splat_1m,964763,cluster_fast,554.82,22.28,ok
+scrapper HDF5,splat_1m,964763,umap,436.02,22.28,ok
+scrapper HDF5,splat_1m,964763,dge,,22.28,TIMEOUT
 Seurat std mtx,splat_1m,964763,load,,22.83,OOM
 Seurat std h5ad,splat_1m,964763,load,,22.84,OOM
 Seurat BPCells,splat_1m,964763,load,132.55,9.48,ok

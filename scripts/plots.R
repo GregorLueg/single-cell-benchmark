@@ -254,7 +254,7 @@ for (lst in list(
 
 # normalisation is deferred in Dask and scrapper (normalizeCounts(delayed = TRUE)):
 # the cost lands in later steps, so a fold change against or of it is meaningless
-lazy_cols <- c("Scanpy dask", "scrapper h5ad")
+lazy_cols <- c("Scanpy dask", "scrapper h5ad", "scrapper HDF5")
 
 speedup_plot <- function(size_key, ref_col, title, subtitle, caption, file, height) {
   d <- dt[size == size_key & status == "ok"]
