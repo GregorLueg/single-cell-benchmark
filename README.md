@@ -20,7 +20,7 @@ The benchmarks ran within Docker on a MacBook M1 Max.
 
 Seconds without tSNE and peak memory from h5ad, or where the run died, plus
 quality against the truth across the three sizes. Stack: bixverse 0.8.0,
-bixverse.gpu 0.5.0, Scanpy 1.12.4, scrapper 1.6.3, Seurat 5.6.0. One repeat,
+bixverse.gpu 0.6.0, Scanpy 1.12.4, scrapper 1.6.3, Seurat 5.6.0. One repeat,
 one seed.
 
 | framework | 100k | 500k | 1M | Harmony purity | ARI | rare F1 |

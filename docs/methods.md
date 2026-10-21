@@ -87,17 +87,18 @@ Every row, PBMC and simulation, runs on the same stack.
 
 | framework | versions |
 |---|---|
-| bixverse | bixverse 0.8.0 (`feat-pca-updates` ca9c8b2), bixverse.gpu 0.5.0 (`feat-new-gpu-pca` 822491a), bixverse-rs `feat-lanczos-single-cell` 59807e8, manifoldsR 0.5.0 (manifolds-rs 0.7.2) |
+| bixverse | bixverse 0.8.0 (`feat-pca-updates` ca9c8b2), bixverse.gpu 0.6.0 (822491a), bixverse-rs `feat-lanczos-single-cell` 59807e8, manifoldsR 0.5.0 (manifolds-rs 0.7.2) |
 | Scanpy | 1.12.4 (anndata 0.13.4, dask 2026.8.0, harmonypy 2.1.0, openTSNE 1.0.4, scikit-learn 1.9.1) |
 | scrapper | 1.6.3 |
 | Seurat | 5.6.0 (SeuratObject 5.4.0, BPCells 0.3.1, harmony 2.0.5, presto 1.1.0, uwot 0.2.5) |
 | scrapper HDF5 | scrapper 1.6.3, HDF5Array 1.40.0, DelayedArray 0.38.2, beachmat.hdf5 1.10.0 |
 
 bixverse, bixverse.gpu and manifoldsR are built from source: bixverse and
-bixverse.gpu at the branch commits in the table, both pulling bixverse-rs from
-git at `feat-lanczos-single-cell`, manifoldsR at the commit in `vendor/SHAS`.
-These are unreleased development builds. The GPU and MLX rows use the
-default PCA solver, block Lanczos. Docker:
+bixverse.gpu at the commits in the table, both pulling bixverse-rs from git
+at `feat-lanczos-single-cell`, manifoldsR at the commit in `vendor/SHAS`.
+bixverse is an unreleased development build; the bixverse.gpu commit is the
+0.6.0 release. The GPU and MLX rows use the default PCA solver, block Lanczos.
+Docker:
 `docker/r-local.Dockerfile` on top of `scbench-r`. Native: installed into
 `rlib/`, bixverse.gpu with the MLX backend.
 

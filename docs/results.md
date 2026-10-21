@@ -24,7 +24,7 @@ path; see [methods](methods.md#caveats).
 
 Splat data with 24 batches, 12 groups and uneven group composition per batch,
 fitted to the PBMC data ([methods](methods.md#data)). Stack: bixverse 0.8.0,
-bixverse.gpu 0.5.0, manifoldsR 0.5.0, Scanpy 1.12.4, scrapper 1.6.3, Seurat
+bixverse.gpu 0.6.0, manifoldsR 0.5.0, Scanpy 1.12.4, scrapper 1.6.3, Seurat
 5.6.0.
 
 ![Time without tSNE and peak memory on the simulation](figures/scaling_splat.png)
