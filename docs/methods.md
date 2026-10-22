@@ -87,18 +87,18 @@ Every row, PBMC and simulation, runs on the same stack.
 
 | framework | versions |
 |---|---|
-| bixverse | bixverse 0.8.0 (`feat-pca-updates` ca9c8b2), bixverse.gpu 0.6.0 (822491a), bixverse-rs `feat-lanczos-single-cell` 59807e8, manifoldsR 0.5.0 (manifolds-rs 0.7.2) |
+| bixverse | bixverse 0.8.1 (`feat-new-bixverse-rs` bfd56e1), bixverse.gpu 0.6.1 (`fix-windows` 5d86cb4), bixverse-rs 0.9.0, manifoldsR 0.5.0 (manifolds-rs 0.7.2) |
 | Scanpy | 1.12.4 (anndata 0.13.4, dask 2026.8.0, harmonypy 2.1.0, openTSNE 1.0.4, scikit-learn 1.9.1) |
 | scrapper | 1.6.3 |
 | Seurat | 5.6.0 (SeuratObject 5.4.0, BPCells 0.3.1, harmony 2.0.5, presto 1.1.0, uwot 0.2.5) |
 | scrapper HDF5 | scrapper 1.6.3, HDF5Array 1.40.0, DelayedArray 0.38.2, beachmat.hdf5 1.10.0 |
 
 bixverse, bixverse.gpu and manifoldsR are built from source: bixverse and
-bixverse.gpu at the commits in the table, both pulling bixverse-rs from git
-at `feat-lanczos-single-cell`, manifoldsR at the commit in `vendor/SHAS`.
-bixverse is an unreleased development build; the bixverse.gpu commit is the
-0.6.0 release. The GPU and MLX rows use the default PCA solver, block Lanczos.
-Docker:
+bixverse.gpu at the commits in the table, manifoldsR at the commit in
+`vendor/SHAS`. bixverse.gpu uses the bixverse-rs 0.9.0 crates; bixverse
+patches them to the `feat-sc-data-improv` branch (93bf560), which the 0.9.0
+release contains. The single cell store is the v4 format. The GPU and MLX
+rows use the default PCA solver, block Lanczos. Docker:
 `docker/r-local.Dockerfile` on top of `scbench-r`. Native: installed into
 `rlib/`, bixverse.gpu with the MLX backend.
 
@@ -227,16 +227,12 @@ harmonypy.
   name every place that favours it.
 - **One repeat, one machine, one simulation seed.** Apple Silicon under
   Docker, not a real 24 GB laptop. Reruns of the same bixverse configuration
-  moved the load step by up to 35 s; two runs of the same build on PBMC 500k
-  mtx loaded in 70.5 and 49.0 s, the MTX reader's file passes taking 2 to 3x
-  longer in the slow run. The bixverse mtx rows on PBMC 500k and full were
-  repeated because their first loads looked slow, and the repeats are shown:
-  for those two rows that picks the better of two runs, which favours
-  bixverse. A Scanpy h5ad run on PBMC 500k that
+  moved the load step by up to 35 s, mostly in the MTX reader's file passes.
+  A Scanpy h5ad run on PBMC 500k that
   overlapped a system sleep took 3,233 s; the rerun took 833 s and is the one
   shown.
 - **Peak memory includes tSNE.** For bixverse at 1M the tSNE step sets the
-  run peak (10.5 against 8.5 GB before tSNE, h5ad).
+  run peak (10.5 against 8.3 GB before tSNE, h5ad).
 - **Splat is the easy case.** No gene-gene structure beyond the DE, no
   continuous states, convex groups of similar density, and a multiplicative
   batch effect on every gene. The quality scores rank pipelines on that, not
@@ -247,8 +243,11 @@ harmonypy.
 - **GPU and MLX keep less of the rare group at 1M.** Harmony rare purity
   on the GPU rows is about 0.23 against 0.29 on the CPU at 1M, and Harmony
   itself is not the cause (same-input comparison); which step is, is not
-  checked. 12 against 13 clusters between rows is not tested across Leiden
-  seeds.
+  checked.
+- **Cluster counts flip between 12 and 13 at 500k and 1M.** Across rows and
+  reruns with the same embedding quality, Leiden returns 12 or 13 clusters,
+  and ARI moves with it (about 0.87 against 0.79). It is not tested across
+  Leiden seeds.
 - **Harness code.** The R pre-filter for scrapper and Seurat standard makes
   copies (`counts > 0`, column subsetting); part of their in-memory OOMs may
   be ours. The Scanpy Dask QC is hand-written (see Setup).
@@ -259,7 +258,7 @@ harmonypy.
   like-for-like: the same step takes in-memory Scanpy 454 s on the 500k
   simulation and 602 s on PBMC 500k. Treat the Dask row as experimental.
 - **`cluster_fast` on the CPU is slower than the Leiden it replaces** from
-  500k (bixverse 14 against 4 s at 500k, 46 against 9 s at 1M; scrapper 194
+  500k (bixverse 14 against 4 s at 500k, 47 against 8 s at 1M; scrapper 194
   against 110 s). It is in the tables as an option, not in the totals.
 - **scrapper HDF5 times out in DGE at the largest size.** On the 1M
   simulation and the full PBMC data no step finished within 45 min after
