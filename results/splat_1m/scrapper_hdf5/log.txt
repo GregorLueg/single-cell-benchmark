@@ -1,0 +1,14 @@
+>>> load: 415.2 s <<<
+>>> qc: 13.1 s <<<
+>>> normalise: 0.0 s <<<
+>>> hvg: 38.4 s <<<
+>>> pca: 68.3 s <<<
+>>> harmony: 169.9 s <<<
+>>> knn_snn: 91.9 s <<<
+>>> cluster: 275.5 s <<<
+>>> cluster_fast: 554.8 s <<<
+Warning message:
+In clusterKmeans(t(emb), k = as.integer(4 * sqrt(nrow(emb))), num.threads = threads) :
+  convergence failure for k-means
+>>> umap: 436.0 s <<<
+exit=124

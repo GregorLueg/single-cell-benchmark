@@ -10,6 +10,10 @@ a run leaves in its scratch volume. Setup, versions and caveats:
 
 Regenerate the timing tables with `uv run scripts/tables.py results <dataset>`
 and the quality scores with `uv run scripts/score.py results/<dataset> data/<dataset>`.
+The raw per-run files are in `results/<dataset>/<run>/`: step times
+(`steps.csv`), memory samples (`mem.csv`), the run log, disk use and the
+scores (`quality.csv` per data set). Embeddings, clusters and markers are not
+committed; a rerun writes them.
 
 qd: quick and dirty. `tsne_quick` is the qdtsne Barnes-Hut (theta 1, 500
 iterations, depth-capped tree), not a standard Barnes-Hut tSNE.

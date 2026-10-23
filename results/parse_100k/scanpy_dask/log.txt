@@ -1,0 +1,62 @@
+>>> load: 6.1 s <<<
+>>> qc: 1.1 s <<<
+>>> normalise: 0.0 s <<<
+>>> hvg: 1.7 s <<<
+>>> pca: 4.0 s <<<
+2026-10-17 21:37:24,480 - harmonypy - INFO - Running Harmony
+2026-10-17 21:37:24,480 - harmonypy - INFO -   Parameters:
+2026-10-17 21:37:24,480 - harmonypy - INFO -     max_iter_harmony: 10
+2026-10-17 21:37:24,481 - harmonypy - INFO -     max_iter_kmeans: 4
+2026-10-17 21:37:24,481 - harmonypy - INFO -     epsilon_cluster: 0.001
+2026-10-17 21:37:24,481 - harmonypy - INFO -     epsilon_harmony: 0.01
+2026-10-17 21:37:24,481 - harmonypy - INFO -     nclust: 100
+2026-10-17 21:37:24,481 - harmonypy - INFO -     block_size: 0.05
+2026-10-17 21:37:24,481 - harmonypy - INFO -     lamb: dynamic (alpha=0.2)
+2026-10-17 21:37:24,481 - harmonypy - INFO -     theta: [2. 2. 2. 2. 2. 2. 2. 2. 2. 2. 2. 2. 2. 2. 2. 2. 2. 2. 2. 2. 2. 2. 2. 2.]
+2026-10-17 21:37:24,481 - harmonypy - INFO -     sigma: [0.1 0.1 0.1 0.1 0.1]...
+2026-10-17 21:37:24,482 - harmonypy - INFO -     verbose: True
+2026-10-17 21:37:24,482 - harmonypy - INFO -     random_state: 0
+2026-10-17 21:37:24,482 - harmonypy - INFO -   Data: 30 PCs × 69412 cells
+2026-10-17 21:37:24,482 - harmonypy - INFO -   Batch variables: ['sample']
+2026-10-17 21:37:24,488 - harmonypy - INFO - Computing initial centroids...
+2026-10-17 21:37:24,571 - harmonypy - INFO - Initialization complete.
+2026-10-17 21:37:24,571 - harmonypy - INFO - Iteration 1 of 10
+2026-10-17 21:37:24,637 - harmonypy - INFO - Iteration 2 of 10
+2026-10-17 21:37:24,709 - harmonypy - INFO - Iteration 3 of 10
+2026-10-17 21:37:24,779 - harmonypy - INFO - Iteration 4 of 10
+2026-10-17 21:37:24,849 - harmonypy - INFO - Iteration 5 of 10
+2026-10-17 21:37:24,919 - harmonypy - INFO - Iteration 6 of 10
+2026-10-17 21:37:24,989 - harmonypy - INFO - Converged after 6 iterations
+>>> harmony: 0.5 s <<<
+>>> knn_snn: 23.7 s <<<
+>>> cluster: 1.9 s <<<
+>>> umap: 26.4 s <<<
+/bench/pipelines/scanpy_pipeline.py:151: UserWarning: In previous versions of scanpy, calling tsne with `n_jobs` > 1 would use MulticoreTSNE. Now this uses the scikit-learn version of TSNE by default. If you’d like the old behaviour (which is deprecated), pass `use_fast_tsne=True`. Note, MulticoreTSNE is not actually faster anymore.
+  sc.tl.tsne(adata, use_rep="X_pca_harmony", perplexity=30, n_jobs=THREADS)
+>>> tsne_default: 102.3 s <<<
+>>> tsne_fft: 31.0 s <<<
+cells after QC: 69412, clusters: 16
+	Command being timed: "python /bench/pipelines/scanpy_pipeline.py /data /out"
+	User time (seconds): 680.22
+	System time (seconds): 13.84
+	Percent of CPU this job got: 339%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 3:24.18
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 3823164
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 43
+	Minor (reclaiming a frame) page faults: 5587198
+	Voluntary context switches: 311356
+	Involuntary context switches: 5838
+	Swaps: 0
+	File system inputs: 12176
+	File system outputs: 129792
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
+exit=0

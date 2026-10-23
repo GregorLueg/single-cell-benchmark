@@ -1,5 +1,12 @@
 /data
-/results
+results/*.log
+results/*.sh
+results/sim_10k/
+results/**/emb_*
+results/**/clusters*
+results/**/markers.csv
+results/harmony_bench/input_*.csv
+results/harmony_bench/**/rep*.csv.gz
 .DS_Store
 vendor/
 rlib/

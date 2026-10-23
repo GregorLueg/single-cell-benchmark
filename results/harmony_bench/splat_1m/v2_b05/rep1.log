@@ -1,0 +1,20 @@
+Warning message:
+package ‘data.table’ was built under R version 4.5.2 
+       10.99 real        47.44 user         1.19 sys
+          3918331904  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+              275261  page reclaims
+                  19  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                   0  messages sent
+                   0  messages received
+                   0  signals received
+                  77  voluntary context switches
+               21871  involuntary context switches
+        297553750761  instructions retired
+        146954419709  cycles elapsed
+          3010694408  peak memory footprint

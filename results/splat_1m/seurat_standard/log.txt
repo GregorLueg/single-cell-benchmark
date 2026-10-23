@@ -1,0 +1,25 @@
+Command terminated by signal 9
+	Command being timed: "Rscript /bench/pipelines/seurat_standard.R /data /out /scratch"
+	User time (seconds): 219.29
+	System time (seconds): 22.61
+	Percent of CPU this job got: 93%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 4:17.85
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 23947532
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 395175
+	Minor (reclaiming a frame) page faults: 11894874
+	Voluntary context switches: 396292
+	Involuntary context switches: 133518
+	Swaps: 0
+	File system inputs: 9781240
+	File system outputs: 0
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
+exit=137

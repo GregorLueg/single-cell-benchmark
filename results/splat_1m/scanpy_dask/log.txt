@@ -1,0 +1,34 @@
+>>> load: 39.3 s <<<
+>>> qc: 7.2 s <<<
+>>> normalise: 0.0 s <<<
+>>> hvg: 8.2 s <<<
+>>> pca: 18.2 s <<<
+2026-10-18 08:45:34,011 - harmonypy - INFO - Running Harmony
+2026-10-18 08:45:34,012 - harmonypy - INFO -   Parameters:
+2026-10-18 08:45:34,012 - harmonypy - INFO -     max_iter_harmony: 10
+2026-10-18 08:45:34,012 - harmonypy - INFO -     max_iter_kmeans: 4
+2026-10-18 08:45:34,012 - harmonypy - INFO -     epsilon_cluster: 0.001
+2026-10-18 08:45:34,012 - harmonypy - INFO -     epsilon_harmony: 0.01
+2026-10-18 08:45:34,012 - harmonypy - INFO -     nclust: 100
+2026-10-18 08:45:34,013 - harmonypy - INFO -     block_size: 0.05
+2026-10-18 08:45:34,013 - harmonypy - INFO -     lamb: dynamic (alpha=0.2)
+2026-10-18 08:45:34,013 - harmonypy - INFO -     theta: [2. 2. 2. 2. 2. 2. 2. 2. 2. 2. 2. 2. 2. 2. 2. 2. 2. 2. 2. 2. 2. 2. 2. 2.]
+2026-10-18 08:45:34,013 - harmonypy - INFO -     sigma: [0.1 0.1 0.1 0.1 0.1]...
+2026-10-18 08:45:34,013 - harmonypy - INFO -     verbose: True
+2026-10-18 08:45:34,014 - harmonypy - INFO -     random_state: 0
+2026-10-18 08:45:34,014 - harmonypy - INFO -   Data: 30 PCs × 964763 cells
+2026-10-18 08:45:34,014 - harmonypy - INFO -   Batch variables: ['sample']
+2026-10-18 08:45:34,118 - harmonypy - INFO - Computing initial centroids...
+2026-10-18 08:45:35,115 - harmonypy - INFO - Initialization complete.
+2026-10-18 08:45:35,115 - harmonypy - INFO - Iteration 1 of 10
+2026-10-18 08:45:35,775 - harmonypy - INFO - Iteration 2 of 10
+2026-10-18 08:45:36,532 - harmonypy - INFO - Iteration 3 of 10
+2026-10-18 08:45:37,274 - harmonypy - INFO - Iteration 4 of 10
+2026-10-18 08:45:38,038 - harmonypy - INFO - Converged after 4 iterations
+>>> harmony: 4.2 s <<<
+>>> knn_snn: 39.6 s <<<
+>>> cluster: 46.8 s <<<
+>>> umap: 555.4 s <<<
+/bench/pipelines/scanpy_pipeline.py:151: UserWarning: In previous versions of scanpy, calling tsne with `n_jobs` > 1 would use MulticoreTSNE. Now this uses the scikit-learn version of TSNE by default. If you’d like the old behaviour (which is deprecated), pass `use_fast_tsne=True`. Note, MulticoreTSNE is not actually faster anymore.
+  sc.tl.tsne(adata, use_rep="X_pca_harmony", perplexity=30, n_jobs=THREADS)
+exit=124

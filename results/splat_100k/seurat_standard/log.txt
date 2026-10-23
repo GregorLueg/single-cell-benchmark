@@ -1,0 +1,155 @@
+>>> load: 37.9 s <<<
+>>> qc: 2.6 s <<<
+>>> normalise: 0.2 s <<<
+>>> hvg: 3.7 s <<<
+>>> pca: 10.6 s <<<
+>>> harmony: 13.3 s <<<
+>>> knn_snn: 7.5 s <<<
+>>> cluster: 19.0 s <<<
+>>> umap: 45.7 s <<<
+>>> dge: 11.8 s <<<
+>>> tsne_default: 125.1 s <<<
+Using rsvd() to compute the top PCs for initialization.
+=============== t-SNE v1.2.1 ===============
+fast_tsne data_path: /tmp/RtmpoXGcQZ/fftRtsne_data_a453eb695.dat
+fast_tsne result_path: /tmp/RtmpoXGcQZ/fftRtsne_result_a3e442287.dat
+fast_tsne nthreads: 8
+Read the following parameters:
+	 n 96342 by d 30 dataset, theta 0.500000,
+	 perplexity 30.000000, no_dims 2, max_iter 750,
+	 stop_lying_iter 250, mom_switch_iter 250,
+	 momentum 0.500000, final_momentum 0.800000,
+	 learning_rate 8028.500000, max_step_norm 5.000000,
+	 K -1, sigma -30.000000, nbody_algo 2,
+	 knn_algo 1, early_exag_coeff 12.000000,
+	 no_momentum_during_exag 0, n_trees 50, search_k 4500,
+	 start_late_exag_iter -1, late_exag_coeff 1.000000
+	 nterms 3, interval_per_integer 1.000000, min_num_intervals 50, t-dist df 1.000000
+Read the 96342 x 30 data matrix successfully. X[0,0] = -1.264510
+Read the initialization successfully.
+Will use momentum during exaggeration phase
+Computing input similarities...
+Using perplexity, so normalizing input data (to prevent numerical problems)
+Using perplexity, not the manually set kernel width.  K (number of nearest neighbors) and sigma (bandwidth) parameters are going to be ignored.
+Using ANNOY for knn search, with parameters: n_trees 50 and search_k 4500
+Going to allocate memory. N: 96342, K: 90, N*K = 8670780
+Building Annoy tree...
+Done building tree. Beginning nearest neighbor search... 
+parallel (8 threads):
+[>                                                           ] 0% 0.001s[>                                                           ] 0% 0.046s[>                                                           ] 1% 0.091s[=>                                                          ] 2% 0.137s[=>                                                          ] 3% 0.183s[==>                                                         ] 4% 0.229s[==>                                                         ] 4% 0.274s[===>                                                        ] 5% 0.32s[===>                                                        ] 6% 0.366s[====>                                                       ] 7% 0.412s[=====>                                                      ] 8% 0.459s[=====>                                                      ] 9% 0.504s[=====>                                                      ] 9% 0.55s[======>                                                     ] 10% 0.596s[======>                                                     ] 11% 0.641s[=======>                                                    ] 12% 0.687s[=======>                                                    ] 13% 0.732s[========>                                                   ] 14% 0.778s[========>                                                   ] 14% 0.824s[=========>                                                  ] 15% 0.87s[=========>                                                  ] 16% 0.915s[==========>                                                 ] 17% 0.961s[==========>                                                 ] 18% 1.007s[===========>                                                ] 19% 1.054s[===========>                                                ] 19% 1.099s[============>                                               ] 20% 1.146s[============>                                               ] 21% 1.192s[=============>                                              ] 22% 1.237s[=============>                                              ] 23% 1.283s[==============>                                             ] 24% 1.328s[==============>                                             ] 24% 1.374s[===============>                                            ] 25% 1.419s[===============>                                            ] 26% 1.467s[================>                                           ] 27% 1.512s[================>                                           ] 28% 1.557s[=================>                                          ] 29% 1.604s[=================>                                          ] 29% 1.649s[==================>                                         ] 30% 1.695s[==================>                                         ] 31% 1.74s[===================>                                        ] 32% 1.786s[===================>                                        ] 33% 1.831s[====================>                                       ] 34% 1.877s[====================>                                       ] 34% 1.924s[=====================>                                      ] 35% 1.97s[=====================>                                      ] 36% 2.016s[======================>                                     ] 37% 2.063s[======================>                                     ] 38% 2.109s[=======================>                                    ] 39% 2.155s[========================>                                   ] 40% 2.203s[========================>                                   ] 40% 2.249s[=========================>                                  ] 41% 2.295s[=========================>                                  ] 42% 2.342s[==========================>                                 ] 43% 2.388s[==========================>                                 ] 44% 2.435s[===========================>                                ] 45% 2.481s[===========================>                                ] 45% 2.528s[============================>                               ] 46% 2.574s[============================>                               ] 47% 2.62s[=============================>                              ] 48% 2.666s[=============================>                              ] 49% 2.713s[==============================>                             ] 50% 2.763s[==============================>                             ] 50% 2.809s[===============================>                            ] 51% 2.855s[===============================>                            ] 52% 2.901s[================================>                           ] 53% 2.947s[================================>                           ] 54% 2.994s[=================================>                          ] 55% 3.04s[=================================>                          ] 56% 3.087s[==================================>                         ] 56% 3.133s[==================================>                         ] 57% 3.18s[===================================>                        ] 58% 3.226s[===================================>                        ] 59% 3.272s[====================================>                       ] 60% 3.318s[====================================>                       ] 61% 3.365s[=====================================>                      ] 61% 3.412s[=====================================>                      ] 62% 3.459s[======================================>                     ] 63% 3.506s[======================================>                     ] 64% 3.552s[=======================================>                    ] 65% 3.598s[=======================================>                    ] 66% 3.644s[========================================>                   ] 66% 3.691s[========================================>                   ] 67% 3.736s[=========================================>                  ] 68% 3.781s[=========================================>                  ] 69% 3.827s[==========================================>                 ] 70% 3.873s[==========================================>                 ] 71% 3.922s[===========================================>                ] 71% 3.966s[===========================================>                ] 72% 4.014s[============================================>               ] 73% 4.059s[============================================>               ] 74% 4.105s[=============================================>              ] 75% 4.151s[=============================================>              ] 76% 4.197s[==============================================>             ] 76% 4.242s[==============================================>             ] 77% 4.287s[===============================================>            ] 78% 4.332s[===============================================>            ] 79% 4.378s[================================================>           ] 80% 4.424s[================================================>           ] 81% 4.469s[=================================================>          ] 81% 4.515s[=================================================>          ] 82% 4.56s[==================================================>         ] 83% 4.605s[==================================================>         ] 84% 4.65s[===================================================>        ] 85% 4.695s[===================================================>        ] 86% 4.741s[====================================================>       ] 86% 4.785s[====================================================>       ] 87% 4.831s[=====================================================>      ] 88% 4.877s[=====================================================>      ] 89% 4.922s[======================================================>     ] 90% 4.967s[======================================================>     ] 90% 5.013s[=======================================================>    ] 91% 5.059s[=======================================================>    ] 92% 5.113s[========================================================>   ] 93% 5.157s[========================================================>   ] 94% 5.203s[=========================================================>  ] 95% 5.247s[=========================================================>  ] 95% 5.292s[==========================================================> ] 96% 5.337s[==========================================================> ] 97% 5.384s[===========================================================>] 98% 5.429s[===========================================================>] 99% 5.475s[===========================================================>] 99% 5.527s[===========================================================>] 99% 5.546s
+Symmetrizing...
+Using the given initialization.
+Exaggerating Ps by 12.000000
+Input similarities computed (sparsity = 0.001478)!
+Learning embedding...
+Using FIt-SNE approximation.
+Iteration 50 (50 iterations in 0.99 seconds), cost 5.870401
+Iteration 100 (50 iterations in 1.00 seconds), cost 5.165589
+Iteration 150 (50 iterations in 1.01 seconds), cost 5.086101
+Iteration 200 (50 iterations in 0.99 seconds), cost 4.970753
+Iteration 250 (50 iterations in 1.00 seconds), cost 4.947703
+Unexaggerating Ps by 12.000000
+Iteration 300 (50 iterations in 0.99 seconds), cost 4.455584
+Iteration 350 (50 iterations in 0.98 seconds), cost 4.167641
+Iteration 400 (50 iterations in 1.01 seconds), cost 4.064559
+Iteration 450 (50 iterations in 1.14 seconds), cost 3.964674
+Iteration 500 (50 iterations in 1.28 seconds), cost 3.906323
+Iteration 550 (50 iterations in 1.63 seconds), cost 3.872922
+Iteration 600 (50 iterations in 1.65 seconds), cost 3.834718
+Iteration 650 (50 iterations in 1.92 seconds), cost 3.809095
+Iteration 700 (50 iterations in 2.16 seconds), cost 3.800589
+Iteration 750 (50 iterations in 2.36 seconds), cost 3.775516
+Wrote the 96342 x 2 data matrix successfully.
+Done.
+
+>>> tsne_fft: 31.6 s <<<
+cells after QC: 96342, clusters: 13
+R version 4.6.1 (2026-06-24)
+Platform: aarch64-unknown-linux-gnu
+Running under: Ubuntu 24.04.4 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/aarch64-linux-gnu/openblas-pthread/libblas.so.3 
+LAPACK: /usr/lib/aarch64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+time zone: Etc/UTC
+tzcode source: system (glibc)
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] harmony_2.0.5       Rcpp_1.1.2          Seurat_5.6.0       
+[4] SeuratObject_5.4.0  sp_2.2-3            data.table_1.18.6.1
+
+loaded via a namespace (and not attached):
+  [1] deldir_2.0-4           pbapply_1.7-5          gridExtra_2.3.1       
+  [4] rlang_1.3.0            magrittr_2.0.5         RcppAnnoy_0.0.23      
+  [7] otel_0.2.0             matrixStats_1.5.0      ggridges_0.5.7        
+ [10] compiler_4.6.1         spatstat.geom_3.8-3    png_0.1-9             
+ [13] vctrs_0.7.3            reshape2_1.4.5         stringr_1.6.0         
+ [16] pkgconfig_2.0.3        fastmap_1.2.0          promises_1.5.0        
+ [19] purrr_1.2.2            jsonlite_2.0.0         goftest_1.2-3         
+ [22] later_1.4.8            spatstat.utils_3.2-5   irlba_2.3.7           
+ [25] parallel_4.6.1         cluster_2.1.8.2        R6_2.6.1              
+ [28] ica_1.0-3              stringi_1.8.9          RColorBrewer_1.1-3    
+ [31] spatstat.data_3.1-9    reticulate_1.47.0      parallelly_1.48.0     
+ [34] spatstat.univar_3.2-0  lmtest_0.9-40          scattermore_1.2       
+ [37] tensor_1.5.1           future.apply_1.20.2    zoo_1.9-1             
+ [40] sctransform_0.4.3      httpuv_1.6.17          Matrix_1.7-5          
+ [43] splines_4.6.1          igraph_2.3.3           tidyselect_1.2.1      
+ [46] abind_1.4-8            codetools_0.2-20       spatstat.random_3.5-2 
+ [49] miniUI_0.1.2           spatstat.explore_3.8-3 listenv_1.0.0         
+ [52] lattice_0.22-9         tibble_3.3.1           plyr_1.8.9            
+ [55] withr_3.0.3            shiny_1.14.0           S7_0.2.2              
+ [58] ROCR_1.0-12            Rtsne_0.17             future_1.76.0         
+ [61] fastDummies_1.7.6      survival_3.8-6         polyclip_1.10-7       
+ [64] fitdistrplus_1.2-6     pillar_1.11.1          leidenbase_0.1.37     
+ [67] KernSmooth_2.23-26     plotly_4.12.1          generics_0.1.4        
+ [70] RcppHNSW_0.7.0         ggplot2_4.0.3          scales_1.4.0          
+ [73] globals_0.19.1         xtable_1.8-8           RhpcBLASctl_0.23-42   
+ [76] glue_1.8.1             tools_4.6.1            RSpectra_0.16-2       
+ [79] RANN_2.6.3             dotCall64_1.2          cowplot_1.2.0         
+ [82] grid_4.6.1             tidyr_1.3.2            nlme_3.1-169          
+ [85] patchwork_1.3.2        presto_1.1.0           rsvd_1.0.5            
+ [88] cli_3.6.6              spatstat.sparse_3.2-0  spam_2.11-4           
+ [91] viridisLite_0.4.3      dplyr_1.2.1            uwot_0.2.5            
+ [94] gtable_0.3.6           digest_0.6.39          progressr_1.0.0       
+ [97] ggrepel_0.9.8          htmlwidgets_1.6.4      farver_2.1.2          
+[100] htmltools_0.5.9        lifecycle_1.0.5        httr_1.4.9            
+[103] mime_0.13              MASS_7.3-65           
+Warning message:
+In RunLeiden(object = leiden.graph, leiden_method = leiden_method,  :
+  `random.seed` must be greater than 0 for leiden clustering, resetting `random.seed` to 1.
+	Command being timed: "Rscript /bench/pipelines/seurat_standard.R /data /out /scratch"
+	User time (seconds): 851.71
+	System time (seconds): 20.25
+	Percent of CPU this job got: 277%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 5:13.73
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 9329324
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 498
+	Minor (reclaiming a frame) page faults: 18392731
+	Voluntary context switches: 23133
+	Involuntary context switches: 8076
+	Swaps: 0
+	File system inputs: 78328
+	File system outputs: 335456
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
+exit=0
