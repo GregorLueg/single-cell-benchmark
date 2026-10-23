@@ -1,13 +1,13 @@
 framework,size,start,seconds,peak_gb
-bixverse,parse_100k,cold,10.42,1.61
-bixverse,parse_100k,warm,0.29,0.23
+bixverse,parse_100k,cold,9.99,1.55
+bixverse,parse_100k,warm,0.26,0.25
 Seurat BPCells,parse_100k,cold,14.55,2.57
 Seurat BPCells,parse_100k,warm,2.25,0.76
-bixverse,parse_500k,cold,55.00,6.34
-bixverse,parse_500k,warm,0.55,0.33
+bixverse,parse_500k,cold,46.18,6.25
+bixverse,parse_500k,warm,0.42,0.35
 Seurat BPCells,parse_500k,cold,70.13,5.62
 Seurat BPCells,parse_500k,warm,10.14,0.93
-bixverse,parse_full,cold,102.21,9.49
-bixverse,parse_full,warm,1.37,0.46
+bixverse,parse_full,cold,98.50,9.52
+bixverse,parse_full,warm,0.62,0.33
 Seurat BPCells,parse_full,cold,142.58,9.55
 Seurat BPCells,parse_full,warm,20.93,1.09

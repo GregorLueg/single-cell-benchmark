@@ -92,11 +92,11 @@ scaling_bars <- function(labels, title, file) {
     geom_col(aes(x = no_tsne, fill = family, alpha = native), width = 0.75, na.rm = TRUE) +
     geom_text(
       aes(x = no_tsne, label = format(round(no_tsne), big.mark = ",", trim = TRUE)),
-      hjust = -0.15, size = 2.6, colour = ink, na.rm = TRUE
+      hjust = -0.15, size = 3.6, colour = ink, na.rm = TRUE
     ) +
     geom_text(
       data = r[!is.na(died)], aes(x = x_min, label = died),
-      hjust = 0, size = 2.6, colour = ink_2, nudge_x = 0.02
+      hjust = 0, size = 3.6, colour = ink_2, nudge_x = 0.02
     ) +
     scale_x_log10(
       limits = c(x_min, NA), oob = scales::oob_keep, breaks = c(10, 100, 1000), labels = c("10 s", "100 s", "1,000 s"),
@@ -113,7 +113,7 @@ scaling_bars <- function(labels, title, file) {
         x = peak_gb, label = paste0(sprintf("%.1f", peak_gb), fifelse(is.na(died), "", ", died")),
         hjust = fifelse(peak_gb > 18, 1.1, -0.15), colour = peak_gb > 18
       ),
-      size = 2.6, show.legend = FALSE
+      size = 3.6, show.legend = FALSE
     ) +
     scale_colour_manual(values = c(`FALSE` = ink, `TRUE` = "#ffffff")) +
     scale_x_continuous(breaks = c(0, 8, 16, 24), labels = c("0", "8", "16", "24"),
@@ -130,15 +130,15 @@ scaling_bars <- function(labels, title, file) {
         "Scanpy dask has no DGE step. A run that timed out in tSNE keeps its time without tSNE.",
         sep = "\n"
       ),
-      theme = theme_bench()
+      theme = theme_bench(14)
     ) &
     scale_fill_manual(values = family_cols, name = NULL) &
     scale_alpha_manual(values = c(`FALSE` = 1, `TRUE` = 0.55), guide = "none") &
-    theme_bench() &
+    theme_bench(14) &
     theme(panel.grid.major.y = element_blank(), legend.position = "bottom")
 
-  ggsave(file.path(fig_dir, paste0(file, ".png")), p, width = 12, height = 9, dpi = 200, bg = surface)
-  ggsave(file.path(fig_dir, paste0(file, ".pdf")), p, width = 12, height = 9, bg = surface)
+  ggsave(file.path(fig_dir, paste0(file, ".png")), p, width = 14, height = 11, dpi = 300, bg = surface)
+  ggsave(file.path(fig_dir, paste0(file, ".pdf")), p, width = 14, height = 11, bg = surface)
 }
 
 scaling_bars(
@@ -160,7 +160,7 @@ no_step <- list(
 )
 total_step <- "total (no tSNE)"
 
-step_heatmap <- function(labels, title, file, height) {
+step_heatmap <- function(labels, title, file, height, width = 11, base_size = 10, text_size = 2.4) {
   d <- dt_all[size %in% names(labels)]
   d[, family := sub(" .*", "", column)]
   # a run that died in a tSNE step still has a total without tSNE
@@ -197,7 +197,7 @@ step_heatmap <- function(labels, title, file, height) {
 
   p <- ggplot(d, aes(column, step)) +
     geom_tile(aes(fill = scaled), colour = surface, linewidth = 0.8) +
-    geom_text(aes(label = lab, colour = light), size = 2.4, lineheight = 0.85, show.legend = FALSE) +
+    geom_text(aes(label = lab, colour = light), size = text_size, lineheight = 0.85, show.legend = FALSE) +
     scale_fill_gradientn(
       colours = step_ramp, limits = c(0, 1), na.value = missing_fill,
       breaks = c(0, 1), labels = c("fastest", "slowest"), name = "per step"
@@ -216,15 +216,17 @@ step_heatmap <- function(labels, title, file, height) {
       ),
       x = NULL, y = NULL
     ) +
-    theme_bench() +
+    theme_bench(base_size) +
     theme(
       panel.grid.major = element_blank(),
       axis.text.x = element_text(angle = 35, hjust = 1),
       legend.key.width = unit(1.6, "cm")
     )
+  # the size is in the title already
+  if (length(labels) == 1) p <- p + theme(strip.text = element_blank())
 
-  ggsave(file.path(fig_dir, paste0(file, ".png")), p, width = 11, height = height, dpi = 200, bg = surface)
-  ggsave(file.path(fig_dir, paste0(file, ".pdf")), p, width = 11, height = height, bg = surface)
+  ggsave(file.path(fig_dir, paste0(file, ".png")), p, width = width, height = height, dpi = 300, bg = surface)
+  ggsave(file.path(fig_dir, paste0(file, ".pdf")), p, width = width, height = height, bg = surface)
 }
 
 step_heatmap(
@@ -233,11 +235,26 @@ step_heatmap(
 )
 step_heatmap(size_labels, "Wall time per step: Parse 1M PBMC", "steps_heatmap_pbmc", 16)
 
+# one figure per size, larger type
+for (lst in list(
+  list(c(splat_100k = "100k (96,342 cells)", splat_500k = "500k (482,409 cells)", splat_1m = "1M (964,763 cells)"),
+       "Splat simulation", "splat"),
+  list(size_labels, "Parse 1M PBMC", "pbmc")
+)) {
+  for (k in names(lst[[1]])) {
+    step_heatmap(
+      lst[[1]][k], paste0("Wall time per step: ", lst[[2]], ", ", lst[[1]][k]),
+      paste0("steps_heatmap_", lst[[3]], "_", sub(".*_", "", k)),
+      height = 9.5, width = 13, base_size = 14, text_size = 3.6
+    )
+  }
+}
+
 #### figure 3: speed-up per step against a Scanpy reference ------------------
 
 # normalisation is deferred in Dask and scrapper (normalizeCounts(delayed = TRUE)):
 # the cost lands in later steps, so a fold change against or of it is meaningless
-lazy_cols <- c("Scanpy dask", "scrapper h5ad")
+lazy_cols <- c("Scanpy dask", "scrapper h5ad", "scrapper HDF5")
 
 speedup_plot <- function(size_key, ref_col, title, subtitle, caption, file, height) {
   d <- dt[size == size_key & status == "ok"]
@@ -263,7 +280,7 @@ speedup_plot <- function(size_key, ref_col, title, subtitle, caption, file, heig
     geom_tile(aes(fill = pmax(pmin(log2(fold), lim), -lim)), colour = surface, linewidth = 0.8) +
     geom_text(
       aes(label = lab, colour = is.na(fold) | log2(fold) < -2 | log2(fold) > 2.7),
-      size = 2.6, show.legend = FALSE
+      size = 3.6, show.legend = FALSE
     ) +
     scale_colour_manual(values = c(`FALSE` = ink, `TRUE` = "#ffffff")) +
     # the heatmap ramp reversed, beige pinned to "same"
@@ -276,15 +293,15 @@ speedup_plot <- function(size_key, ref_col, title, subtitle, caption, file, heig
       name = NULL
     ) +
     labs(title = title, subtitle = subtitle, caption = caption, x = NULL, y = NULL) +
-    theme_bench() +
+    theme_bench(14) +
     theme(
       panel.grid.major = element_blank(),
       axis.text.x = element_text(angle = 35, hjust = 1),
-      legend.key.width = unit(1.8, "cm")
+      legend.key.width = unit(2.2, "cm")
     )
 
-  ggsave(file.path(fig_dir, paste0(file, ".png")), p, width = 9.5, height = height, dpi = 200, bg = surface)
-  ggsave(file.path(fig_dir, paste0(file, ".pdf")), p, width = 9.5, height = height, bg = surface)
+  ggsave(file.path(fig_dir, paste0(file, ".png")), p, width = 13, height = height, dpi = 300, bg = surface)
+  ggsave(file.path(fig_dir, paste0(file, ".pdf")), p, width = 13, height = height, bg = surface)
 }
 
 speedup_plot(
@@ -297,7 +314,7 @@ speedup_plot(
     sep = "\n"
   ),
   file = "speedup_vs_scanpy_500k",
-  height = 4
+  height = 5.6
 )
 
 speedup_plot(
@@ -311,7 +328,7 @@ speedup_plot(
     sep = "\n"
   ),
   file = "speedup_vs_scanpy_dask_full",
-  height = 3.2
+  height = 4.6
 )
 
 #### figure 4: cold vs warm load ------------------------------------------------
@@ -343,5 +360,5 @@ fig4 <- ggplot(wl, aes(size_label, seconds, fill = start)) +
   theme_bench() +
   theme(panel.grid.major.x = element_blank())
 
-ggsave(file.path(fig_dir, "warm_start.png"), fig4, width = 8, height = 3.6, dpi = 200, bg = surface)
+ggsave(file.path(fig_dir, "warm_start.png"), fig4, width = 8, height = 3.6, dpi = 300, bg = surface)
 ggsave(file.path(fig_dir, "warm_start.pdf"), fig4, width = 8, height = 3.6, bg = surface)
