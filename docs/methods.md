@@ -228,12 +228,6 @@ harmonypy.
 - **One repeat, one machine, one simulation seed.** Apple Silicon under
   Docker, not a real 24 GB laptop. Reruns of the same bixverse configuration
   moved the load step by up to 35 s, mostly in the MTX reader's file passes.
-  A Scanpy h5ad run on PBMC 500k that
-  overlapped a system sleep took 3,233 s without tSNE; the rerun took 832 s
-  and is the one shown. A Seurat BPCells run on the 500k simulation timed out
-  in tSNE across a sleep; the rerun is shown, and its time without tSNE
-  matched within 3 s (1,281 against 1,278 s). Both first runs are kept in
-  `results/` with a `_slept` suffix.
 - **Peak memory includes tSNE.** For bixverse at 1M the tSNE step sets the
   run peak (10.5 against 8.3 GB before tSNE, h5ad).
 - **Splat is the easy case.** No gene-gene structure beyond the DE, no
