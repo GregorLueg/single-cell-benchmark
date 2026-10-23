@@ -18,10 +18,10 @@ The benchmarks ran within Docker on a MacBook M1 Max.
 
 ## Headline
 
-Seconds without tSNE and peak memory from h5ad, or where the run died, plus
-quality against the truth across the three sizes. Stack: bixverse 0.8.1,
-bixverse.gpu 0.6.1, Scanpy 1.12.4, scrapper 1.6.3, Seurat 5.6.0. One repeat,
-one seed.
+Seconds without tSNE and peak memory (whole run, tSNE included) from h5ad, or
+where the run died, plus quality against the truth across the sizes each tool
+finished. Stack: bixverse 0.8.1, bixverse.gpu 0.6.1, Scanpy 1.12.4, scrapper
+1.6.3, Seurat 5.6.0. One repeat, one seed.
 
 | framework | 100k | 500k | 1M | Harmony purity | ARI | rare F1 |
 |---|---|---|---|---|---|---|
@@ -38,29 +38,33 @@ one seed.
 \* Native macOS on Metal, no memory cap, peak is the process memory
 footprint: close to, but not the same metric as, the Docker rows. MLX needs an opt-in build against mlx-c.
 
-- **bixverse is about 6x faster than scrapper at a quarter of its memory, and
-  3.6x to 9x faster than Scanpy (Dask to h5ad).** At 1M only the out-of-core
-  designs are left: bixverse (3.2 min), Scanpy with Dask (12 min, no DGE) and
-  Seurat with BPCells (44 min). The GPU rows halve bixverse's time again.
+- **bixverse is about 6x faster than scrapper at a quarter to a third of its
+  memory, and 3.6x to 8.7x faster than Scanpy (Dask to h5ad).** At 1M only
+  three out-of-core designs finish: bixverse (3.2 min), Scanpy with Dask
+  (12 min, no DGE) and Seurat with BPCells (44 min). From 500k the GPU rows
+  halve bixverse's time again (native, so their load also skips the VM); at
+  100k they save 3 to 6 s.
 - **Scanpy Dask skips the slowest Scanpy step.** It has no DGE (Wilcoxon fails
   on Dask arrays); in-memory Scanpy spends 454 s of its 766 s on it at 500k.
 - **No compromise on embeddings.** bixverse and Seurat share the top Harmony
   purity (0.97), ahead of scrapper (0.93) and Scanpy (0.89 to 0.91), and the
-  best recovery of the rare group.
-- **scrapper clusters best from 500k.** ARI 0.94 at every size from its
-  rank-weighted sNN, though it merges groups (9 clusters for 12) and misses
-  the rare one. bixverse leads at 100k (0.98) and drops to 0.79 to 0.88,
+  best recovery of the rare group, though at rare F1 0.26 to 0.35 nobody
+  recovers it well.
+- **scrapper clusters best at 500k.** ARI 0.94 at 100k and 500k from its
+  rank-weighted sNN (no scores at 1M: it OOMs in memory and times out in DGE
+  on HDF5), though it merges groups (9 clusters for 12) and misses the rare
+  one. bixverse leads at 100k (0.98) and drops to 0.79 to 0.88,
   depending on whether Leiden returns 12 or 13 clusters.
 - **DGE in seconds.** 0.5 to 4.2 s for bixverse, against 3.5 to 22 s for
-  scrapper and minutes for Scanpy and BPCells. On the shared genes it ranks
-  like Seurat's presto; scrapper and Scanpy rank detectable markers slightly
+  scrapper, 46 to 454 s for Scanpy and 89 to 822 s for BPCells. On the shared
+  genes it ranks like Seurat's presto; scrapper and Scanpy rank detectable markers slightly
   better.
 - **scrapper out of core saves memory, not time.** On HDF5 it stays under
   13 GB without swap at 500k, but takes 2,426 s, most of it in DGE, and
   times out in DGE at 1M and on the full PBMC data.
-- **Harmony on the same input:** bixverse v2 2x faster than harmonypy 2.1.0
-  (2.1 against 4.2 s at 1M), MLX 4.2x, with 97% of harmonypy's neighbours
-  kept, at 1.1 GB more memory for v2.
+- **Harmony on the same input:** at 1M bixverse v2 is 2x faster than
+  harmonypy 2.1.0 (2.1 against 4.2 s) and MLX 4.2x; at 100k both are 1.8x.
+  97% of harmonypy's neighbours kept, at 1.1 GB more memory for v2.
 - **Smallest on disk.** bixverse's store takes 2.7 GB at 1M, against 3.7 GB
   for BPCells and 8.1 GB for the h5ad.
 
@@ -112,6 +116,10 @@ figures are in [results](docs/results.md#pbmc).
   timed.
 
 Details in [methods](docs/methods.md#caveats).
+
+Think a framework is run the wrong way here, or along a slower path than it
+should be? Please [open an issue](https://github.com/GregorLueg/single-cell-benchmark/issues)
+with the call you'd use instead. The pipelines are in `pipelines/`.
 
 ## Docs
 

@@ -182,11 +182,13 @@ wrapper plus the VM, not split further.
   Scanpy Dask (719 s, no DGE) and Seurat BPCells (2,662 s). scrapper makes
   500k at the memory ceiling with 2.6 GB swap; Seurat standard OOMs in PCA at
   500k.
-- **The GPU rows halve that again.** 41 s (wgpu) and 37 s (MLX) at 500k,
-  91 s and 80 s at 1M, native and uncapped. Most of the gain is UMAP and the
-  FFT tSNE; Leiden and DGE are the same CPU code.
+- **From 500k the GPU rows halve that again.** 41 s (wgpu) and 37 s (MLX) at
+  500k, 91 s and 80 s at 1M, native and uncapped; at 100k 12 and 9 s against
+  15 s. Most of the gain is UMAP (80 s to 10 to 11 s at 1M), then the kNN
+  (30 s to 13 to 15 s). Load is 8 to 15 s faster too, partly because native
+  I/O skips the VM. Leiden and DGE are the same CPU code.
 - **Embeddings: bixverse and Seurat lead, Scanpy trails.** Harmony purity
-  0.969 to 0.971 for both at every size, the GPU rows 0.963 to 0.968, scrapper
+  0.968 to 0.971 for both at every size, the GPU rows 0.963 to 0.968, scrapper
   0.926 to 0.929, Scanpy 0.889 to 0.908. UMAP and tSNE keep the order.
 - **The GPU rows mix slightly more and keep less of the rare group.** Batch
   mix 1.004 to 1.011 against 0.982 to 0.990 on the CPU, and rare purity 0.22
@@ -194,15 +196,16 @@ wrapper plus the VM, not split further.
   Harmony is not the cause: on the same input
   the GPU and MLX Harmony score as v2 does (rare purity 0.291 and 0.292, batch
   mix 0.982 at 1M). Which upstream step it is, is not checked.
-- **Clustering: scrapper wins ARI from 500k.** 0.94 at every size with 9
-  clusters for 12 groups, from its rank-weighted sNN without pruning; it
+- **Clustering: scrapper wins ARI at 500k.** 0.94 at 100k and 500k (it has
+  no scores at 1M) with 9 clusters for 12 groups, from its rank-weighted sNN without pruning; it
   merges groups, so its rare F1 stays at 0.13. bixverse leads at 100k (0.976,
   11 clusters). At 500k and 1M every bixverse row gives 12 or 13 clusters,
   and ARI follows the count: about 0.87 to 0.88 with 12, 0.79 to 0.80 with
   13. Which rows land on 13 is not stable (rare F1, purity and batch mix do
   not move with it). Seurat 0.70 to 0.81.
 - **The rare group goes to Seurat and bixverse.** Rare F1 0.26 to 0.35 for
-  both on the CPU, against 0.09 to 0.13 for Scanpy and scrapper.
+  both on the CPU, against 0.09 to 0.13 for Scanpy and scrapper. Nobody
+  recovers it well: the best-matching cluster is still mostly other cells.
 - **`cluster_fast` does not pay off on the CPU here.** It keeps the rare group
   (bixverse rare F1 within 0.02 of Leiden) at ARI 0.79 to 0.94, but the CPU
   k-means costs more than the Leiden it replaces: 14 s against 4 s at 500k and
@@ -210,13 +213,15 @@ wrapper plus the VM, not split further.
   the GPU and MLX rows it is about Leiden's time.
 - **DGE: bixverse in seconds.** 0.5 to 4.2 s against 3.5 to 22 s for scrapper,
   46 to 454 s for Scanpy and 89 to 822 s for BPCells. On the shared genes
-  bixverse and Seurat agree (R-precision 0.975); on detectable markers
+  bixverse and Seurat agree at 100k and 500k (R-precision 0.97 to 0.975;
+  BPCells drops to 0.91 at 1M); on detectable markers
   scrapper and Scanpy rank slightly better (0.93 to 0.94 against 0.89 to
   0.90). bixverse's `min_prop = 0.05` reports fewer genes, so its all-gene
   AUROC is lower (0.735 against 0.88 to 0.94 at 500k): markers it filters out
   rank last. BPCells drops to 0.69 and 0.63 at 500k and 1M; why is not
   checked.
-- **tSNE: bixverse is 2x to 6x faster in every category.** Standard
+- **tSNE: bixverse on the CPU is 2x to 6x faster in every category, the GPU
+  FFT up to 11x.** Standard
   Barnes-Hut at 500k: 252 s against 1,315 s for Scanpy and 1,404 s for
   BPCells, both of which time out at 1M. FFT: 61 s on the CPU and 14 to 20 s
   on the GPU, against 153 to 157 s. Quick and dirty: 42 to 48 s against
@@ -225,7 +230,7 @@ wrapper plus the VM, not split further.
   ([methods](methods.md#workflow)).
 - **tSNE sets bixverse's CPU peak at 1M.** Before tSNE the CPU rows peak at
   8.3 GB; the run peak is 10.5 (h5ad) and 11.5 GB (mtx). At 500k tSNE
-  adds 0.1 GB.
+  adds 0.1 to 0.2 GB.
 - **scrapper HDF5 trades time for memory, up to 500k.** 213 s and 3.4 GB at
   100k against 90 s and 5.6 GB in memory; 2,426 s and 12.4 GB without swap at
   500k against 515 s and 22.7 GB with 2.6 GB swap. Same scores. DGE is most of
@@ -375,7 +380,7 @@ cold load s is the mtx load step of the full cold run.
 - **The GPU earns its keep from 500k.** 39 s (wgpu) and 38 s (MLX) without
   tSNE at 500k, 81 and 75 s on the full data, against 73 and 151 s on the
   CPU. The FFT tSNE takes 20 to 31 s on the full data against 115 s on the
-  CPU; tSNE is now most of every run that has it.
+  CPU; tSNE is now most of every bixverse run.
 - **scrapper out of core does not finish the full data.** On HDF5 it gets
   through load (731 s) to UMAP at a 16.0 GB peak without swap, then times out
   in DGE, as on the 1M simulation. At 500k it finishes in 2,182 s at 8.3 GB.

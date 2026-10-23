@@ -10,8 +10,8 @@
   process's peak memory footprint from `/usr/bin/time -l`: dirty anonymous
   and compressed memory plus the process's Metal allocations, but not clean
   file-backed pages, so like cgroup anon it does not charge the mapped
-  bixverse store. Max RSS, which does, is about twice as high (1M simulation:
-  19.5 against 10.3 GB on wgpu). Close to the Docker numbers but not the same
+  bixverse store. Max RSS, which does, is much higher (1M simulation:
+  17.4 against 10.9 GB on wgpu). Close to the Docker numbers but not the same
   metric, and its disk I/O skips the VM, so its load is faster too. Two
   backends of bixverse.gpu: wgpu (the GPU row) and MLX (the MLX row).
 - **MLX**: experimental, and not what a user gets from a plain install. The
@@ -131,7 +131,7 @@ path.
      centroid's label. The step time covers k-means and both Leiden runs.
      sqrt(n), the IVF and bluster `TwoStepParam` default, left the rare group
      merged with three neighbours at 100k (rare F1 0.09); 4 x sqrt(n) separates
-     it (0.25, as plain Leiden). Coarsening still trades resolution for speed:
+     it (0.27 against 0.26 for plain Leiden on bixverse). Coarsening still trades resolution for speed:
      a group needs a few centroids of its own to survive. bixverse
      `fast_cluster_sc` (`fast_cluster_gpu_sc` on the GPU and MLX rows, k-means
      on the device); the centroid graph and k-means settings are each
@@ -271,6 +271,10 @@ harmonypy.
   and HDF5Array's CSC extractor loads every column for each row block of the
   cell-major file. scran 1.40 and scuttle 1.22 deprecate these functions in
   favour of scrapper, which is the scrapper HDF5 row.
+- **Scanpy's kNN has a fixed cost.** 27 s at 100k, 33 s at 500k, so most of
+  it at 100k does not scale with the data. It inflates Scanpy's 100k totals
+  and the speed-ups against it there; the cause (pynndescent's numba
+  compilation is the obvious suspect) is not checked.
 - **Defaults differ** in scaling, normalisation and graph construction; see
   Workflow.
 
