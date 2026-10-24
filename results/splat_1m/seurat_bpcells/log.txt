@@ -1,13 +1,11 @@
->>> load: 132.5 s <<<
->>> qc: 9.8 s <<<
->>> normalise: 4.3 s <<<
->>> hvg: 24.8 s <<<
->>> pca: 467.9 s <<<
->>> harmony: 178.6 s <<<
->>> knn_snn: 99.7 s <<<
->>> cluster: 367.4 s <<<
->>> umap: 554.7 s <<<
-Warning: Column-major order detected; FindMarkers requires row-major order.
-Consider first running BPCells::transpose_storage_order() to avoid repeated transpositions.
->>> dge: 822.0 s <<<
+>>> load: 129.0 s <<<
+>>> qc: 8.5 s <<<
+>>> normalise: 4.1 s <<<
+>>> hvg: 24.5 s <<<
+>>> pca: 463.0 s <<<
+>>> harmony: 175.1 s <<<
+>>> knn_snn: 94.8 s <<<
+>>> cluster: 342.7 s <<<
+>>> umap: 545.8 s <<<
+>>> dge: 517.6 s <<<
 exit=124

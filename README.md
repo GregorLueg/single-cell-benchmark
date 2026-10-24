@@ -30,18 +30,18 @@ finished. Stack: bixverse 0.8.1, bixverse.gpu 0.6.1, Scanpy 1.12.4, scrapper
 | bixverse MLX (native)\* | 9 s, 1.5 GB | 37 s, 6.1 GB | 80 s, 10.9 GB | 0.965 to 0.967 | 0.87 to 0.97 | 0.22 to 0.31 |
 | Scanpy | 122 s, 2.6 GB | 766 s, 14.2 GB | OOM at load | 0.894 to 0.908 | 0.78 to 0.88 | 0.09 to 0.11 |
 | Scanpy dask (experimental, no DGE) | 77 s, 1.8 GB | 317 s, 7.8 GB | 719 s, 10.8 GB | 0.889 to 0.908 | 0.86 to 0.91 | 0.10 to 0.11 |
-| scrapper | 90 s, 5.6 GB | 515 s, 22.7 GB | OOM at load | 0.926 to 0.929 | 0.94 | 0.13 |
-| scrapper HDF5 | 213 s, 3.4 GB | 2426 s, 12.4 GB | TIMEOUT at dge | 0.926 to 0.929 | 0.94 | 0.13 |
-| Seurat std | 124 s, 8.9 GB | OOM at pca | OOM at load | 0.971 | 0.81 | 0.27 |
-| Seurat BPCells | 253 s, 2.6 GB | 1281 s, 6.5 GB | 2662 s, 9.5 GB | 0.968 to 0.971 | 0.70 to 0.79 | 0.27 to 0.35 |
+| scrapper | 83 s, 5.5 GB | 469 s, 22.7 GB | OOM at load | 0.926 to 0.929 | 0.94 | 0.13 |
+| scrapper HDF5 | 223 s, 3.3 GB | 2413 s, 12.3 GB | TIMEOUT at dge | 0.926 to 0.929 | 0.94 | 0.13 |
+| Seurat std | 125 s, 8.9 GB | OOM at pca | OOM at load | 0.971 | 0.81 | 0.27 |
+| Seurat BPCells | 223 s, 2.5 GB | 1140 s, 6.9 GB | 2305 s, 10.8 GB | 0.968 to 0.971 | 0.70 to 0.79 | 0.27 to 0.35 |
 
 \* Native macOS on Metal, no memory cap, peak is the process memory
 footprint: close to, but not the same metric as, the Docker rows. MLX needs an opt-in build against mlx-c.
 
-- **bixverse is about 6x faster than scrapper at a quarter to a third of its
+- **bixverse is about 5x faster than scrapper at a quarter to a third of its
   memory, and 3.6x to 8.7x faster than Scanpy (Dask to h5ad).** At 1M only
   three out-of-core designs finish: bixverse (3.2 min), Scanpy with Dask
-  (12 min, no DGE) and Seurat with BPCells (44 min). From 500k the GPU rows
+  (12 min, no DGE) and Seurat with BPCells (38 min). From 500k the GPU rows
   halve bixverse's time again (native, so their load also skips the VM); at
   100k they save 3 to 6 s.
 - **Scanpy Dask skips the slowest Scanpy step.** It has no DGE (Wilcoxon fails
@@ -55,18 +55,19 @@ footprint: close to, but not the same metric as, the Docker rows. MLX needs an o
   on HDF5), though it merges groups (9 clusters for 12) and misses the rare
   one. bixverse leads at 100k (0.98) and drops to 0.79 to 0.88,
   depending on whether Leiden returns 12 or 13 clusters.
-- **DGE in seconds.** 0.5 to 4.2 s for bixverse, against 3.5 to 22 s for
-  scrapper, 46 to 454 s for Scanpy and 89 to 822 s for BPCells. On the shared
+- **DGE in seconds.** 0.5 to 4.2 s for bixverse, against 3.6 to 23 s for
+  scrapper, 46 to 454 s for Scanpy and 57 to 518 s for BPCells. On the shared
   genes it ranks like Seurat's presto; scrapper and Scanpy rank detectable markers slightly
   better.
 - **scrapper out of core saves memory, not time.** On HDF5 it stays under
-  13 GB without swap at 500k, but takes 2,426 s, most of it in DGE, and
+  13 GB without swap at 500k, but takes 2,413 s, most of it in DGE, and
   times out in DGE at 1M and on the full PBMC data.
 - **Harmony on the same input:** at 1M bixverse v2 is 2x faster than
   harmonypy 2.1.0 (2.1 against 4.2 s) and MLX 4.2x; at 100k both are 1.8x.
   97% of harmonypy's neighbours kept, at 1.1 GB more memory for v2.
 - **Smallest on disk.** bixverse's store takes 2.7 GB at 1M, against 3.7 GB
-  for BPCells and 8.1 GB for the h5ad.
+  for the BPCells store and 8.1 GB for the h5ad. BPCells' DGE step adds a
+  gene-major copy of the normalised data, 12.5 GB on disk in all.
 
 ## Real data check: PBMC
 
@@ -82,16 +83,16 @@ subsamples, or where the run died. Same stack.
 | Scanpy mtx | 137 s, 6.0 GB | OOM at load | OOM at load |
 | Scanpy h5ad | 116 s, 2.0 GB | 832 s, 14.2 GB | OOM at load |
 | Scanpy dask (experimental, no DGE) | 65 s, 1.6 GB | 237 s, 6.7 GB | 490 s, 10.4 GB |
-| scrapper mtx | 104 s, 5.3 GB | OOM at load | OOM at load |
-| scrapper h5ad | 73 s, 4.9 GB | 565 s, 22.9 GB | OOM at load |
-| scrapper HDF5 | 201 s, 2.5 GB | 2182 s, 8.3 GB | TIMEOUT at dge |
-| Seurat std mtx | 143 s, 7.7 GB | OOM at load | OOM at load |
-| Seurat std h5ad | 110 s, 7.8 GB | OOM at load | OOM at load |
-| Seurat BPCells | 361 s, 2.6 GB | 1829 s, 5.6 GB | 3231 s, 9.5 GB |
+| scrapper mtx | 102 s, 5.3 GB | OOM at load | OOM at load |
+| scrapper h5ad | 66 s, 4.8 GB | 434 s, 20.9 GB | OOM at load |
+| scrapper HDF5 | 201 s, 2.7 GB | 2237 s, 8.3 GB | TIMEOUT at dge |
+| Seurat std mtx | 141 s, 7.7 GB | OOM at load | OOM at load |
+| Seurat std h5ad | 109 s, 7.8 GB | OOM at load | OOM at load |
+| Seurat BPCells | 286 s, 2.5 GB | 1421 s, 5.6 GB | 3012 s, 10.9 GB |
 
 The real data agree with the simulation: only the out-of-core designs finish
 the full set (bixverse in 2.5 min from h5ad, Scanpy with Dask in 8.2 min
-without DGE, Seurat with BPCells in 54 min, all at 8.7 to 10.4 GB), and every
+without DGE, Seurat with BPCells in 50 min, all at 8.7 to 10.9 GB), and every
 in-memory path dies at load. Per-step tables, the warm start and the scaling
 figures are in [results](docs/results.md#pbmc).
 
@@ -110,6 +111,13 @@ figures are in [results](docs/results.md#pbmc).
   GPU and MLX rows run natively without a cap.
 - From 500k bixverse's CPU tSNE uses an approximate kNN (IVF), where the
   default Barnes-Hut of Scanpy and Seurat pays for an exact one.
+- Defaults that favour bixverse: its UMAP optimiser is multi-threaded where
+  Scanpy's, Seurat's and scrapper's run on one thread, and its quick tSNE uses
+  qdtsne's leaf approximation, which scrapper leaves off. Defaults that favour
+  Scanpy: Leiden with 2 iterations, Wilcoxon without tie correction.
+- Seurat with BPCells transposes its data to gene-major order inside the DGE
+  step, as BPCells advises for `FindAllMarkers`; the time and the extra disk
+  count against it.
 - Harness workarounds: Scanpy Dask computes its QC sums by hand, because
   `calculate_qc_metrics` blows up under Dask, and has no DGE. scrapper HDF5
   and Scanpy Dask need an h5ad (or 10x `.h5`); their MTX conversion is not

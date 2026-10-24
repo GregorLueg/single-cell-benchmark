@@ -28,14 +28,17 @@
   pages too and reclaims them under pressure, so it still bounds every run.
 - **Disk**: `run.sh` records what a run leaves in its scratch volume
   (`scratch_kb`): the bixverse store and the BPCells matrix dirs. Input files
-  are not counted. Measuring right after load (`LOAD_ONLY=1`) gives the same
-  size as after a full run (BPCells on 1M simulated cells: 3,747 against
-  3,748 MB).
+  are not counted. For bixverse that is the store written at load. For
+  BPCells it also holds the gene-major copy of the normalised data that the
+  DGE step writes (see Workflow): the store alone, measured right after load
+  (`LOAD_ONLY=1`), is 3.7 GB on 1M simulated cells, against 12.5 GB after a
+  full run.
 - **Watchdog**: a run is killed when no step finishes for `STEP_TIMEOUT`
   seconds (45 min by default). The tables mark it as **TIMEOUT**.
 - **Repeats**: one per run. Treat differences of a few seconds as noise.
-- **bixverse**: loaders use `csc_mem_gb = 8` as in the big data vignette; the
-  sNN kNN is nndescent (`BIX_KNN=nndescent`). The GPU and MLX rows use GPU
+- **bixverse**: loaders run at their default `csc_mem_gb = 8`; the sNN kNN is
+  nndescent (`BIX_KNN=nndescent`). Every framework's sNN kNN is approximate
+  (Annoy or NNDescent), so this is like for like. The GPU and MLX rows use GPU
   NNDescent (`find_neighbours_gpu_sc`).
 - **Scanpy Dask**: X read lazily from the h5ad in 50k cell CSR chunks, threaded
   scheduler. `sc.pp.calculate_qc_metrics` peaks at 16.6 GB transiently on 500k
@@ -104,8 +107,10 @@ rows use the default PCA solver, block Lanczos. Docker:
 
 ## Workflow
 
-Same steps and parameters everywhere, each via the framework's own documented
-path.
+Same steps and parameters everywhere, each along the framework's standard
+in-memory or out-of-core workflow from its vignettes. Some frameworks
+document other routes for large data that are not benchmarked here:
+scrapper's batch correction via `block =` plus MNN, Seurat's sketching.
 
 1. **load**: pre-filter as bixverse does it. Genes in at least 5 cells first,
    then cells with at least 100 genes and 250 UMIs. bixverse fuses the
@@ -115,12 +120,16 @@ path.
 3. **normalise**: library size to 1e4 and log1p (bixverse, Scanpy, Seurat);
    centred size factors and log2 (scrapper defaults).
 4. **hvg**: 2000 genes, each framework's default method.
-5. **pca**: 30 components. Scanpy and scrapper centre only; Seurat and
-   bixverse also scale to unit variance.
+5. **pca**: 30 components on the HVGs (scrapper via `runPca(subset =)`, as in
+   its vignette). Scanpy and scrapper centre only; Seurat and bixverse also
+   scale to unit variance.
 6. **harmony**: by sample. Scanpy runs harmonypy with `ncores = 8`, the CPU
    cap; Seurat calls `setThreads(8)`, as its 5.6.0 kernels default to one
    thread.
-7. **knn_snn**: k = 15.
+7. **knn_snn**: k = 15. scrapper builds the kNN once (`findKNN` with Annoy)
+   and hands it to both `buildSnnGraph` and `runUmap`, as
+   `runAllNeighborSteps` in its vignette does; the harness calls the steps one
+   by one to keep the per-step times.
 8. **cluster**: Leiden, resolution 1. The graphs differ, so the cluster counts
    do not compare: Scanpy clusters the UMAP fuzzy graph, Seurat and bixverse a
    Jaccard sNN pruned at 1/15 and 1/16, scrapper a rank-weighted sNN
@@ -143,7 +152,14 @@ path.
 10. **dge**: one-vs-rest markers, each framework's default test: bixverse
     `find_all_markers_sc` (Wilcoxon, `min_prop = 0.05`), Scanpy
     `rank_genes_groups` (Wilcoxon), Seurat `FindAllMarkers` (presto),
-    scrapper `scoreMarkers` (AUC). On the simulation the groups are
+    scrapper `scoreMarkers` (AUC). On BPCells, `FindAllMarkers` does not use
+    presto but `BPCells::marker_features` once per group, which wants
+    gene-major storage and otherwise warns and transposes on every call. The
+    BPCells row therefore transposes the normalised data layer once with
+    `transpose_storage_order`, as the warning advises, inside the DGE step:
+    its time and its disk copy count against BPCells. It cut DGE from 404 to
+    260 s on the 500k simulation and from 1,348 to 1,137 s on the full PBMC
+    data, at 0.4 to 1.4 GB more peak memory and three times the disk. On the simulation the groups are
     the true ones, so this tests the DE engine rather than the clustering. On
     PBMC they are the 24 samples, the same workload for everyone.
 11. **tsne**: perplexity 30, each tSNE builds its own kNN at k = 3 x
@@ -152,8 +168,11 @@ path.
     - `tsne_fft`: FFT where it exists (bixverse `fft_3k`, `fft_3k_gpu` on the
       GPU, Seurat's FIt-SNE, openTSNE for Scanpy).
     - `tsne_quick (qd)`: the quick-and-dirty Barnes-Hut of qdtsne (depth-capped
-      tree, repulsion per leaf) at scrapper's defaults: theta 1, 500
-      iterations, 250 early exaggeration at 12, max depth 7. scrapper and
+      tree) at scrapper's defaults: theta 1, 500 iterations, 250 early
+      exaggeration at 12, max depth 7. bixverse's `bh_qd` uses qdtsne's leaf
+      approximation (repulsion once per leaf); scrapper's `runTsne` leaves it
+      off by default, so it computes repulsion per point. This favours
+      bixverse's time. scrapper and
       bixverse (`manifoldsR::tsne(approx_type = "bh_qd")`, and `"bh_qd"` on
       the GPU). Not a standard tSNE.
 
@@ -180,8 +199,8 @@ in the harness; every other tool's tSNE runs its default kNN:
 | bixverse GPU / MLX | bixverse.gpu `tsne_gpu_sc` | GPU IVF (`knn_method` default) |
 
 So at 500k and above bixverse gets an approximate kNN where Scanpy's and
-Seurat's default Barnes-Hut pay for an exact one. For UMAP, bixverse and Scanpy
-reuse the graph; Seurat and scrapper rebuild it.
+Seurat's default Barnes-Hut pay for an exact one. For UMAP, bixverse, Scanpy
+and scrapper reuse the k = 15 neighbours; Seurat rebuilds them.
 
 ## Quality scores
 
@@ -245,9 +264,14 @@ harmonypy.
   reruns with the same embedding quality, Leiden returns 12 or 13 clusters,
   and ARI moves with it (about 0.87 against 0.79). It is not tested across
   Leiden seeds.
-- **Harness code.** The R pre-filter for scrapper and Seurat standard makes
-  copies (`counts > 0`, column subsetting); part of their in-memory OOMs may
-  be ours. The Scanpy Dask QC is hand-written (see Setup).
+- **Harness code.** The R pre-filter for scrapper and Seurat standard counts
+  detections from the sparse slots, but subsetting the matrix still copies
+  it; part of their in-memory OOMs may be ours. The Scanpy Dask QC is
+  hand-written (see Setup).
+- **BPCells DGE includes a transpose.** See Workflow, step 10. Without it
+  `FindAllMarkers` on BPCells transposes once per group and is slower; with
+  it the step writes a gene-major copy of the data (7.7 GB on the full PBMC
+  data). The split between transpose and marker test is not timed.
 - **No DGE for Scanpy Dask.** Wilcoxon `rank_genes_groups` fails on Dask
   arrays in Scanpy 1.12.4 (numba `TypingError` in `_select_top_n`). Only the
   t-test runs, and a t-test on zero-inflated counts is not a like-for-like
@@ -255,8 +279,8 @@ harmonypy.
   like-for-like: the same step takes in-memory Scanpy 454 s on the 500k
   simulation and 602 s on PBMC 500k. Treat the Dask row as experimental.
 - **`cluster_fast` on the CPU is slower than the Leiden it replaces** from
-  500k (bixverse 14 against 4 s at 500k, 47 against 8 s at 1M; scrapper 194
-  against 110 s). It is in the tables as an option, not in the totals.
+  500k (bixverse 14 against 4 s at 500k, 47 against 8 s at 1M; scrapper 195
+  against 114 s). It is in the tables as an option, not in the totals.
 - **scrapper HDF5 times out in DGE at the largest size.** On the 1M
   simulation and the full PBMC data no step finished within 45 min after
   UMAP; its row there is marked TIMEOUT.
@@ -268,10 +292,28 @@ harmonypy.
   and HDF5Array's CSC extractor loads every column for each row block of the
   cell-major file. scran 1.40 and scuttle 1.22 deprecate these functions in
   favour of scrapper, which is the scrapper HDF5 row.
-- **Scanpy's kNN has a fixed cost.** 27 s at 100k, 33 s at 500k, so most of
-  it at 100k does not scale with the data. It inflates Scanpy's 100k totals
-  and the speed-ups against it there; the cause (pynndescent's numba
-  compilation is the obvious suspect) is not checked.
+- **Scanpy pays a first-run cost.** Each run is a fresh container, so numba
+  compiles its kernels every time; the numba cache is partial and lost with
+  the container. This is what a user running the pipeline once sees, and it
+  is left in. Scanpy's kNN shows a fixed cost (27 s at 100k, 33 s at 500k),
+  which inflates its 100k totals and the speed-ups against it there; how much
+  of it is compilation is not measured.
+- **Defaults that favour Scanpy's speed.** Leiden runs Scanpy's default
+  `n_iterations = 2`, and `rank_genes_groups` skips the Wilcoxon tie
+  correction by default.
+- **tSNE settings are each framework's own.** Iteration counts and learning
+  rates are not matched; `sc.tl.tsne` hard-codes `learning_rate = 1000`.
+- **UMAP optimisation is single-threaded outside bixverse.** umap-learn under
+  Scanpy, uwot under Seurat (`n_sgd_threads = 0`) and scrapper's `runUmap`
+  (`parallel.optimization = FALSE`) run the SGD on one thread by default;
+  bixverse's default optimiser (`adam_parallel`) uses all 8. This favours
+  bixverse; none of the three is switched to a parallel mode here.
+- **Harmony is not one implementation.** Seurat runs the R harmony package
+  (with `project.dim = TRUE`), Scanpy harmonypy, scrapper and bixverse their
+  own. The same-input comparison covers bixverse and harmonypy only.
+- **Per-step times of the lazy rows shift work between steps.** Scanpy Dask,
+  scrapper HDF5 and BPCells defer computation, so a step can pay for work
+  queued earlier. Compare their totals, not single steps.
 - **Defaults differ** in scaling, normalisation and graph construction; see
   Workflow.
 

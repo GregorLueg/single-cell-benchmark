@@ -1,19 +1,19 @@
->>> load: 162.0 s <<<
->>> qc: 2.2 s <<<
+>>> load: 18.8 s <<<
+>>> qc: 2.1 s <<<
 >>> normalise: 0.4 s <<<
 >>> hvg: 0.9 s <<<
->>> pca: 10.1 s <<<
->>> harmony: 87.1 s <<<
->>> knn_snn: 26.5 s <<<
->>> cluster: 89.0 s <<<
->>> cluster_fast: 117.0 s <<<
+>>> pca: 14.3 s <<<
+>>> harmony: 121.6 s <<<
+>>> knn_snn: 26.8 s <<<
+>>> cluster: 85.1 s <<<
+>>> cluster_fast: 117.8 s <<<
 Warning message:
 In clusterKmeans(t(emb), k = as.integer(4 * sqrt(nrow(emb))), num.threads = threads) :
   convergence failure for k-means
->>> umap: 150.3 s <<<
->>> dge: 36.1 s <<<
->>> tsne_quick: 95.7 s <<<
-cells after QC: 346259, clusters: 16, fast clusters: 8 (res 1), 14 (res 2)
+>>> umap: 126.1 s <<<
+>>> dge: 37.8 s <<<
+>>> tsne_quick: 99.2 s <<<
+cells after QC: 346259, clusters: 17, fast clusters: 8 (res 1), 13 (res 2)
 R version 4.6.1 (2026-06-24)
 Platform: aarch64-unknown-linux-gnu
 Running under: Ubuntu 24.04.4 LTS
@@ -57,22 +57,22 @@ loaded via a namespace (and not attached):
 [40] abind_1.4-8           stats4_4.6.1          matrixStats_1.5.0    
 [43] tools_4.6.1           pkgconfig_2.0.3      
 	Command being timed: "Rscript /bench/pipelines/scrapper.R /data /out /scratch"
-	User time (seconds): 1401.44
-	System time (seconds): 66.31
-	Percent of CPU this job got: 187%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 13:02.10
+	User time (seconds): 1285.15
+	System time (seconds): 54.03
+	Percent of CPU this job got: 204%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 10:55.72
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 23975992
+	Maximum resident set size (kbytes): 21941332
 	Average resident set size (kbytes): 0
-	Major (requiring I/O) page faults: 464416
-	Minor (reclaiming a frame) page faults: 60370493
-	Voluntary context switches: 480062
-	Involuntary context switches: 211298
+	Major (requiring I/O) page faults: 994
+	Minor (reclaiming a frame) page faults: 59387800
+	Voluntary context switches: 13297
+	Involuntary context switches: 10459
 	Swaps: 0
-	File system inputs: 5483168
+	File system inputs: 173296
 	File system outputs: 0
 	Socket messages sent: 0
 	Socket messages received: 0

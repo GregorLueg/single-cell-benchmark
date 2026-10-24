@@ -40,6 +40,17 @@ step("umap", {
 
 step("dge", {
   Idents(obj) <- dge_col
+  # On BPCells, FindAllMarkers skips presto and runs BPCells::marker_features
+  # per group, which needs gene-major storage and otherwise transposes the whole
+  # matrix on every call. Transpose the data layer once, as its warning advises;
+  # the cost stays in this step.
+  if (exists("on_bpcells")) {
+    LayerData(obj, layer = "data") <- BPCells::transpose_storage_order(
+      LayerData(obj, layer = "data"),
+      outdir = file.path(scratch, "data_gene_major"),
+      tmpdir = scratch
+    )
+  }
   markers <- as.data.table(FindAllMarkers(obj, verbose = FALSE))
 })
 

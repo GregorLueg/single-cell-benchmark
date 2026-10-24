@@ -19,8 +19,9 @@ step("load", {
     counts <- as(Matrix::t(counts), "CsparseMatrix")
     dimnames(counts) <- list(genes$gene_id, meta$bc_wells)
   }
-  counts <- counts[Matrix::rowSums(counts > 0) >= 5, ]
-  keep <- Matrix::colSums(counts > 0) >= 100 & Matrix::colSums(counts) >= 250
+  # detection counts straight from the dgCMatrix slots: `counts > 0` would copy it
+  counts <- counts[tabulate(counts@i + 1L, nrow(counts)) >= 5, ]
+  keep <- diff(counts@p) >= 100 & Matrix::colSums(counts) >= 250
   counts <- counts[, keep]
   md <- data.frame(meta[keep], row.names = meta$bc_wells[keep])
   obj <- CreateSeuratObject(counts = counts, meta.data = md)
