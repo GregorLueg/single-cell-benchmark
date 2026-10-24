@@ -150,9 +150,10 @@ if (truth) {
 
 # tsne_quick: the quick-and-dirty Barnes-Hut of qdtsne (depth-capped tree), at
 # scrapper's defaults: theta = 1, 500 iterations, 250 early exaggeration at 12,
-# max depth 7, no leaf approximation. Not a standard Barnes-Hut tSNE.
+# max depth 7. The leaf approximation is off by default; it is switched on to
+# match bixverse's bh_qd. Not a standard Barnes-Hut tSNE.
 step("tsne_quick", {
-  tsne <- runTsne(t(emb), perplexity = 30, num.threads = threads)
+  tsne <- runTsne(t(emb), perplexity = 30, leaf.approximation = TRUE, num.threads = threads)
 })
 if (truth) write_truth_outputs(embs = list(tsne_quick = cells_named(tsne)))
 
