@@ -169,10 +169,11 @@ scrapper's batch correction via `block =` plus MNN, Seurat's sketching.
       GPU, Seurat's FIt-SNE, openTSNE for Scanpy).
     - `tsne_quick (qd)`: the quick-and-dirty Barnes-Hut of qdtsne (depth-capped
       tree) at scrapper's defaults: theta 1, 500 iterations, 250 early
-      exaggeration at 12, max depth 7. bixverse's `bh_qd` uses qdtsne's leaf
-      approximation (repulsion once per leaf); scrapper's `runTsne` leaves it
-      off by default, so it computes repulsion per point. This favours
-      bixverse's time. scrapper and
+      exaggeration at 12, max depth 7, and qdtsne's leaf approximation
+      (repulsion once per leaf). bixverse's `bh_qd` uses it by default;
+      scrapper's `runTsne` needs `leaf.approximation = TRUE`, which the harness
+      sets (it cuts scrapper's step from 151 to 132 s on the 500k simulation).
+      bixverse's own defaults (1,000 iterations) are overridden to match. scrapper and
       bixverse (`manifoldsR::tsne(approx_type = "bh_qd")`, and `"bh_qd"` on
       the GPU). Not a standard tSNE.
 
@@ -279,8 +280,8 @@ harmonypy.
   like-for-like: the same step takes in-memory Scanpy 454 s on the 500k
   simulation and 602 s on PBMC 500k. Treat the Dask row as experimental.
 - **`cluster_fast` on the CPU is slower than the Leiden it replaces** from
-  500k (bixverse 14 against 4 s at 500k, 47 against 8 s at 1M; scrapper 195
-  against 114 s). It is in the tables as an option, not in the totals.
+  500k (bixverse 14 against 4 s at 500k, 47 against 8 s at 1M; scrapper 194
+  against 123 s). It is in the tables as an option, not in the totals.
 - **scrapper HDF5 times out in DGE at the largest size.** On the 1M
   simulation and the full PBMC data no step finished within 45 min after
   UMAP; its row there is marked TIMEOUT.

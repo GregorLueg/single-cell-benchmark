@@ -1,19 +1,19 @@
->>> load: 4.9 s <<<
+>>> load: 4.8 s <<<
 >>> qc: 0.4 s <<<
 >>> normalise: 0.1 s <<<
 >>> hvg: 0.1 s <<<
->>> pca: 2.2 s <<<
->>> harmony: 12.5 s <<<
->>> knn_snn: 6.4 s <<<
->>> cluster: 13.9 s <<<
->>> cluster_fast: 17.8 s <<<
+>>> pca: 2.0 s <<<
+>>> harmony: 14.2 s <<<
+>>> knn_snn: 6.3 s <<<
+>>> cluster: 13.3 s <<<
+>>> cluster_fast: 17.3 s <<<
 Warning message:
 In clusterKmeans(t(emb), k = as.integer(4 * sqrt(nrow(emb))), num.threads = threads) :
   convergence failure for k-means
->>> umap: 38.4 s <<<
->>> dge: 3.6 s <<<
->>> tsne_quick: 26.0 s <<<
-cells after QC: 96342, clusters: 9, fast clusters: 9 (res 1), 10 (res 2)
+>>> umap: 38.1 s <<<
+>>> dge: 3.3 s <<<
+>>> tsne_quick: 21.0 s <<<
+cells after QC: 96342, clusters: 9, fast clusters: 9 (res 1), 11 (res 2)
 R version 4.6.1 (2026-06-24)
 Platform: aarch64-unknown-linux-gnu
 Running under: Ubuntu 24.04.4 LTS
@@ -57,22 +57,22 @@ loaded via a namespace (and not attached):
 [40] abind_1.4-8           stats4_4.6.1          matrixStats_1.5.0    
 [43] tools_4.6.1           pkgconfig_2.0.3      
 	Command being timed: "Rscript /bench/pipelines/scrapper.R /data /out /scratch"
-	User time (seconds): 280.68
-	System time (seconds): 7.78
-	Percent of CPU this job got: 219%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 2:11.34
+	User time (seconds): 253.93
+	System time (seconds): 8.48
+	Percent of CPU this job got: 208%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 2:05.68
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 5835052
+	Maximum resident set size (kbytes): 5809468
 	Average resident set size (kbytes): 0
-	Major (requiring I/O) page faults: 99
-	Minor (reclaiming a frame) page faults: 5380871
-	Voluntary context switches: 7058
-	Involuntary context switches: 6304
+	Major (requiring I/O) page faults: 285
+	Minor (reclaiming a frame) page faults: 5831308
+	Voluntary context switches: 7756
+	Involuntary context switches: 5910
 	Swaps: 0
-	File system inputs: 0
+	File system inputs: 30656
 	File system outputs: 0
 	Socket messages sent: 0
 	Socket messages received: 0

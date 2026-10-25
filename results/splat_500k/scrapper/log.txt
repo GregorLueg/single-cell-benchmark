@@ -1,18 +1,18 @@
->>> load: 205.6 s <<<
->>> qc: 2.4 s <<<
+>>> load: 203.2 s <<<
+>>> qc: 2.2 s <<<
 >>> normalise: 0.4 s <<<
 >>> hvg: 0.5 s <<<
->>> pca: 15.1 s <<<
->>> harmony: 100.8 s <<<
->>> knn_snn: 40.6 s <<<
->>> cluster: 117.7 s <<<
->>> cluster_fast: 197.3 s <<<
+>>> pca: 14.9 s <<<
+>>> harmony: 100.1 s <<<
+>>> knn_snn: 40.4 s <<<
+>>> cluster: 114.9 s <<<
+>>> cluster_fast: 196.3 s <<<
 Warning message:
 In clusterKmeans(t(emb), k = as.integer(4 * sqrt(nrow(emb))), num.threads = threads) :
   convergence failure for k-means
->>> umap: 172.9 s <<<
->>> dge: 21.8 s <<<
->>> tsne_quick: 151.2 s <<<
+>>> umap: 181.6 s <<<
+>>> dge: 22.4 s <<<
+>>> tsne_quick: 131.8 s <<<
 cells after QC: 482409, clusters: 9, fast clusters: 9 (res 1), 11 (res 2)
 R version 4.6.1 (2026-06-24)
 Platform: aarch64-unknown-linux-gnu
@@ -56,22 +56,22 @@ loaded via a namespace (and not attached):
 [37] abind_1.4-8           stats4_4.6.1          matrixStats_1.5.0    
 [40] tools_4.6.1           pkgconfig_2.0.3      
 	Command being timed: "Rscript /bench/pipelines/scrapper.R /data /out /scratch"
-	User time (seconds): 2045.96
-	System time (seconds): 76.53
-	Percent of CPU this job got: 204%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 17:18.62
+	User time (seconds): 1898.12
+	System time (seconds): 72.31
+	Percent of CPU this job got: 193%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 17:00.93
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 23744008
+	Maximum resident set size (kbytes): 23738744
 	Average resident set size (kbytes): 0
-	Major (requiring I/O) page faults: 1870
-	Minor (reclaiming a frame) page faults: 70381015
-	Voluntary context switches: 9589
-	Involuntary context switches: 12679
+	Major (requiring I/O) page faults: 2162
+	Minor (reclaiming a frame) page faults: 69791671
+	Voluntary context switches: 10419
+	Involuntary context switches: 13549
 	Swaps: 0
-	File system inputs: 74184
+	File system inputs: 61456
 	File system outputs: 0
 	Socket messages sent: 0
 	Socket messages received: 0

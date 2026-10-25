@@ -1,19 +1,19 @@
->>> load: 5.0 s <<<
+>>> load: 5.1 s <<<
 >>> qc: 0.4 s <<<
 >>> normalise: 0.1 s <<<
 >>> hvg: 0.2 s <<<
->>> pca: 2.3 s <<<
->>> harmony: 10.9 s <<<
->>> knn_snn: 4.6 s <<<
->>> cluster: 8.4 s <<<
->>> cluster_fast: 10.4 s <<<
+>>> pca: 2.4 s <<<
+>>> harmony: 13.6 s <<<
+>>> knn_snn: 4.4 s <<<
+>>> cluster: 9.3 s <<<
+>>> cluster_fast: 10.6 s <<<
 Warning message:
 In clusterKmeans(t(emb), k = as.integer(4 * sqrt(nrow(emb))), num.threads = threads) :
   convergence failure for k-means
->>> umap: 28.3 s <<<
->>> dge: 6.2 s <<<
->>> tsne_quick: 16.9 s <<<
-cells after QC: 69412, clusters: 14, fast clusters: 6 (res 1), 11 (res 2)
+>>> umap: 28.0 s <<<
+>>> dge: 6.3 s <<<
+>>> tsne_quick: 15.3 s <<<
+cells after QC: 69412, clusters: 13, fast clusters: 7 (res 1), 12 (res 2)
 R version 4.6.1 (2026-06-24)
 Platform: aarch64-unknown-linux-gnu
 Running under: Ubuntu 24.04.4 LTS
@@ -57,20 +57,20 @@ loaded via a namespace (and not attached):
 [40] abind_1.4-8           stats4_4.6.1          matrixStats_1.5.0    
 [43] tools_4.6.1           pkgconfig_2.0.3      
 	Command being timed: "Rscript /bench/pipelines/scrapper.R /data /out /scratch"
-	User time (seconds): 203.28
-	System time (seconds): 6.59
-	Percent of CPU this job got: 215%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:37.24
+	User time (seconds): 187.11
+	System time (seconds): 7.63
+	Percent of CPU this job got: 196%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:39.04
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 5105004
+	Maximum resident set size (kbytes): 5106260
 	Average resident set size (kbytes): 0
-	Major (requiring I/O) page faults: 185
-	Minor (reclaiming a frame) page faults: 3350414
-	Voluntary context switches: 3855
-	Involuntary context switches: 4791
+	Major (requiring I/O) page faults: 183
+	Minor (reclaiming a frame) page faults: 3512888
+	Voluntary context switches: 4366
+	Involuntary context switches: 11525
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 0

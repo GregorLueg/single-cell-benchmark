@@ -1,18 +1,18 @@
->>> load: 18.8 s <<<
+>>> load: 18.9 s <<<
 >>> qc: 2.1 s <<<
 >>> normalise: 0.4 s <<<
 >>> hvg: 0.9 s <<<
->>> pca: 14.3 s <<<
->>> harmony: 121.6 s <<<
->>> knn_snn: 26.8 s <<<
->>> cluster: 85.1 s <<<
->>> cluster_fast: 117.8 s <<<
+>>> pca: 14.4 s <<<
+>>> harmony: 87.1 s <<<
+>>> knn_snn: 27.1 s <<<
+>>> cluster: 85.4 s <<<
+>>> cluster_fast: 117.5 s <<<
 Warning message:
 In clusterKmeans(t(emb), k = as.integer(4 * sqrt(nrow(emb))), num.threads = threads) :
   convergence failure for k-means
->>> umap: 126.1 s <<<
->>> dge: 37.8 s <<<
->>> tsne_quick: 99.2 s <<<
+>>> umap: 127.9 s <<<
+>>> dge: 39.2 s <<<
+>>> tsne_quick: 84.1 s <<<
 cells after QC: 346259, clusters: 17, fast clusters: 8 (res 1), 13 (res 2)
 R version 4.6.1 (2026-06-24)
 Platform: aarch64-unknown-linux-gnu
@@ -57,22 +57,22 @@ loaded via a namespace (and not attached):
 [40] abind_1.4-8           stats4_4.6.1          matrixStats_1.5.0    
 [43] tools_4.6.1           pkgconfig_2.0.3      
 	Command being timed: "Rscript /bench/pipelines/scrapper.R /data /out /scratch"
-	User time (seconds): 1285.15
-	System time (seconds): 54.03
-	Percent of CPU this job got: 204%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 10:55.72
+	User time (seconds): 1148.60
+	System time (seconds): 43.01
+	Percent of CPU this job got: 195%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 10:09.71
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 21941332
+	Maximum resident set size (kbytes): 21909660
 	Average resident set size (kbytes): 0
-	Major (requiring I/O) page faults: 994
-	Minor (reclaiming a frame) page faults: 59387800
-	Voluntary context switches: 13297
-	Involuntary context switches: 10459
+	Major (requiring I/O) page faults: 450
+	Minor (reclaiming a frame) page faults: 46041944
+	Voluntary context switches: 11112
+	Involuntary context switches: 6633
 	Swaps: 0
-	File system inputs: 173296
+	File system inputs: 9272
 	File system outputs: 0
 	Socket messages sent: 0
 	Socket messages received: 0
