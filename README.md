@@ -94,7 +94,7 @@ The real data agree with the simulation: only the out-of-core designs finish
 the full set (bixverse in 2.5 min from h5ad, Scanpy with Dask in 8.2 min
 without DGE, Seurat with BPCells in 50 min, all at 8.7 to 10.9 GB), and every
 in-memory path dies at load. Per-step tables, the warm start and the scaling
-figures are in [results](docs/results.md#pbmc).
+figures are in [results](docs/results.md).
 
 ## Caveats
 
