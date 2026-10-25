@@ -32,4 +32,5 @@ step("load", {
 # LOAD_ONLY=1: stop once the on-disk store is written, to measure its size
 if (Sys.getenv("LOAD_ONLY") == "1") quit(save = "no")
 
+on_bpcells <- TRUE
 source("/bench/pipelines/seurat_common.R")

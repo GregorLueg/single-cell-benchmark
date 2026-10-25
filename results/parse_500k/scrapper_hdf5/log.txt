@@ -1,0 +1,87 @@
+>>> load: 371.7 s <<<
+Warning message:
+In .load_h5ad_dimnames(filepath) :
+  could not find dimnames in this h5ad file
+>>> qc: 5.6 s <<<
+>>> normalise: 0.0 s <<<
+>>> hvg: 13.3 s <<<
+>>> pca: 50.5 s <<<
+>>> harmony: 124.8 s <<<
+>>> knn_snn: 28.6 s <<<
+>>> cluster: 82.6 s <<<
+>>> cluster_fast: 118.8 s <<<
+Warning message:
+In clusterKmeans(t(emb), k = as.integer(4 * sqrt(nrow(emb))), num.threads = threads) :
+  convergence failure for k-means
+>>> umap: 126.8 s <<<
+>>> dge: 1401.2 s <<<
+>>> tsne_quick: 87.2 s <<<
+cells after QC: 346259, clusters: 16, fast clusters: 8 (res 1), 12 (res 2)
+R version 4.6.1 (2026-06-24)
+Platform: aarch64-unknown-linux-gnu
+Running under: Ubuntu 24.04.4 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/aarch64-linux-gnu/openblas-pthread/libblas.so.3 
+LAPACK: /usr/lib/aarch64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+time zone: Etc/UTC
+tzcode source: system (glibc)
+
+attached base packages:
+[1] stats4    stats     graphics  grDevices utils     datasets  methods  
+[8] base     
+
+other attached packages:
+ [1] beachmat.hdf5_1.10.0  HDF5Array_1.40.0      h5mread_1.4.1        
+ [4] rhdf5_2.56.1          DelayedArray_0.38.2   SparseArray_1.12.3   
+ [7] S4Arrays_1.12.1       IRanges_2.46.0        abind_1.4-8          
+[10] S4Vectors_0.50.3      MatrixGenerics_1.24.0 matrixStats_1.5.0    
+[13] BiocGenerics_0.58.1   generics_0.1.4        Matrix_1.7-5         
+[16] harmony_2.0.5         Rcpp_1.1.2            scrapper_1.6.3       
+[19] data.table_1.18.6.1  
+
+loaded via a namespace (and not attached):
+ [1] gtable_0.3.6        dplyr_1.2.1         compiler_4.6.1     
+ [4] tidyselect_1.2.1    rhdf5filters_1.24.1 parallel_4.6.1     
+ [7] scales_1.4.0        RhpcBLASctl_0.23-42 lattice_0.22-9     
+[10] ggplot2_4.0.3       R6_2.6.1            XVector_0.52.0     
+[13] tibble_3.3.1        pillar_1.11.1       RColorBrewer_1.1-3 
+[16] BiocNeighbors_2.6.0 rlang_1.3.0         S7_0.2.2           
+[19] cli_3.6.6           Rhdf5lib_2.0.0      magrittr_2.0.5     
+[22] grid_4.6.1          cowplot_1.2.0       lifecycle_1.0.5    
+[25] vctrs_0.7.3         glue_1.8.1          farver_2.1.2       
+[28] codetools_0.2-20    beachmat_2.28.0     tools_4.6.1        
+[31] pkgconfig_2.0.3    
+	Command being timed: "Rscript /bench/pipelines/scrapper.R /data /out /scratch"
+	User time (seconds): 2493.11
+	System time (seconds): 421.48
+	Percent of CPU this job got: 120%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 40:15.14
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 8712872
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 659
+	Minor (reclaiming a frame) page faults: 65626066
+	Voluntary context switches: 562323
+	Involuntary context switches: 14198
+	Swaps: 0
+	File system inputs: 45448
+	File system outputs: 16
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
+exit=0

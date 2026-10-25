@@ -159,7 +159,7 @@ step("tsne_fft", {
 })
 
 # tsne_quick: the quick-and-dirty Barnes-Hut of qdtsne (depth-capped tree,
-# repulsion per leaf), at scrapper's defaults: theta = 1, 500 iterations, 250
+# repulsion per leaf), at the scrapper row's settings: theta = 1, 500 iterations, 250
 # early exaggeration at 12, max depth 7. Not a standard Barnes-Hut tSNE.
 # tsne_sc does not take "bh_qd" yet, so call the manifoldsR function it wraps
 step("tsne_quick", {

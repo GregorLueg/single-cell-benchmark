@@ -1,0 +1,11 @@
+>>> load: 129.0 s <<<
+>>> qc: 8.5 s <<<
+>>> normalise: 4.1 s <<<
+>>> hvg: 24.5 s <<<
+>>> pca: 463.0 s <<<
+>>> harmony: 175.1 s <<<
+>>> knn_snn: 94.8 s <<<
+>>> cluster: 342.7 s <<<
+>>> umap: 545.8 s <<<
+>>> dge: 517.6 s <<<
+exit=124

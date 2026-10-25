@@ -43,8 +43,9 @@ step("load", {
       counts <- as(Matrix::t(counts), "CsparseMatrix")
       dimnames(counts) <- list(genes$gene_id, meta$bc_wells)
     }
-    counts <- counts[Matrix::rowSums(counts > 0) >= 5, ]
-    keep <- Matrix::colSums(counts > 0) >= 100 & Matrix::colSums(counts) >= 250
+    # detection counts straight from the dgCMatrix slots: `counts > 0` would copy it
+    counts <- counts[tabulate(counts@i + 1L, nrow(counts)) >= 5, ]
+    keep <- diff(counts@p) >= 100 & Matrix::colSums(counts) >= 250
     counts <- counts[, keep]
     md <- data.frame(meta[keep])
   }
@@ -73,7 +74,7 @@ step("hvg", {
 })
 
 step("pca", {
-  pca <- runPca(logn[hvgs, ], number = 30, num.threads = threads)
+  pca <- runPca(logn, number = 30, subset = hvgs, num.threads = threads)
 })
 
 step("harmony", {
@@ -86,8 +87,20 @@ step("harmony", {
   )
 })
 
+# neighbours as in runAllNeighborSteps from the scrapper vignette: one k = 15
+# search shared by the sNN graph and UMAP. Called step by step to keep the
+# per-step timings and threads. tSNE builds its own kNN, as in every framework.
 step("knn_snn", {
-  graph <- buildSnnGraph(t(emb), num.neighbors = 15, num.threads = threads)
+  nn15 <- BiocNeighbors::findKNN(
+    t(emb),
+    k = 15,
+    transposed = TRUE,
+    BNPARAM = BiocNeighbors::AnnoyParam(),
+    get.index = "transposed",
+    get.distance = "transposed",
+    num.threads = threads
+  )
+  graph <- buildSnnGraph(nn15, num.threads = threads)
 })
 
 step("cluster", {
@@ -108,7 +121,7 @@ step("cluster_fast", {
 })
 
 step("umap", {
-  umap <- runUmap(t(emb), num.threads = threads)
+  umap <- runUmap(nn15, num.threads = threads)
 })
 
 step("dge", {
@@ -135,11 +148,12 @@ if (truth) {
   )
 }
 
-# tsne_quick: the quick-and-dirty Barnes-Hut of qdtsne (depth-capped tree,
-# repulsion per leaf), at scrapper's defaults: theta = 1, 500 iterations, 250
-# early exaggeration at 12, max depth 7. Not a standard Barnes-Hut tSNE.
+# tsne_quick: the quick-and-dirty Barnes-Hut of qdtsne (depth-capped tree), at
+# scrapper's defaults: theta = 1, 500 iterations, 250 early exaggeration at 12,
+# max depth 7. The leaf approximation is off by default; it is switched on to
+# match bixverse's bh_qd. Not a standard Barnes-Hut tSNE.
 step("tsne_quick", {
-  tsne <- runTsne(t(emb), perplexity = 30, num.threads = threads)
+  tsne <- runTsne(t(emb), perplexity = 30, leaf.approximation = TRUE, num.threads = threads)
 })
 if (truth) write_truth_outputs(embs = list(tsne_quick = cells_named(tsne)))
 

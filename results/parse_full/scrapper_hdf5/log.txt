@@ -1,0 +1,17 @@
+>>> load: 731.4 s <<<
+Warning message:
+In .load_h5ad_dimnames(filepath) :
+  could not find dimnames in this h5ad file
+>>> qc: 13.1 s <<<
+>>> normalise: 0.0 s <<<
+>>> hvg: 27.4 s <<<
+>>> pca: 106.2 s <<<
+>>> harmony: 254.9 s <<<
+>>> knn_snn: 60.6 s <<<
+>>> cluster: 217.2 s <<<
+>>> cluster_fast: 330.3 s <<<
+Warning message:
+In clusterKmeans(t(emb), k = as.integer(4 * sqrt(nrow(emb))), num.threads = threads) :
+  convergence failure for k-means
+>>> umap: 261.7 s <<<
+exit=124
