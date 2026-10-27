@@ -136,7 +136,7 @@ figures are in [results](docs/results.md).
   and Scanpy Dask need an h5ad (or 10x `.h5`); their MTX conversion is not
   timed.
 
-Details in [methods](docs/methods.md#caveats).
+Details in [methods](docs/methods.md).
 
 Think a framework is run the wrong way here, or along a slower path than it
 should be? Please [open an issue](https://github.com/GregorLueg/single-cell-benchmark/issues)
