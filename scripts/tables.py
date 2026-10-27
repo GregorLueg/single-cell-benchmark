@@ -99,6 +99,7 @@ def collect(ds_dir):
 WARM = {
     "bixverse": (["bixverse_mtx_snn_nndescent", "bixverse_mtx", "bixverse"], "bixverse_warm"),
     "Seurat BPCells": (["seurat_bpcells"], "seurat_bpcells_warm"),
+    "CyteArc": (["cytearc"], "cytearc_warm"),
 }
 
 

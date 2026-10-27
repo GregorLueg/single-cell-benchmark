@@ -357,11 +357,11 @@ fig4 <- ggplot(wl, aes(size_label, seconds, fill = start)) +
   labs(
     title = "Load: cold conversion against a warm reconnect",
     subtitle = "Warm reopens what the cold run wrote to disk. One repeat each, run straight after the cold run.",
-    caption = "bixverse cold load from mtx. BPCells warm reopens the pre-filtered, pre-QC matrix.",
+    caption = "Cold load from mtx. BPCells warm reopens the pre-filtered, pre-QC matrix; CyteArc warm reopens its store.",
     x = NULL, y = NULL
   ) +
   theme_bench() +
   theme(panel.grid.major.x = element_blank())
 
-ggsave(file.path(fig_dir, "warm_start.png"), fig4, width = 8, height = 3.6, dpi = 300, bg = surface)
-ggsave(file.path(fig_dir, "warm_start.pdf"), fig4, width = 8, height = 3.6, bg = surface)
+ggsave(file.path(fig_dir, "warm_start.png"), fig4, width = 11, height = 3.6, dpi = 300, bg = surface)
+ggsave(file.path(fig_dir, "warm_start.pdf"), fig4, width = 11, height = 3.6, bg = surface)
