@@ -321,9 +321,7 @@ harmonypy.
   which inflates its 100k totals and the speed-ups against it there; how much
   of it is compilation is not measured.
 - **CyteArc pays a first-run cost too.** Its kNN and Leiden compile numba
-  kernels on first use. On 10k cells, natively, a second run took 1.5 against
-  12.1 s for the kNN step and 0.2 against 13.9 s for Leiden. Each container
-  run pays it, as for Scanpy.
+  kernels on first use, and each container run pays it, as for Scanpy.
 - **Defaults that favour Scanpy's speed.** Leiden runs Scanpy's default
   `n_iterations = 2`, and `rank_genes_groups` skips the Wilcoxon tie
   correction by default.
