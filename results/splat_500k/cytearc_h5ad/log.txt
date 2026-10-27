@@ -1,0 +1,46 @@
+WARNING: `obsm` slot in H5ad file is empty.
+WARNING: `obsm` slot in H5ad file is empty.
+WARNING: `obsm` slot in H5ad file is empty.
+WARNING: `obsm` slot in H5ad file is empty.
+WARNING: `obsm` slot in H5ad file is empty.
+INFO: execution countsImportBand: read=1/1 compute=1/1 write=1/1 fetch=0.00s compute=0.00s readerWait=0.00s computeWait=0.00s held=0 reason=1 compute workers used because each unit needs 3215712082 bytes; 1 writers used because each unit needs 3215712082 bytes
+INFO: execution countsImportBand: read=1/1 compute=1/1 write=1/1 fetch=0.00s compute=0.00s readerWait=0.00s computeWait=0.00s held=0 reason=1 compute workers used because each unit needs 3215712082 bytes; 1 writers used because each unit needs 3215712082 bytes
+INFO: execution countsImportBand: read=1/1 compute=1/1 write=1/1 fetch=0.00s compute=0.00s readerWait=0.00s computeWait=0.00s held=0 reason=1 compute workers used because each unit needs 3215712082 bytes; 1 writers used because each unit needs 3215712082 bytes
+INFO: execution countsImportBand: read=1/1 compute=1/1 write=1/1 fetch=0.00s compute=0.00s readerWait=0.00s computeWait=0.00s held=0 reason=1 compute workers used because each unit needs 3215712082 bytes; 1 writers used because each unit needs 3215712082 bytes
+WARNING: No matches found for pattern ^MT-. Percentage feature RNA_percentMito is unavailable
+WARNING: No matches found for pattern ^RPS|^RPL|^MRPS|^MRPL. Percentage feature RNA_percentRibo is unavailable
+>>> load: 36.9 s <<<
+>>> qc: 0.0 s <<<
+>>> hvg: 7.2 s <<<
+>>> normalise: 13.0 s <<<
+>>> pca: 27.5 s <<<
+>>> harmony: 80.6 s <<<
+>>> knn_snn: 159.3 s <<<
+>>> cluster: 16.2 s <<<
+>>> umap: 422.9 s <<<
+>>> dge: 13.0 s <<<
+cells after QC: 482409, clusters: 10
+	Command being timed: "python /bench/pipelines/cytearc_pipeline.py /data /out /scratch"
+	User time (seconds): 1773.16
+	System time (seconds): 63.61
+	Percent of CPU this job got: 220%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 13:54.71
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 6961440
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 37
+	Minor (reclaiming a frame) page faults: 32962310
+	Voluntary context switches: 329949
+	Involuntary context switches: 79084
+	Swaps: 0
+	File system inputs: 484936
+	File system outputs: 9424848
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
+exit=0
