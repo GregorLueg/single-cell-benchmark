@@ -23,12 +23,13 @@
 - **Memory**: cgroup `anon` sampled once a second (`docker/monitor.sh`). Page
   cache is excluded, so streaming tools are not charged for their files. This
   favours the out-of-core rows (bixverse, Seurat BPCells, Scanpy Dask,
-  scrapper HDF5): the file pages they read or map do not count, while an
+  scrapper HDF5, CyteArc): the file pages they read or map do not count, while an
   in-memory row pays for every byte it holds. The cgroup cap counts cached
   pages too and reclaims them under pressure, so it still bounds every run.
 - **Disk**: `run.sh` records what a run leaves in its scratch volume
   (`scratch_kb`): the bixverse store and the BPCells matrix dirs. Input files
-  are not counted. For bixverse that is the store written at load. For
+  are not counted. For bixverse and CyteArc that is the store written at load
+  (CyteArc's holds the counts twice, cell-major and gene-major). For
   BPCells it also holds the gene-major copy of the normalised data that the
   DGE step writes (see Workflow): the store alone, measured right after load
   (`LOAD_ONLY=1`), is 3.7 GB on 1M simulated cells, against 12.5 GB after a
@@ -55,6 +56,16 @@
   source (Parse, the MTX directory of Cell Ranger) has to be read into memory
   and written to HDF5 first; that conversion is not timed here, as for the
   Scanpy Dask row, which also needs an h5ad.
+- **CyteArc**: imports the mtx or h5ad into its Zarr store at load
+  (`MtxToZarr`, `H5adToZarr`), then streams every count pass from it. Its own
+  Python 3.13 image (`docker/cytearc.Dockerfile`). Memory budget and workers
+  at its defaults, which read the cgroup limits: 17.6 GB (75% of the cap) and
+  8 workers. The budget plans block sizes; it is not a hard cap. Every result
+  is written to the store as an artifact, and that I/O is in the step times.
+  The harness calls the explicit chain (`features.hvgs`, `features.normalize`,
+  `reduction.pca`, ...) rather than the `ds.pipeline.rna` recipe, which adds
+  cell cycle, doublet scores and four Leiden resolutions; the order and the
+  inputs of each call follow the recipe.
 
 ## Data
 
@@ -95,6 +106,7 @@ Every row, PBMC and simulation, runs on the same stack.
 | scrapper | 1.6.3 |
 | Seurat | 5.6.0 (SeuratObject 5.4.0, BPCells 0.3.1, harmony 2.0.5, presto 1.1.0, uwot 0.2.5) |
 | scrapper HDF5 | scrapper 1.6.3, HDF5Array 1.40.0, DelayedArray 0.38.2, beachmat.hdf5 1.10.0 |
+| CyteArc | 1.3.0 (PyPI), Python 3.13 |
 
 bixverse, bixverse.gpu and manifoldsR are built from source: bixverse and
 bixverse.gpu at the commits in the table, manifoldsR at the commit in
@@ -118,20 +130,23 @@ scrapper's batch correction via `block =` plus MNN, Seurat's sketching.
    normalise step.
 2. **qc**: MT < 5%, total UMIs >= 750, detected genes >= 250.
 3. **normalise**: library size to 1e4 and log1p (bixverse, Scanpy, Seurat);
-   centred size factors and log2 (scrapper defaults).
+   centred size factors and log2 (scrapper defaults); CyteArc's default,
+   library size to 1000 over the HVGs and log1p, computed lazily, so it runs
+   after HVG selection and its cost lands in PCA.
 4. **hvg**: 2000 genes, each framework's default method.
 5. **pca**: 30 components on the HVGs (scrapper via `runPca(subset =)`, as in
-   its vignette). Scanpy and scrapper centre only; Seurat and bixverse also
-   scale to unit variance.
+   its vignette). Scanpy and scrapper centre only; Seurat, bixverse and
+   CyteArc also scale to unit variance.
 6. **harmony**: by sample. Scanpy runs harmonypy with `ncores = 8`, the CPU
    cap; Seurat calls `setThreads(8)`, as its 5.6.0 kernels default to one
-   thread.
+   thread. CyteArc runs its own Harmony2 (`reduction.harmony`).
 7. **knn_snn**: k = 15. scrapper builds the kNN once (`findKNN` with Annoy)
    and hands it to both `buildSnnGraph` and `runUmap`, as
    `runAllNeighborSteps` in its vignette does; the harness calls the steps one
-   by one to keep the per-step times.
+   by one to keep the per-step times. CyteArc: hnswlib index, k = 15
+   neighbours and its fuzzy connectivity graph.
 8. **cluster**: Leiden, resolution 1. The graphs differ, so the cluster counts
-   do not compare: Scanpy clusters the UMAP fuzzy graph, Seurat and bixverse a
+   do not compare: Scanpy and CyteArc cluster a UMAP-style fuzzy graph, Seurat and bixverse a
    Jaccard sNN pruned at 1/15 and 1/16, scrapper a rank-weighted sNN
    without pruning.
    - `cluster_fast (qd)`: k-means on the Harmony embedding down to
@@ -147,12 +162,15 @@ scrapper's batch correction via `block =` plus MNN, Seurat's sketching.
      package's defaults otherwise. scrapper has no single call for it, so the
      harness composes `clusterKmeans`, `buildSnnGraph` on the centroids and
      `clusterGraph`, as bluster's `TwoStepParam` does. An extra row: not in
-     the totals.
-9. **umap**: defaults.
+     the totals. CyteArc has no equivalent.
+9. **umap**: defaults. CyteArc's step includes its k-means initialisation
+   (`embeddings.initialization`) on the Harmony coordinates, as its recipe does.
 10. **dge**: one-vs-rest markers, each framework's default test: bixverse
     `find_all_markers_sc` (Wilcoxon, `min_prop = 0.05`), Scanpy
     `rank_genes_groups` (Wilcoxon), Seurat `FindAllMarkers` (presto),
-    scrapper `scoreMarkers` (AUC). On BPCells, `FindAllMarkers` does not use
+    scrapper `scoreMarkers` (AUC), CyteArc `markers.search` (Mann-Whitney,
+    scored by AUC as for scrapper; genes in at least 5 cells, groups frozen
+    from the cell column with `snapshot_cluster_labels`). On BPCells, `FindAllMarkers` does not use
     presto but `BPCells::marker_features` once per group, which wants
     gene-major storage and otherwise warns and transposes on every call. The
     BPCells row therefore transposes the normalised data layer once with
@@ -176,6 +194,9 @@ scrapper's batch correction via `block =` plus MNN, Seurat's sketching.
       bixverse's own defaults (1,000 iterations) are overridden to match. scrapper and
       bixverse (`manifoldsR::tsne(approx_type = "bh_qd")`, and `"bh_qd"` on
       the GPU). Not a standard tSNE.
+    - CyteArc has no tSNE row. Its only tSNE is SG-t-SNE-Pi on the
+      connectivity graph (no perplexity), comparable to none of the above, and
+      its `sgtsnepi` dependency has no linux/arm64 wheel.
 
 On the simulation the score inputs (clusters, HVGs, embeddings, markers) are
 written right after DGE, so a tSNE timeout only loses the tSNE rows.
@@ -299,6 +320,10 @@ harmonypy.
   is left in. Scanpy's kNN shows a fixed cost (27 s at 100k, 33 s at 500k),
   which inflates its 100k totals and the speed-ups against it there; how much
   of it is compilation is not measured.
+- **CyteArc pays a first-run cost too.** Its kNN and Leiden compile numba
+  kernels on first use. On 10k cells, natively, a second run took 1.5 against
+  12.1 s for the kNN step and 0.2 against 13.9 s for Leiden. Each container
+  run pays it, as for Scanpy.
 - **Defaults that favour Scanpy's speed.** Leiden runs Scanpy's default
   `n_iterations = 2`, and `rank_genes_groups` skips the Wilcoxon tie
   correction by default.
@@ -307,13 +332,14 @@ harmonypy.
 - **UMAP optimisation is single-threaded outside bixverse.** umap-learn under
   Scanpy, uwot under Seurat (`n_sgd_threads = 0`) and scrapper's `runUmap`
   (`parallel.optimization = FALSE`) run the SGD on one thread by default;
-  bixverse's default optimiser (`adam_parallel`) uses all 8. This favours
-  bixverse; none of the three is switched to a parallel mode here.
+  bixverse's default optimiser (`adam_parallel`) uses all 8. CyteArc's
+  `embeddings.umap` defaults to `parallel = False` as well. This favours
+  bixverse; none of the four is switched to a parallel mode here.
 - **Harmony is not one implementation.** Seurat runs the R harmony package
-  (with `project.dim = TRUE`), Scanpy harmonypy, scrapper and bixverse their
-  own. The same-input comparison covers bixverse and harmonypy only.
+  (with `project.dim = TRUE`), Scanpy harmonypy, scrapper, bixverse and
+  CyteArc their own. The same-input comparison covers bixverse and harmonypy only.
 - **Per-step times of the lazy rows shift work between steps.** Scanpy Dask,
-  scrapper HDF5 and BPCells defer computation, so a step can pay for work
+  scrapper HDF5, BPCells and CyteArc defer computation, so a step can pay for work
   queued earlier. Compare their totals, not single steps.
 - **Defaults differ** in scaling, normalisation and graph construction; see
   Workflow.
@@ -334,6 +360,7 @@ splatter-sc sim/splat_100k.json   # and splat_10k (smoke test), splat_500k, spla
 # images, and the native library for the GPU row
 docker build -f docker/r.Dockerfile -t scbench-r .
 docker build -f docker/py.Dockerfile -t scbench-py .
+docker build -f docker/cytearc.Dockerfile -t scbench-cytearc .
 # bixverse, bixverse-rs and manifoldsR sources packed into vendor/ (see the
 # header of docker/r-local.Dockerfile)
 docker build -f docker/r-local.Dockerfile -t scbench-r:local .
@@ -342,7 +369,7 @@ R_LIBS=rlib R CMD INSTALL -l rlib manifoldsR
 R_LIBS=rlib R CMD INSTALL -l rlib bixverse
 BIXVERSE_GPU_MLX=true R_LIBS=rlib R CMD INSTALL -l rlib bixverse.gpu
 
-# tool: bixverse | scanpy | scrapper | seurat_standard | seurat_bpcells
+# tool: bixverse | scanpy | cytearc | scrapper | seurat_standard | seurat_bpcells
 # INPUT: mtx | h5ad | dask (scanpy only) | hdf5 (scrapper only, with TAG=hdf5)
 [INPUT=h5ad] [BIX_KNN=nndescent] [BIX_TSNE_KNN=ivf] [TAG=suffix] [STEP_TIMEOUT=2700] [R_IMAGE=scbench-r:local] scripts/run.sh <tool> <dataset>
 [BACKEND=mlx] scripts/run_native.sh <dataset>       # bixverse.gpu on Metal: wgpu, or MLX

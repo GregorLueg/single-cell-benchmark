@@ -24,6 +24,7 @@ TOOL_STEPS = {
     "scanpy": [s for s in STEPS if s not in ("cluster_fast", "tsne_quick")],
     "scrapper": [s for s in STEPS if s not in ("tsne_default", "tsne_fft")],
     "seurat": [s for s in STEPS if s not in ("cluster_fast", "tsne_quick")],
+    "cytearc": [s for s in STEPS if s != "cluster_fast" and not s.startswith("tsne")],
 }
 # alternative takes on a step: listed, but not in the totals
 EXTRA = ("tsne", "cluster_fast")
@@ -43,6 +44,8 @@ COLUMNS = {
     "Seurat std mtx": ["seurat_standard"],
     "Seurat std h5ad": ["seurat_standard_h5ad"],
     "Seurat BPCells": ["seurat_bpcells"],
+    "CyteArc mtx": ["cytearc"],
+    "CyteArc h5ad": ["cytearc_h5ad"],
 }
 
 

@@ -17,7 +17,8 @@ family_cols <- c(
   bixverse = "#0F8096",
   Scanpy = "#E8351E",
   scrapper = "#17A769",
-  Seurat = "#852F88"
+  Seurat = "#852F88",
+  CyteArc = "#D98E04"
 )
 surface <- "#fcfcfb"
 ink <- "#0b0b0b"
@@ -28,7 +29,8 @@ column_order <- c(
   "bixverse mtx", "bixverse h5ad", "bixverse GPU*", "bixverse MLX*",
   "Scanpy mtx", "Scanpy h5ad", "Scanpy dask",
   "scrapper mtx", "scrapper h5ad", "scrapper HDF5",
-  "Seurat std mtx", "Seurat std h5ad", "Seurat BPCells"
+  "Seurat std mtx", "Seurat std h5ad", "Seurat BPCells",
+  "CyteArc mtx", "CyteArc h5ad"
 )
 step_order <- c(
   "load", "qc", "normalise", "hvg", "pca", "harmony", "knn_snn", "cluster",
@@ -252,9 +254,9 @@ for (lst in list(
 
 #### figure 3: speed-up per step against a Scanpy reference ------------------
 
-# normalisation is deferred in Dask and scrapper (normalizeCounts(delayed = TRUE)):
+# normalisation is deferred in Dask, scrapper (normalizeCounts(delayed = TRUE)) and CyteArc:
 # the cost lands in later steps, so a fold change against or of it is meaningless
-lazy_cols <- c("Scanpy dask", "scrapper h5ad", "scrapper HDF5")
+lazy_cols <- c("Scanpy dask", "scrapper h5ad", "scrapper HDF5", "CyteArc mtx", "CyteArc h5ad")
 
 speedup_plot <- function(size_key, ref_col, title, subtitle, caption, file, height) {
   d <- dt[size == size_key & status == "ok"]

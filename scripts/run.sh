@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Usage: [INPUT=h5ad|hdf5] [BIX_KNN=nndescent] [BIX_TSNE_KNN=nndescent] [TAG=suffix] [STEP_TIMEOUT=2700] [R_IMAGE=scbench-r] scripts/run.sh <tool> <dataset>
-#   tool: scanpy | seurat_bpcells | seurat_standard | scrapper | bixverse
+#   tool: scanpy | cytearc | seurat_bpcells | seurat_standard | scrapper | bixverse
 # WARM=1 reconnects to the on-disk data the last cold run left in the scratch
 # volume (bixverse | seurat_bpcells only), so run the cold run first.
 # Container is capped like a MacBook Air: 8 cores, 24 GB RAM plus swap.
@@ -15,6 +15,7 @@ rm -rf "$out"; mkdir -p "$out"
 
 case "$tool" in
   scanpy) image=scbench-py; cmd=(python /bench/pipelines/scanpy_pipeline.py /data /out) ;;
+  cytearc) image=scbench-cytearc; cmd=(python /bench/pipelines/cytearc_pipeline.py /data /out /scratch) ;;
   *)      image="${R_IMAGE:-scbench-r}";  cmd=(Rscript "/bench/pipelines/${tool}${suffix}.R" /data /out /scratch) ;;
 esac
 
