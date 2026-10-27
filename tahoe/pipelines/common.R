@@ -8,6 +8,7 @@ out <- args[2]
 scratch <- args[3]
 threads <- 8L
 
+mt_max <- as.numeric(Sys.getenv("MT_MAX"))
 truth_col <- Sys.getenv("TRUTH_COL")
 batch_col <- Sys.getenv("BATCH_COL")
 dge_col <- Sys.getenv("DGE_COL")

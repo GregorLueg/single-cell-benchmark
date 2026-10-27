@@ -9,6 +9,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+MT_MAX = float(os.environ.get("MT_MAX", "15"))
 TRUTH_COL = os.environ.get("TRUTH_COL", "")
 BATCH_COL = os.environ.get("BATCH_COL", "")
 DGE_COL = os.environ.get("DGE_COL", "")

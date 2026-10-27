@@ -27,8 +27,8 @@ step("qc", {
   sce <- gene_set_proportions_sc(object = sce, gene_set_list = list(MT = mt_ids))
   qc_df <- sce[[c("cell_id", "lib_size", "nnz", "MT")]]
   # MT comes back as a proportion or a percentage depending on version
-  mt_cut <- if (max(qc_df$MT, na.rm = TRUE) <= 1) 0.05 else 5
-  keep <- qc_df[MT < mt_cut & lib_size >= 750 & nnz >= 250, cell_id]
+  mt_cut <- if (max(qc_df$MT, na.rm = TRUE) <= 1) mt_max / 100 else mt_max
+  keep <- qc_df[MT <= mt_cut & lib_size >= 750 & nnz >= 250, cell_id]
   sce <- set_cells_to_keep(sce, keep)
 })
 

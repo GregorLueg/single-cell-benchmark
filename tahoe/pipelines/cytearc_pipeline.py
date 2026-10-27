@@ -10,7 +10,7 @@ import pandas as pd
 import cytearc
 
 sys.path.insert(0, "/bench/pipelines")
-from common import BATCH_COL, DGE_CASE, DGE_COL, DGE_CTRL, TRUTH_COL, h5_paths, step_timer, write_embs
+from common import BATCH_COL, DGE_CASE, DGE_COL, DGE_CTRL, MT_MAX, TRUTH_COL, h5_paths, step_timer, write_embs
 
 # DataStoreMerge prefixes the source metadata columns with its prepend_text
 TRUTH, BATCH, DGE = (f"orig_{c}" for c in (TRUTH_COL, BATCH_COL, DGE_COL))
@@ -49,7 +49,7 @@ def main():
     with step("qc"):
         cells = ds.qc.filter(["RNA_nCounts", "RNA_nFeatures"], [750, 250], [None, None],
                              cell_selection=pre, keep_bounds=True)
-        cells = ds.qc.filter(["RNA_percentMito"], [None], [5], cell_selection=cells)
+        cells = ds.qc.filter(["RNA_percentMito"], [None], [MT_MAX], cell_selection=cells, keep_bounds=True)
 
     # normalisation is lazy and runs on the HVGs, so it sits after HVG selection
     with step("hvg"):

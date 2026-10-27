@@ -38,7 +38,7 @@ step("load", {
 
 step("qc", {
   obj[["percent.mt"]] <- PercentageFeatureSet(obj, features = intersect(mt_ids, rownames(obj)))
-  obj <- subset(obj, subset = percent.mt < 5 & nCount_RNA >= 750 & nFeature_RNA >= 250)
+  obj <- subset(obj, subset = percent.mt <= mt_max & nCount_RNA >= 750 & nFeature_RNA >= 250)
 })
 
 step("normalise", {

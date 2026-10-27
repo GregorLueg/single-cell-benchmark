@@ -19,6 +19,7 @@ from common import (
     DGE_COL,
     DGE_CTRL,
     GENE_COL,
+    MT_MAX,
     TRUTH_COL,
     h5_paths,
     step_timer,
@@ -75,7 +76,7 @@ with step("qc"):
     adata.obs["n_genes_by_counts"] = ngenes
     adata.obs["pct_counts_mt"] = 100 * mt / total
     keep = (
-        (adata.obs["pct_counts_mt"] < 5)
+        (adata.obs["pct_counts_mt"] <= MT_MAX)
         & (adata.obs["total_counts"] >= 750)
         & (adata.obs["n_genes_by_counts"] >= 250)
     ).values
