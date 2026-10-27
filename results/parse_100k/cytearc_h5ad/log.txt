@@ -1,0 +1,45 @@
+WARNING: `obsm` slot in H5ad file is empty.
+WARNING: 20055 feature names in 'gene_name' are missing or blank; those features take their IDs as names
+WARNING: `obsm` slot in H5ad file is empty.
+WARNING: `obsm` slot in H5ad file is empty.
+WARNING: `obsm` slot in H5ad file is empty.
+WARNING: `obsm` slot in H5ad file is empty.
+INFO: execution countsImportBand: read=1/1 compute=1/1 write=1/1 fetch=0.00s compute=0.00s readerWait=0.00s computeWait=0.00s held=0 reason=1 compute workers used because each unit needs 3159674788 bytes; 1 writers used because each unit needs 3159674788 bytes
+INFO: execution countsImportBand: read=1/1 compute=1/1 write=1/1 fetch=0.00s compute=0.00s readerWait=0.00s computeWait=0.00s held=0 reason=1 compute workers used because each unit needs 3159674788 bytes; 1 writers used because each unit needs 3159674788 bytes
+INFO: execution countsImportBand: read=1/1 compute=1/1 write=1/1 fetch=0.00s compute=0.00s readerWait=0.00s computeWait=0.00s held=0 reason=1 compute workers used because each unit needs 3159674788 bytes; 1 writers used because each unit needs 3159674788 bytes
+INFO: execution countsImportBand: read=1/1 compute=1/1 write=1/1 fetch=0.00s compute=0.00s readerWait=0.00s computeWait=0.00s held=0 reason=1 compute workers used because each unit needs 3159674788 bytes; 1 writers used because each unit needs 3159674788 bytes
+>>> load: 20.4 s <<<
+>>> qc: 0.1 s <<<
+>>> hvg: 5.0 s <<<
+>>> normalise: 3.5 s <<<
+>>> pca: 4.7 s <<<
+>>> harmony: 25.3 s <<<
+>>> knn_snn: 16.4 s <<<
+>>> cluster: 14.4 s <<<
+>>> umap: 59.0 s <<<
+>>> dge: 9.1 s <<<
+cells after QC: 69415, clusters: 23
+	Command being timed: "python /bench/pipelines/cytearc_pipeline.py /data /out /scratch"
+	User time (seconds): 479.53
+	System time (seconds): 31.46
+	Percent of CPU this job got: 319%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 2:39.69
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 8384880
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 17
+	Minor (reclaiming a frame) page faults: 19156956
+	Voluntary context switches: 172328
+	Involuntary context switches: 35518
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 1984272
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
+exit=0

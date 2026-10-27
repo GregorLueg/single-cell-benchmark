@@ -17,7 +17,8 @@ family_cols <- c(
   bixverse = "#0F8096",
   Scanpy = "#E8351E",
   scrapper = "#17A769",
-  Seurat = "#852F88"
+  Seurat = "#852F88",
+  CyteArc = "#D98E04"
 )
 surface <- "#fcfcfb"
 ink <- "#0b0b0b"
@@ -28,7 +29,8 @@ column_order <- c(
   "bixverse mtx", "bixverse h5ad", "bixverse GPU*", "bixverse MLX*",
   "Scanpy mtx", "Scanpy h5ad", "Scanpy dask",
   "scrapper mtx", "scrapper h5ad", "scrapper HDF5",
-  "Seurat std mtx", "Seurat std h5ad", "Seurat BPCells"
+  "Seurat std mtx", "Seurat std h5ad", "Seurat BPCells",
+  "CyteArc mtx", "CyteArc h5ad"
 )
 step_order <- c(
   "load", "qc", "normalise", "hvg", "pca", "harmony", "knn_snn", "cluster",
@@ -156,7 +158,8 @@ no_step <- list(
   bixverse = "normalise",
   Scanpy = c("cluster_fast", "tsne_quick"),
   Seurat = c("cluster_fast", "tsne_quick"),
-  scrapper = c("tsne_default", "tsne_fft")
+  scrapper = c("tsne_default", "tsne_fft"),
+  CyteArc = c("cluster_fast", "tsne_default", "tsne_fft", "tsne_quick")
 )
 total_step <- "total (no tSNE)"
 
@@ -252,9 +255,9 @@ for (lst in list(
 
 #### figure 3: speed-up per step against a Scanpy reference ------------------
 
-# normalisation is deferred in Dask and scrapper (normalizeCounts(delayed = TRUE)):
+# normalisation is deferred in Dask, scrapper (normalizeCounts(delayed = TRUE)) and CyteArc:
 # the cost lands in later steps, so a fold change against or of it is meaningless
-lazy_cols <- c("Scanpy dask", "scrapper h5ad", "scrapper HDF5")
+lazy_cols <- c("Scanpy dask", "scrapper h5ad", "scrapper HDF5", "CyteArc mtx", "CyteArc h5ad")
 
 speedup_plot <- function(size_key, ref_col, title, subtitle, caption, file, height) {
   d <- dt[size == size_key & status == "ok"]
@@ -354,11 +357,11 @@ fig4 <- ggplot(wl, aes(size_label, seconds, fill = start)) +
   labs(
     title = "Load: cold conversion against a warm reconnect",
     subtitle = "Warm reopens what the cold run wrote to disk. One repeat each, run straight after the cold run.",
-    caption = "bixverse cold load from mtx. BPCells warm reopens the pre-filtered, pre-QC matrix.",
+    caption = "Cold load from mtx. BPCells warm reopens the pre-filtered, pre-QC matrix; CyteArc warm reopens its store.",
     x = NULL, y = NULL
   ) +
   theme_bench() +
   theme(panel.grid.major.x = element_blank())
 
-ggsave(file.path(fig_dir, "warm_start.png"), fig4, width = 8, height = 3.6, dpi = 300, bg = surface)
-ggsave(file.path(fig_dir, "warm_start.pdf"), fig4, width = 8, height = 3.6, bg = surface)
+ggsave(file.path(fig_dir, "warm_start.png"), fig4, width = 11, height = 3.6, dpi = 300, bg = surface)
+ggsave(file.path(fig_dir, "warm_start.pdf"), fig4, width = 11, height = 3.6, bg = surface)

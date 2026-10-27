@@ -1,0 +1,37 @@
+WARNING: No matches found for pattern ^MT-. Percentage feature RNA_percentMito is unavailable
+WARNING: No matches found for pattern ^RPS|^RPL|^MRPS|^MRPL. Percentage feature RNA_percentRibo is unavailable
+>>> load: 32.3 s <<<
+>>> qc: 0.0 s <<<
+>>> hvg: 2.2 s <<<
+>>> normalise: 2.8 s <<<
+>>> pca: 6.0 s <<<
+>>> harmony: 13.7 s <<<
+>>> knn_snn: 24.3 s <<<
+>>> cluster: 13.9 s <<<
+>>> umap: 84.4 s <<<
+>>> dge: 6.3 s <<<
+cells after QC: 96342, clusters: 10
+	Command being timed: "python /bench/pipelines/cytearc_pipeline.py /data /out /scratch"
+	User time (seconds): 363.02
+	System time (seconds): 14.12
+	Percent of CPU this job got: 188%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 3:20.03
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 9605344
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 3
+	Minor (reclaiming a frame) page faults: 8072785
+	Voluntary context switches: 87716
+	Involuntary context switches: 10587
+	Swaps: 0
+	File system inputs: 8
+	File system outputs: 1957280
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
+exit=0

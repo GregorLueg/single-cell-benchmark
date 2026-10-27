@@ -1,0 +1,35 @@
+>>> load: 384.1 s <<<
+>>> qc: 0.1 s <<<
+>>> hvg: 32.5 s <<<
+>>> normalise: 26.5 s <<<
+>>> pca: 38.5 s <<<
+>>> harmony: 227.7 s <<<
+>>> knn_snn: 166.9 s <<<
+>>> cluster: 17.1 s <<<
+>>> umap: 588.5 s <<<
+>>> dge: 39.3 s <<<
+cells after QC: 684935, clusters: 27
+	Command being timed: "python /bench/pipelines/cytearc_pipeline.py /data /out /scratch"
+	User time (seconds): 4283.56
+	System time (seconds): 283.07
+	Percent of CPU this job got: 299%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 25:23.55
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 9293760
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 525
+	Minor (reclaiming a frame) page faults: 165400387
+	Voluntary context switches: 917117
+	Involuntary context switches: 333591
+	Swaps: 0
+	File system inputs: 4357752
+	File system outputs: 17136264
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
+exit=0
