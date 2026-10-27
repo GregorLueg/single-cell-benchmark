@@ -289,7 +289,10 @@ harmonypy.
 - **Harness code.** The R pre-filter for scrapper and Seurat standard counts
   detections from the sparse slots, but subsetting the matrix still copies
   it; part of their in-memory OOMs may be ours. The Scanpy Dask QC is
-  hand-written (see Setup).
+  hand-written (see Setup). CyteArc keeps 3 to 5 more PBMC cells than the
+  other rows (69,415, 346,264 and 684,935); its QC columns are its own, and
+  whether they count genes before or after the 5-cell gene filter is not
+  checked. Same cells on the simulation.
 - **BPCells DGE includes a transpose.** See Workflow, step 10. Without it
   `FindAllMarkers` on BPCells transposes once per group and is slower; with
   it the step writes a gene-major copy of the data (7.7 GB on the full PBMC

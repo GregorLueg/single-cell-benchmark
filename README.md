@@ -21,7 +21,7 @@ The benchmarks ran within Docker on a MacBook M1 Max.
 Seconds without tSNE and peak memory (whole run, tSNE included) from h5ad, or
 where the run died, plus quality against the truth across the sizes each tool
 finished. Stack: bixverse 0.8.1, bixverse.gpu 0.6.1, Scanpy 1.12.4, scrapper
-1.6.3, Seurat 5.6.0. One repeat, one seed.
+1.6.3, Seurat 5.6.0, CyteArc 1.3.0. One repeat, one seed.
 
 | framework | 100k | 500k | 1M | Harmony purity | ARI | rare F1 |
 |---|---|---|---|---|---|---|
@@ -34,31 +34,40 @@ finished. Stack: bixverse 0.8.1, bixverse.gpu 0.6.1, Scanpy 1.12.4, scrapper
 | scrapper HDF5 | 216 s, 3.3 GB | 2448 s, 12.3 GB | TIMEOUT at dge | 0.926 to 0.929 | 0.94 | 0.13 |
 | Seurat std | 125 s, 8.9 GB | OOM at pca | OOM at load | 0.971 | 0.81 | 0.27 |
 | Seurat BPCells | 223 s, 2.5 GB | 1140 s, 6.9 GB | 2305 s, 10.8 GB | 0.968 to 0.971 | 0.70 to 0.79 | 0.27 to 0.35 |
+| CyteArc | 164 s, 8.3 GB | 777 s, 11.4 GB | 1617 s, 10.3 GB | 0.949 to 0.956 | 0.95 to 0.97 | 0.14 to 0.34 |
 
 \* Native macOS on Metal, no memory cap, peak is the process memory
 footprint: close to, but not the same metric as, the Docker rows. MLX needs an opt-in build against mlx-c.
 
 - **bixverse is about 5x faster than scrapper at a quarter to a third of its
   memory, and 3.6x to 8.7x faster than Scanpy (Dask to h5ad).** At 1M only
-  three out-of-core designs finish: bixverse (3.2 min), Scanpy with Dask
-  (12 min, no DGE) and Seurat with BPCells (38 min). From 500k the GPU rows
+  four out-of-core designs finish: bixverse (3.2 min), Scanpy with Dask
+  (12 min, no DGE), CyteArc (27 min) and Seurat with BPCells (38 min). From 500k the GPU rows
   halve bixverse's time again (native, so their load also skips the VM); at
   100k they save 3 to 6 s.
 - **Scanpy Dask skips the slowest Scanpy step.** It has no DGE (Wilcoxon fails
   on Dask arrays); in-memory Scanpy spends 454 s of its 766 s on it at 500k.
 - **No compromise on embeddings.** bixverse and Seurat share the top Harmony
-  purity (0.97), ahead of scrapper (0.93) and Scanpy (0.89 to 0.91), and the
-  best recovery of the rare group, though at rare F1 0.26 to 0.35 nobody
-  recovers it well.
-- **scrapper clusters best at 500k.** ARI 0.94 at 100k and 500k from its
+  purity (0.97), ahead of CyteArc (0.95 to 0.96), scrapper (0.93) and Scanpy
+  (0.89 to 0.91), and the best recovery of the rare group, though at rare F1
+  0.26 to 0.35 nobody recovers it well.
+- **CyteArc clusters best from 500k.** ARI 0.96 at 500k and 0.97 at 1M with
+  10 and 11 clusters for 12 groups; at 1M it also finds the rare group as
+  well as bixverse (rare F1 0.34 against 0.35), at 100k and 500k it merges
+  it (0.14 to 0.17). scrapper reaches 0.94 at 100k and 500k from its
   rank-weighted sNN (no scores at 1M: it OOMs in memory and times out in DGE
-  on HDF5), though it merges groups (9 clusters for 12) and misses the rare
-  one. bixverse leads at 100k (0.98) and drops to 0.79 to 0.88,
-  depending on whether Leiden returns 12 or 13 clusters.
+  on HDF5), merging groups (9 clusters for 12) and the rare one. bixverse
+  leads at 100k (0.98) and drops to 0.79 to 0.88, depending on whether
+  Leiden returns 12 or 13 clusters.
 - **DGE in seconds.** 0.5 to 4.2 s for bixverse, against 3.3 to 23 s for
-  scrapper, 46 to 454 s for Scanpy and 57 to 518 s for BPCells. On the shared
-  genes it ranks like Seurat's presto; scrapper and Scanpy rank detectable markers slightly
-  better.
+  scrapper, 6 to 25 s for CyteArc, 46 to 454 s for Scanpy and 57 to 518 s for
+  BPCells. On the shared genes it ranks like Seurat's presto; scrapper,
+  Scanpy and CyteArc rank detectable markers slightly better.
+- **CyteArc finishes every size at about 10 GB, slowly.** 164, 777 and
+  1,617 s from h5ad; its import sets the peak (8.3 to 11.4 GB) and the
+  analysis stays under 6 GB. Slower than every in-memory row at 100k, level
+  with in-memory Scanpy at 500k (777 against 766 s), 1.4x faster than BPCells
+  at 1M. UMAP is about half of its analysis time.
 - **scrapper out of core saves memory, not time.** On HDF5 it stays under
   13 GB without swap at 500k, but takes 2,448 s, most of it in DGE, and
   times out in DGE at 1M and on the full PBMC data.
@@ -67,7 +76,8 @@ footprint: close to, but not the same metric as, the Docker rows. MLX needs an o
   97% of harmonypy's neighbours kept, at 1.1 GB more memory for v2.
 - **Smallest on disk.** bixverse's store takes 2.7 GB at 1M, against 3.7 GB
   for the BPCells store and 8.1 GB for the h5ad. BPCells' DGE step adds a
-  gene-major copy of the normalised data, 12.5 GB on disk in all.
+  gene-major copy of the normalised data, 12.5 GB on disk in all; CyteArc's
+  store holds the counts cell- and gene-major, 8.3 GB.
 
 ## Real data check: PBMC
 
@@ -89,11 +99,14 @@ subsamples, or where the run died. Same stack.
 | Seurat std mtx | 141 s, 7.7 GB | OOM at load | OOM at load |
 | Seurat std h5ad | 109 s, 7.8 GB | OOM at load | OOM at load |
 | Seurat BPCells | 286 s, 2.5 GB | 1421 s, 5.6 GB | 3012 s, 10.9 GB |
+| CyteArc mtx | 181 s, 8.0 GB | 828 s, 8.5 GB | 1521 s, 8.4 GB |
+| CyteArc h5ad | 158 s, 9.1 GB | 683 s, 9.6 GB | 1300 s, 8.8 GB |
 
 The real data agree with the simulation: only the out-of-core designs finish
 the full set (bixverse in 2.5 min from h5ad, Scanpy with Dask in 8.2 min
-without DGE, Seurat with BPCells in 50 min, all at 8.7 to 10.9 GB), and every
-in-memory path dies at load. Per-step tables, the warm start and the scaling
+without DGE, CyteArc in 22 min, Seurat with BPCells in 50 min, all at 8.4 to
+10.9 GB), and every in-memory path dies at load. CyteArc from h5ad passes
+in-memory Scanpy at 500k (683 against 832 s), mostly on DGE. Per-step tables, the warm start and the scaling
 figures are in [results](docs/results.md).
 
 ## Caveats
@@ -112,7 +125,8 @@ figures are in [results](docs/results.md).
 - From 500k bixverse's CPU tSNE uses an approximate kNN (IVF), where the
   default Barnes-Hut of Scanpy and Seurat pays for an exact one.
 - Defaults that favour bixverse: its UMAP optimiser is multi-threaded where
-  Scanpy's, Seurat's and scrapper's run on one thread. Defaults that favour
+  Scanpy's, Seurat's, scrapper's and CyteArc's run on one thread. UMAP
+  settings (epochs, optimiser, graph weights) are each framework's own. Defaults that favour
   Scanpy: Leiden with 2 iterations, Wilcoxon without tie correction.
 - Seurat with BPCells transposes its data to gene-major order inside the DGE
   step, as BPCells advises for `FindAllMarkers`; the time and the extra disk
