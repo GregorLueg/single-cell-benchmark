@@ -13,14 +13,25 @@ qc_param <- params_sc_min_quality(
   target_size = 1e4
 )
 
+# a single plate (the pilot) goes through load_h5ad: the multi-file loader
+# needs at least two
 step("load", {
-  prescan <- prescan_h5ad_files(h5_paths = h5_paths, gene_universe = "intersection")
-  sce <- load_multi_h5ad(
-    object = SingleCells(dir_data = scratch),
-    prescan_result = prescan,
-    sc_qc_param = qc_param,
-    csc_mem_gb = as.numeric(Sys.getenv("BIX_CSC_GB", "8"))
-  )
+  csc_mem_gb <- as.numeric(Sys.getenv("BIX_CSC_GB", "8"))
+  sce <- if (length(h5_paths) == 1L) {
+    load_h5ad(
+      object = SingleCells(dir_data = scratch),
+      h5_path = h5_paths[[1]],
+      sc_qc_param = qc_param,
+      csc_mem_gb = csc_mem_gb
+    )
+  } else {
+    load_multi_h5ad(
+      object = SingleCells(dir_data = scratch),
+      prescan_result = prescan_h5ad_files(h5_paths = h5_paths, gene_universe = "intersection"),
+      sc_qc_param = qc_param,
+      csc_mem_gb = csc_mem_gb
+    )
+  }
 })
 
 step("qc", {

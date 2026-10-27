@@ -12,8 +12,11 @@ import cytearc
 sys.path.insert(0, "/bench/pipelines")
 from common import BATCH_COL, DGE_CASE, DGE_COL, DGE_CTRL, MT_MAX, TRUTH_COL, h5_paths, step_timer, write_embs
 
-# DataStoreMerge prefixes the source metadata columns with its prepend_text
-TRUTH, BATCH, DGE = (f"orig_{c}" for c in (TRUTH_COL, BATCH_COL, DGE_COL))
+
+def merged_cols(single):
+    """DataStoreMerge prefixes the source metadata columns with its prepend_text."""
+    pre = "" if single else "orig_"
+    return (f"{pre}{c}" for c in (TRUTH_COL, BATCH_COL, DGE_COL))
 
 
 def main():
@@ -25,17 +28,22 @@ def main():
     with step("load"):
         # one import per plate (cell-major counts plus the gene-major countsT),
         # merged into one store; the per-plate stores are dropped afterwards
+        # (a single plate, the pilot, imports straight into the store: the merge
+        # needs two sources)
         plates = h5_paths(data)
+        single = len(plates) == 1
         for name, path in plates.items():
             reader = cytearc.H5adReader.from_inspect(cytearc.inspect_h5ad(str(path)))
-            cytearc.H5adToZarr(reader, zarr_loc=str(scratch / f"{name}.zarr")).dump()
-        cytearc.DataStoreMerge(
-            [cytearc.DataStore(str(scratch / f"{n}.zarr"), min_features_per_cell=-1) for n in plates],
-            zarr_path=store,
-            names=list(plates),
-        ).dump()
-        for name in plates:
-            shutil.rmtree(scratch / f"{name}.zarr")
+            cytearc.H5adToZarr(reader, zarr_loc=store if single else str(scratch / f"{name}.zarr")).dump()
+        if not single:
+            cytearc.DataStoreMerge(
+                [cytearc.DataStore(str(scratch / f"{n}.zarr"), min_features_per_cell=-1) for n in plates],
+                zarr_path=store,
+                names=list(plates),
+            ).dump()
+            for name in plates:
+                shutil.rmtree(scratch / f"{name}.zarr")
+        TRUTH, BATCH, DGE = merged_cols(single)
         # -1 keeps the open from dropping cells; the pre-filter below does it
         ds = cytearc.DataStore(store, min_features_per_cell=-1)
         # same pre-filter as bixverse: genes in >= 5 cells (the DGE universe), then
