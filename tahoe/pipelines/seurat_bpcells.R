@@ -31,7 +31,9 @@ step("load", {
   mat <- mat[gene_detected >= 5, ]
   cell_detected <- colSums(binarize(mat, threshold = 0))
   keep <- cell_detected >= 100 & colSums(mat) >= 250
-  mat <- write_matrix_dir(mat[, keep], file.path(scratch, "counts"))
+  # Tahoe stores integer counts as float32, which BPCells warns compresses
+  # poorly; written as uint32 as that warning advises
+  mat <- write_matrix_dir(convert_matrix_type(mat[, keep], "uint32_t"), file.path(scratch, "counts"))
   md <- data.frame(meta[keep], row.names = meta$cell_id[keep])
   obj <- CreateSeuratObject(counts = mat, meta.data = md)
 })
