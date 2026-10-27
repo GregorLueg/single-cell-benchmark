@@ -13,3 +13,6 @@ rlib/
 scripts/harmony_bench/.venv/
 
 .claude/worktrees/*
+tahoe/results/**/emb_*
+tahoe/results/**/score_cells.csv.gz
+tahoe/results/**/markers.csv
