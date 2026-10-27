@@ -327,6 +327,8 @@ harmonypy.
   correction by default.
 - **tSNE settings are each framework's own.** Iteration counts and learning
   rates are not matched; `sc.tl.tsne` hard-codes `learning_rate = 1000`.
+- **UMAP settings are each framework's own.** Epochs, optimiser and graph
+  weights are not matched.
 - **UMAP optimisation is single-threaded outside bixverse.** umap-learn under
   Scanpy, uwot under Seurat (`n_sgd_threads = 0`) and scrapper's `runUmap`
   (`parallel.optimization = FALSE`) run the SGD on one thread by default;
