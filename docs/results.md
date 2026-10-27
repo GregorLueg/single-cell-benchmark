@@ -360,7 +360,10 @@ the DGE groups are the 24 samples.
 Reconnecting to data a cold run already converted (`WARM=1 scripts/run.sh`),
 load step only. bixverse reopens its store and the stored cell map, so its
 object holds the post-QC cells; BPCells reopens the pre-filtered, pre-QC matrix
-and builds the Seurat object. Each warm run goes straight after its cold run,
+and builds the Seurat object; CyteArc reopens its store with every cell, the
+QC selections and results stored in it as artifacts. Only the reopen is timed
+for CyteArc: later steps would hand back the cold run's stored results. Its
+store comes from a load-only cold run (`LOAD_ONLY=1`). Each warm run goes straight after its cold run,
 so the files are likely still in the page cache. Warm peak GB is the load only;
 cold load s is the mtx load step of the full cold run.
 
@@ -370,12 +373,16 @@ cold load s is the mtx load step of the full cold run.
 |---|---|---|---|---|
 | PBMC 100k | bixverse | 10.0 | 0.3 | 0.2 |
 | PBMC 100k | Seurat BPCells | 14.5 | 2.3 | 0.8 |
-| PBMC 500k | bixverse | 46.2 | 0.4 | 0.3 |
-| PBMC 500k | Seurat BPCells | 70.1 | 10.1 | 0.9 |
+| PBMC 100k | CyteArc | 42.7 | 2.8 | 0.1 |
+| PBMC 500k | bixverse | 46.2 | 0.4 | 0.4 |
+| PBMC 500k | Seurat BPCells | 70.7 | 10.1 | 0.9 |
+| PBMC 500k | CyteArc | 222.9 | 3.0 | 0.1 |
 | PBMC full | bixverse | 98.5 | 0.6 | 0.3 |
-| PBMC full | Seurat BPCells | 142.6 | 20.9 | 1.1 |
+| PBMC full | Seurat BPCells | 141.6 | 20.9 | 1.1 |
+| PBMC full | CyteArc | 384.1 | 3.1 | 0.1 |
 | splat 1M | bixverse | 89.5 | 0.7 | 0.4 |
-| splat 1M | Seurat BPCells | 132.5 | 21.2 | 1.0 |
+| splat 1M | Seurat BPCells | 129.0 | 21.2 | 1.0 |
+| splat 1M | CyteArc | 302.6 | 2.9 | 0.1 |
 
 ### What it shows
 
@@ -405,7 +412,9 @@ cold load s is the mtx load step of the full cold run.
   from h5ad passes it too (683 s at 9.6 GB), on DGE: without it CyteArc
   needs 660 s against Scanpy's 230 s.
 - **A warm start removes the conversion cost.** On the full data bixverse
-  reconnects in 0.6 s at 0.3 GB, Seurat + BPCells in 20.9 s at 1.1 GB. The
+  reconnects in 0.6 s at 0.3 GB, CyteArc in 3.1 s at 0.1 GB (2.8 to 3.1 s at
+  every size, against a cold load of up to 384 s), Seurat + BPCells in 20.9 s
+  at 1.1 GB. The
   BPCells PCA and UMAP cost above is untouched by a warm start.
 - **The GPU earns its keep from 500k.** 39 s (wgpu) and 38 s (MLX) without
   tSNE at 500k, 81 and 75 s on the full data, against 73 and 151 s on the
