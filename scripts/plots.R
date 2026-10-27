@@ -158,7 +158,8 @@ no_step <- list(
   bixverse = "normalise",
   Scanpy = c("cluster_fast", "tsne_quick"),
   Seurat = c("cluster_fast", "tsne_quick"),
-  scrapper = c("tsne_default", "tsne_fft")
+  scrapper = c("tsne_default", "tsne_fft"),
+  CyteArc = c("cluster_fast", "tsne_default", "tsne_fft", "tsne_quick")
 )
 total_step <- "total (no tSNE)"
 
