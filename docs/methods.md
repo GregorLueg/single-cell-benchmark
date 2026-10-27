@@ -202,9 +202,10 @@ On the simulation the score inputs (clusters, HVGs, embeddings, markers) are
 written right after DGE, so a tSNE timeout only loses the tSNE rows.
 
 The warm start (`WARM=1`) times only the reconnect: `load_existing` for
-bixverse, `open_matrix_dir` plus `CreateSeuratObject` for Seurat + BPCells. It
-needs a cold run of the same tool and data set first, and lives in
-`<tool>_warm`.
+bixverse, `open_matrix_dir` plus `CreateSeuratObject` for Seurat + BPCells,
+`DataStore` on the existing store for CyteArc. It needs a cold run of the same
+tool and data set first, and lives in `<tool>_warm`. CyteArc's cold run is
+load-only (`LOAD_ONLY=1`), since only the store is reopened.
 
 Inside tSNE the bixverse CPU runs use kmknn at 100k and IVF (default `n_list`,
 `n_probes`) from 500k up (`BIX_TSNE_KNN=ivf`). kmknn takes 1.7 s at 100k but
@@ -379,7 +380,7 @@ BIXVERSE_GPU_MLX=true R_LIBS=rlib R CMD INSTALL -l rlib bixverse.gpu
 LOAD_ONLY=1 TAG=disk scripts/run.sh bixverse <dataset>   # on-disk store only
 
 # warm start: reconnect to what the last cold run left in the scratch volume
-WARM=1 scripts/run.sh bixverse parse_100k          # or seurat_bpcells
+WARM=1 scripts/run.sh bixverse parse_100k          # or seurat_bpcells, cytearc
 
 uv run scripts/tables.py results
 uv run scripts/score.py results/splat_100k data/splat_100k   # writes quality.csv

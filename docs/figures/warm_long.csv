@@ -3,11 +3,17 @@ bixverse,parse_100k,cold,9.99,1.55
 bixverse,parse_100k,warm,0.26,0.25
 Seurat BPCells,parse_100k,cold,14.54,2.55
 Seurat BPCells,parse_100k,warm,2.25,0.76
+CyteArc,parse_100k,cold,42.65,8.01
+CyteArc,parse_100k,warm,2.84,0.14
 bixverse,parse_500k,cold,46.18,6.25
 bixverse,parse_500k,warm,0.42,0.35
 Seurat BPCells,parse_500k,cold,70.68,5.63
 Seurat BPCells,parse_500k,warm,10.14,0.93
+CyteArc,parse_500k,cold,222.89,8.51
+CyteArc,parse_500k,warm,3.01,0.14
 bixverse,parse_full,cold,98.50,9.52
 bixverse,parse_full,warm,0.62,0.33
 Seurat BPCells,parse_full,cold,141.57,10.89
 Seurat BPCells,parse_full,warm,20.93,1.09
+CyteArc,parse_full,cold,384.06,8.38
+CyteArc,parse_full,warm,3.08,0.13
