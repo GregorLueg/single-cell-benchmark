@@ -12,9 +12,10 @@ dataset="${DATASET:-tahoe}"
 out="$root/results/$dataset/$tool${TAG:+_$TAG}"
 rm -rf "$out"; mkdir -p "$out"
 
-# Tahoe defaults: cell lines as the truth, Harmony on sublibraries, DGE of one
-# drug against the vehicle; MT_MAX in percent, inclusive
-TRUTH_COL="${TRUTH_COL:-cell_line}"; BATCH_COL="${BATCH_COL:-sublibrary}"
+# Tahoe defaults: cell lines as the truth, Harmony on plates, DGE of one
+# drug against the vehicle; MT_MAX in percent, inclusive. Plate is the only batch
+# with an effect on identical (DMSO) cells, but it is confounded with dose
+TRUTH_COL="${TRUTH_COL:-cell_line}"; BATCH_COL="${BATCH_COL:-plate}"
 DGE_COL="${DGE_COL:-drug}"; DGE_CTRL="${DGE_CTRL:-DMSO_TF}"; DGE_CASE="${DGE_CASE:-Gemcitabine}"
 MT_MAX="${MT_MAX:-15}"
 
