@@ -3,13 +3,13 @@
 source("/bench/pipelines/common.R")
 suppressPackageStartupMessages(library(bixverse))
 
-# load includes the pre-filter (genes in >= 5 cells, then cells with >= 100
+# load includes the pre-filter (genes in >= MIN_CELLS cells, then cells with >= 100
 # genes and >= 250 UMIs) and the log-normalisation, fused in one streaming pass
 # over all plates
 qc_param <- params_sc_min_quality(
   min_unique_genes = 100L,
   min_lib_size = 250L,
-  min_cells = 5L,
+  min_cells = min_cells,
   target_size = 1e4
 )
 
@@ -27,7 +27,13 @@ step("load", {
   } else {
     load_multi_h5ad(
       object = SingleCells(dir_data = scratch),
-      prescan_result = prescan_h5ad_files(h5_paths = h5_paths, gene_universe = "intersection"),
+      # the var index is named by the _index attribute (gene_name here), which
+      # prescan does not follow on its own
+      prescan_result = prescan_h5ad_files(
+        h5_paths = h5_paths,
+        gene_universe = "intersection",
+        var_index = rhdf5::h5readAttributes(h5_paths[[1]], "/var")[["_index"]]
+      ),
       sc_qc_param = qc_param,
       csc_mem_gb = csc_mem_gb
     )

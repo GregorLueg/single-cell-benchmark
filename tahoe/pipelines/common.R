@@ -9,6 +9,7 @@ scratch <- args[3]
 threads <- 8L
 
 mt_max <- as.numeric(Sys.getenv("MT_MAX"))
+min_cells <- as.integer(Sys.getenv("MIN_CELLS"))
 truth_col <- Sys.getenv("TRUTH_COL")
 batch_col <- Sys.getenv("BATCH_COL")
 dge_col <- Sys.getenv("DGE_COL")

@@ -10,7 +10,7 @@ import pandas as pd
 import cytearc
 
 sys.path.insert(0, "/bench/pipelines")
-from common import BATCH_COL, DGE_CASE, DGE_COL, DGE_CTRL, MT_MAX, TRUTH_COL, h5_paths, step_timer, write_embs
+from common import BATCH_COL, DGE_CASE, DGE_COL, DGE_CTRL, MIN_CELLS, MT_MAX, TRUTH_COL, h5_paths, step_timer, write_embs
 
 
 def merged_cols(single):
@@ -50,7 +50,7 @@ def main():
         # cells with >= 100 genes and >= 250 UMIs. Filters return selections,
         # nothing is removed from the store. Bounds are exclusive by default.
         all_cells = ds.snapshot_cell_selection("I")
-        genes = ds.features.detected(all_cells, min_cells=5)
+        genes = ds.features.detected(all_cells, min_cells=MIN_CELLS)
         pre = ds.qc.filter(["RNA_nFeatures", "RNA_nCounts"], [100, 250], [None, None],
                            cell_selection=all_cells, keep_bounds=True)
 

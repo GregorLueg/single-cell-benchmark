@@ -19,6 +19,7 @@ from common import (
     DGE_COL,
     DGE_CTRL,
     GENE_COL,
+    MIN_CELLS,
     MT_MAX,
     TRUTH_COL,
     h5_paths,
@@ -46,7 +47,7 @@ with step("load"):
     # plates bound lazily on the shared genes
     adata = ad.concat([read_plate(n, p) for n, p in h5_paths(data).items()], join="inner", merge="same")
     # same pre-filter as bixverse: genes first, then cells
-    sc.pp.filter_genes(adata, min_cells=5)
+    sc.pp.filter_genes(adata, min_cells=MIN_CELLS)
     sc.pp.filter_cells(adata, min_genes=100)
     sc.pp.filter_cells(adata, min_counts=250)
 

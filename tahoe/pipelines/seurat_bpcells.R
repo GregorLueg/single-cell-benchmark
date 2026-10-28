@@ -28,7 +28,7 @@ step("load", {
     dt[, cell_id := paste0(p, "_", h5ad_index(h5_paths[[p]], "/obs"))]
   }))
   gene_detected <- rowSums(binarize(mat, threshold = 0))
-  mat <- mat[gene_detected >= 5, ]
+  mat <- mat[gene_detected >= min_cells, ]
   cell_detected <- colSums(binarize(mat, threshold = 0))
   keep <- cell_detected >= 100 & colSums(mat) >= 250
   # Tahoe stores integer counts as float32, which BPCells warns compresses
