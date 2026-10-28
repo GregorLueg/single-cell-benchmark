@@ -34,7 +34,7 @@ bixverse.gpu 0.6.2, manifoldsR 0.5.0, Scanpy 1.12.4, scrapper 1.6.3, Seurat
 
 ![Time without tSNE and peak memory on the simulation](figures/scaling_splat.png)
 
-![Wall time per step on the simulation, scaled per step](figures/steps_heatmap_splat.png)
+![Wall time per step on the simulation, against the fastest per step](figures/steps_heatmap_splat.png)
 
 ### 100k cells (96,342 after QC)
 
@@ -273,7 +273,7 @@ the DGE groups are the 24 samples.
 
 ![Time without tSNE and peak memory on PBMC](figures/scaling_pbmc.png)
 
-![Wall time per step on PBMC, scaled per step](figures/steps_heatmap_pbmc.png)
+![Wall time per step on PBMC, against the fastest per step](figures/steps_heatmap_pbmc.png)
 
 ### 100k cells (69,412 after QC)
 
@@ -413,6 +413,10 @@ cold load s is the mtx load step of the full cold run.
   in DGE, as on the 1M simulation. At 500k it finishes in 2,205 s at 8.3 GB.
 
 ## Native runs: CPU against GPU
+
+![Time without tSNE and peak footprint, native CPU against GPU](figures/native_scaling.png)
+
+![Speed-up per step of the GPU rows over the native CPU](figures/native_gpu_speedup.png)
 
 bixverse.gpu needs Metal, and Docker on macOS has no Metal access, so the wgpu
 and MLX rows run natively (`scripts/run_native.sh`). Set against the Docker

@@ -436,3 +436,42 @@ fig5 <- ggplot(fc, aes(step, column)) +
 
 ggsave(file.path(fig_dir, "native_gpu_speedup.png"), fig5, width = 16, height = 8, dpi = 300, bg = surface)
 ggsave(file.path(fig_dir, "native_gpu_speedup.pdf"), fig5, width = 16, height = 8, bg = surface)
+
+#### figure 6: native time and memory per size ----------------------------------
+
+native_cols_fill <- c(`native CPU` = "#0F8096", `native wgpu` = "#EE9B00", `native MLX` = "#AE2012")
+nr <- nl[, .(
+  no_tsne = sum(seconds[!grepl("^tsne|^cluster_fast", step)]),
+  peak_gb = peak_gb[1]
+), by = .(column, size)]
+nr[, size_label := factor(native_sizes[size], levels = native_sizes[c(1, 3, 5, 2, 4, 6)])]
+nr[, column := factor(column, levels = rev(names(native_cols_fill)))]
+
+native_bars <- function(x, lab, title) {
+  ggplot(nr, aes(y = column)) +
+    geom_col(aes(x = .data[[x]], fill = column), width = 0.75) +
+    geom_text(aes(x = .data[[x]], label = lab(.data[[x]])), hjust = -0.15, size = 3.6, colour = ink) +
+    scale_x_continuous(expand = expansion(mult = c(0, 0.3))) +
+    facet_wrap(~size_label, nrow = 1, scales = "free_x") +
+    labs(title = title, x = NULL, y = NULL)
+}
+
+fig6 <- (native_bars("no_tsne", function(v) sprintf("%.0f s", v), "Without tSNE (s)") /
+  native_bars("peak_gb", function(v) sprintf("%.1f", v), "Peak footprint (GB)")) +
+  plot_layout(guides = "collect") +
+  plot_annotation(
+    title = "Native bixverse: CPU against GPU, time and memory",
+    subtitle = "Same pipeline and parameters, native on macOS (M1 Max, 8 threads, R 4.6.1). One repeat per run.",
+    caption = paste(
+      "Peak footprint from /usr/bin/time -l over the whole run, tSNE included; no memory cap, so it does not compare with the Docker figures.",
+      "At splat 100k the GPU rows' extra memory is CPU heap that grows in the tSNE steps, not GPU buffers; why it is not released is not checked.",
+      sep = "\n"
+    ),
+    theme = theme_bench(14)
+  ) &
+  scale_fill_manual(values = native_cols_fill, breaks = names(native_cols_fill), name = NULL) &
+  theme_bench(14) &
+  theme(panel.grid.major.y = element_blank(), legend.position = "bottom")
+
+ggsave(file.path(fig_dir, "native_scaling.png"), fig6, width = 16, height = 8, dpi = 300, bg = surface)
+ggsave(file.path(fig_dir, "native_scaling.pdf"), fig6, width = 16, height = 8, bg = surface)
