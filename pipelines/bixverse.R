@@ -1,6 +1,6 @@
 # bixverse pipeline. Usage: Rscript bixverse.R <data_dir> <out_dir> <scratch_dir>
 
-source("/bench/pipelines/common.R")
+source(file.path(Sys.getenv("BENCH_DIR", "/bench"), "pipelines", "common.R"))
 suppressPackageStartupMessages(library(bixverse))
 
 # BIX_KNN sets the kNN for the sNN graph, BIX_TSNE_KNN the one tSNE builds
@@ -161,20 +161,18 @@ step("tsne_fft", {
 # tsne_quick: the quick-and-dirty Barnes-Hut of qdtsne (depth-capped tree,
 # repulsion per leaf), at the scrapper row's settings: theta = 1, 500 iterations, 250
 # early exaggeration at 12, max depth 7. Not a standard Barnes-Hut tSNE.
-# tsne_sc does not take "bh_qd" yet, so call the manifoldsR function it wraps
 step("tsne_quick", {
-  harmony <- get_embedding(sce, "harmony_v2")
-  tsne_quick <- manifoldsR::tsne(
-    data = harmony,
+  sce <- tsne_sc(
+    object = sce,
+    embd_to_use = "harmony_v2",
+    slot_name = "tsne_quick",
     perplexity = 30,
     approx_type = "bh_qd",
     knn_method = tsne_knn_method,
-    tsne_params = manifoldsR::params_tsne(n_epochs = 500L, theta = 1, max_depth = 7L),
-    .verbose = FALSE
+    tsne_params = manifoldsR::params_tsne(n_epochs = 500L, theta = 1, max_depth = 7L)
   )
-  rownames(tsne_quick) <- rownames(harmony)
 })
-if (truth) write_truth_outputs(embs = list(tsne_quick = tsne_quick))
+if (truth) write_truth_outputs(embs = list(tsne_quick = get_embedding(sce, "tsne_quick")))
 
 message(sprintf(
   "cells after QC: %d, clusters: %d, fast clusters: %d (res 1), %d (res 2)",

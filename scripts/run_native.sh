@@ -1,20 +1,27 @@
 #!/usr/bin/env bash
-# Usage: [BACKEND=mlx] scripts/run_native.sh <dataset>
-# Runs bixverse_gpu.R on the host (Metal), via wgpu or, with BACKEND=mlx, MLX
-# (needs bixverse.gpu built against mlx-c). No memory cap on macOS. RSS of the
-# R process is sampled once a second instead of cgroup anon memory; it includes
-# resident file-mapped pages, so the tables take the peak footprint that
-# /usr/bin/time -l reports instead.
+# Usage: [BACKEND=wgpu|mlx|cpu] [BIX_KNN=nndescent] [BIX_TSNE_KNN=kmknn] scripts/run_native.sh <dataset>
+# Runs bixverse on the host: bixverse_gpu.R on Metal via wgpu or, with
+# BACKEND=mlx, MLX (needs bixverse.gpu built against mlx-c); BACKEND=cpu runs
+# the Docker CPU pipeline bixverse.R natively, the control for the GPU rows.
+# No memory cap on macOS. RSS of the R process is sampled once a second instead
+# of cgroup anon memory; it includes resident file-mapped pages, so the tables
+# take the peak footprint that /usr/bin/time -l reports instead.
 set -uo pipefail
 dataset="$1"
 root="$(cd "$(dirname "$0")/.." && pwd)"
 backend="${BACKEND:-wgpu}"
-out="$root/results/$dataset/bixverse_$([ "$backend" = mlx ] && echo mlx || echo gpu)"
+case "$backend" in
+  mlx) run=bixverse_mlx; script=bixverse_gpu.R ;;
+  cpu) run=bixverse_native; script=bixverse.R ;;
+  *)   run=bixverse_gpu; script=bixverse_gpu.R ;;
+esac
+out="$root/results/$dataset/$run"
 scratch="$root/scratch_native"
 rm -rf "$out" "$scratch"; mkdir -p "$out" "$scratch"
 
-BACKEND="$backend" BIX_CSC_GB="${BIX_CSC_GB:-8}" R_LIBS="$root/rlib" RAYON_NUM_THREADS=8 BENCH_DIR="$root" /usr/bin/time -l \
-  Rscript "$root/pipelines/bixverse_gpu.R" "$root/data/$dataset" "$out" "$scratch" \
+BACKEND="$backend" BIX_CSC_GB="${BIX_CSC_GB:-8}" BIX_KNN="${BIX_KNN:-kmknn}" BIX_TSNE_KNN="${BIX_TSNE_KNN:-kmknn}" \
+  R_LIBS="$root/rlib" RAYON_NUM_THREADS=8 OMP_NUM_THREADS=8 OPENBLAS_NUM_THREADS=8 BENCH_DIR="$root" /usr/bin/time -l \
+  Rscript "$root/pipelines/$script" "$root/data/$dataset" "$out" "$scratch" \
   > "$out/log.txt" 2>&1 &
 pid=$!
 echo "t,anon_bytes,file_bytes,swap_bytes" > "$out/mem.csv"

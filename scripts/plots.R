@@ -26,7 +26,7 @@ ink_2 <- "#52514e"
 grid_col <- "#e4e3df"
 
 column_order <- c(
-  "bixverse mtx", "bixverse h5ad", "bixverse GPU*", "bixverse MLX*",
+  "bixverse mtx", "bixverse h5ad",
   "Scanpy mtx", "Scanpy h5ad", "Scanpy dask",
   "scrapper mtx", "scrapper h5ad", "scrapper HDF5",
   "Seurat std mtx", "Seurat std h5ad", "Seurat BPCells",
@@ -87,11 +87,10 @@ scaling_bars <- function(labels, title, file) {
   r[!is.na(died), no_tsne := NA_real_]
   r[, size_label := factor(labels[size], levels = labels)]
   r[, column := factor(column, levels = rev(column_order))]
-  r[, native := column %in% c("bixverse GPU*", "bixverse MLX*")]
   x_min <- 5
 
   p_time <- ggplot(r, aes(y = column)) +
-    geom_col(aes(x = no_tsne, fill = family, alpha = native), width = 0.75, na.rm = TRUE) +
+    geom_col(aes(x = no_tsne, fill = family), width = 0.75, na.rm = TRUE) +
     geom_text(
       aes(x = no_tsne, label = format(round(no_tsne), big.mark = ",", trim = TRUE)),
       hjust = -0.15, size = 3.6, colour = ink, na.rm = TRUE
@@ -108,7 +107,7 @@ scaling_bars <- function(labels, title, file) {
     labs(title = "Without tSNE", x = NULL, y = NULL)
 
   p_mem <- ggplot(r, aes(y = column)) +
-    geom_col(aes(x = peak_gb, fill = family, alpha = native), width = 0.75) +
+    geom_col(aes(x = peak_gb, fill = family), width = 0.75) +
     geom_vline(xintercept = 24, linetype = "dotted", colour = ink_2) +
     geom_text(
       aes(
@@ -128,14 +127,13 @@ scaling_bars <- function(labels, title, file) {
       title = title,
       subtitle = "Under a 24 GB, 8 core cap. One repeat per run; a run that died shows where.",
       caption = paste(
-        "Faded: bixverse GPU (wgpu) and MLX, native on Metal without a memory cap; their peak is the macOS memory footprint.",
+        "Docker runs only; the native bixverse runs (CPU, wgpu, MLX) are in their own table in docs/results.md.",
         "Scanpy dask has no DGE step. A run that timed out in tSNE keeps its time without tSNE.",
         sep = "\n"
       ),
       theme = theme_bench(14)
     ) &
     scale_fill_manual(values = family_cols, name = NULL) &
-    scale_alpha_manual(values = c(`FALSE` = 1, `TRUE` = 0.55), guide = "none") &
     theme_bench(14) &
     theme(panel.grid.major.y = element_blank(), legend.position = "bottom")
 
@@ -213,7 +211,7 @@ step_heatmap <- function(labels, title, file, height, width = 11, base_size = 10
       caption = paste(
         "Black: n/a (step not in that framework), OOM or TIMEOUT where the run died, - not reached.",
         "Each step is scaled over the runs that finished it: at 1M the bixverse CPU tSNE is red because the others timed out.",
-        "Scanpy dask has no DGE step. bixverse GPU and MLX run natively without a memory cap.",
+        "Scanpy dask has no DGE step. Docker runs only; the native bixverse runs are in their own table.",
         "bixverse CPU tSNE builds its kNN with IVF from 500k (kmknn at 100k). (qd) steps are not in the total.",
         sep = "\n"
       ),

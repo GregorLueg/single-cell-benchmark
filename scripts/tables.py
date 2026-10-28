@@ -4,9 +4,10 @@
 # ///
 """Markdown tables from the benchmark results.
 
-Usage: tables.py <results_dir> [dataset ...]          per-step tables
-       tables.py --summary <results_dir> [splat]      one row per framework
-       tables.py --long <results_dir>                 tidy CSV for plotting
+Usage: tables.py <results_dir> [dataset ...]          per-step tables (Docker, native, warm)
+       tables.py --summary <results_dir> [splat]      one row per framework (Docker)
+       tables.py --native <results_dir> [splat]       one row per native run
+       tables.py --long <results_dir>                 tidy CSV for plotting (Docker)
        tables.py --warm <results_dir>                 cold vs warm load CSV
 """
 
@@ -29,12 +30,10 @@ TOOL_STEPS = {
 # alternative takes on a step: listed, but not in the totals
 EXTRA = ("tsne", "cluster_fast")
 LABELS = {"cluster_fast": "cluster_fast (qd)", "tsne_quick": "tsne_quick (qd)"}
-# column -> result dir name, in display order
+# column -> result dir name, in display order; Docker runs only
 COLUMNS = {
     "bixverse mtx": ["bixverse_mtx_snn_nndescent", "bixverse_mtx", "bixverse"],
     "bixverse h5ad": ["bixverse_h5ad"],
-    "bixverse GPU*": ["bixverse_gpu"],
-    "bixverse MLX*": ["bixverse_mlx"],
     "Scanpy mtx": ["scanpy_mtx", "scanpy"],
     "Scanpy h5ad": ["scanpy_h5ad"],
     "Scanpy dask": ["scanpy_dask"],
@@ -46,6 +45,13 @@ COLUMNS = {
     "Seurat BPCells": ["seurat_bpcells"],
     "CyteArc mtx": ["cytearc"],
     "CyteArc h5ad": ["cytearc_h5ad"],
+}
+# native macOS runs (scripts/run_native.sh): another environment and memory
+# metric (peak footprint), so they get their own tables
+NATIVE = {
+    "native CPU": ["bixverse_native"],
+    "native wgpu": ["bixverse_gpu"],
+    "native MLX": ["bixverse_mlx"],
 }
 
 
@@ -86,9 +92,9 @@ def load_run(d):
     return steps, peak, swap, failed_at
 
 
-def collect(ds_dir):
+def collect(ds_dir, columns=COLUMNS):
     runs = {}
-    for col, names in COLUMNS.items():
+    for col, names in columns.items():
         d = next((ds_dir / n for n in names if (ds_dir / n / "mem.csv").exists()), None)
         if d:
             runs[col] = (d.name, *load_run(d))
@@ -138,12 +144,13 @@ def warm_long(root):
     return "\n".join(rows)
 
 
-def table(ds_dir):
-    runs = collect(ds_dir)
+def table(ds_dir, native=False):
+    runs = collect(ds_dir, NATIVE if native else COLUMNS)
     if not runs:
         return ""
     cols = list(runs)
-    out = [f"### {ds_dir.name}", "", "| step | " + " | ".join(cols) + " |",
+    title = f"{ds_dir.name}: native" if native else ds_dir.name
+    out = [f"### {title}", "", "| step | " + " | ".join(cols) + " |",
            "|---" * (len(cols) + 1) + "|"]
     for s in STEPS:
         cells = []
@@ -166,8 +173,11 @@ def table(ds_dir):
     out.append("| total without tSNE | " + " | ".join(
         (f"{sum(v for k, v in runs[c][1].items() if not k.startswith(EXTRA)):.0f}"
          if not runs[c][4] or runs[c][4][0].startswith("tsne") else "failed") for c in cols) + " |")
-    out.append("| **peak GB** | " + " | ".join(f"**{runs[c][2]:.1f}**" for c in cols) + " |")
-    out.append("| peak swap GB | " + " | ".join(f"{runs[c][3]:.1f}" for c in cols) + " |")
+    if native:
+        out.append("| **peak footprint GB** | " + " | ".join(f"**{runs[c][2]:.1f}**" for c in cols) + " |")
+    else:
+        out.append("| **peak GB** | " + " | ".join(f"**{runs[c][2]:.1f}**" for c in cols) + " |")
+        out.append("| peak swap GB | " + " | ".join(f"{runs[c][3]:.1f}" for c in cols) + " |")
     scratch = {c: ds_dir / runs[c][0] / "scratch_kb" for c in cols}
     if any(p.exists() and p.read_text().strip() for p in scratch.values()):
         out.append("| on-disk store GB | " + " | ".join(
@@ -180,11 +190,11 @@ def table(ds_dir):
     return "\n".join(out)
 
 
-def summary(root, kind):
+def summary(root, kind, columns=COLUMNS):
     sizes = ({"splat_100k": "100k", "splat_500k": "500k", "splat_1m": "1M"} if kind == "splat"
              else {"parse_100k": "100k", "parse_500k": "500k", "parse_full": "full"})
-    per_size = {label: collect(root / ds) for ds, label in sizes.items()}
-    cols = [c for c in COLUMNS if any(c in r for r in per_size.values())]
+    per_size = {label: collect(root / ds, columns) for ds, label in sizes.items()}
+    cols = [c for c in columns if any(c in r for r in per_size.values())]
     out = ["| framework | " + " | ".join(sizes.values()) + " |", "|---" * (len(sizes) + 1) + "|"]
     for c in cols:
         cells = []
@@ -225,7 +235,10 @@ elif sys.argv[1] == "--warm":
     print(warm_long(Path(sys.argv[2])))
 elif sys.argv[1] == "--summary":
     print(summary(Path(sys.argv[2]), sys.argv[3] if len(sys.argv) > 3 else "parse"))
+elif sys.argv[1] == "--native":
+    print(summary(Path(sys.argv[2]), sys.argv[3] if len(sys.argv) > 3 else "parse", NATIVE))
 else:
     root = Path(sys.argv[1])
     datasets = sys.argv[2:] or ["parse_100k", "parse_500k", "parse_full"]
-    print("\n\n".join(t for d in datasets if (root / d).exists() for t in (table(root / d), warm_table(root / d)) if t))
+    print("\n\n".join(t for d in datasets if (root / d).exists()
+                      for t in (table(root / d), table(root / d, native=True), warm_table(root / d)) if t))
