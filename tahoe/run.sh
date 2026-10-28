@@ -46,9 +46,12 @@ wall="${WALL:-18000}"
 watchdog=$!
 
 status=0
+# bixverse CSC budget stays at 8 GB in Docker: at 24 GB the buffers plus the page
+# cache of the store hit the 48 GB cap and the conversion runs 2x slower (5x
+# slower than natively at 24 GB)
 docker run --rm --name scbench-run --cpus=8 --memory="${MEM:-48g}" --memory-swap="${MEMSWAP:-56g}" \
   -e OMP_NUM_THREADS=8 -e OPENBLAS_NUM_THREADS=8 -e RAYON_NUM_THREADS=8 \
-  -e CHUNK="${CHUNK:-50000}" -e BIX_CSC_GB="${BIX_CSC_GB:-24}" -e GENE_COL="${GENE_COL:-}" \
+  -e CHUNK="${CHUNK:-50000}" -e BIX_CSC_GB="${BIX_CSC_GB:-8}" -e GENE_COL="${GENE_COL:-}" \
   -e MT_MAX="$MT_MAX" -e MIN_CELLS="$MIN_CELLS" -e TRUTH_COL="$TRUTH_COL" -e BATCH_COL="$BATCH_COL" -e DGE_COL="$DGE_COL" -e DGE_CTRL="$DGE_CTRL" -e DGE_CASE="$DGE_CASE" \
   -v "$data:/data:ro" \
   -v "$out:/out" \
