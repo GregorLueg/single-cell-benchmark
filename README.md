@@ -20,14 +20,12 @@ The benchmarks ran within Docker on a MacBook M1 Max.
 
 Seconds without tSNE and peak memory (whole run, tSNE included) from h5ad, or
 where the run died, plus quality against the truth across the sizes each tool
-finished. Stack: bixverse 0.8.1, bixverse.gpu 0.6.1, Scanpy 1.12.4, scrapper
+finished. Stack: bixverse 0.8.4, bixverse.gpu 0.6.2, Scanpy 1.12.4, scrapper
 1.6.3, Seurat 5.6.0, CyteArc 1.3.0. One repeat, one seed.
 
 | framework | 100k | 500k | 1M | Harmony purity | ARI | rare F1 |
 |---|---|---|---|---|---|---|
-| bixverse | 15 s, 1.6 GB | 88 s, 5.7 GB | 190 s, 10.5 GB | 0.969 to 0.970 | 0.79 to 0.98 | 0.26 to 0.35 |
-| bixverse GPU (wgpu, native)\* | 12 s, 1.9 GB | 41 s, 5.4 GB | 91 s, 10.9 GB | 0.963 to 0.968 | 0.80 to 0.98 | 0.24 to 0.29 |
-| bixverse MLX (native)\* | 9 s, 1.5 GB | 37 s, 6.1 GB | 80 s, 10.9 GB | 0.965 to 0.967 | 0.87 to 0.97 | 0.22 to 0.31 |
+| bixverse | 12 s, 1.3 GB | 70 s, 5.4 GB | 153 s, 10.0 GB | 0.969 to 0.970 | 0.87 to 0.98 | 0.26 to 0.35 |
 | Scanpy | 122 s, 2.6 GB | 766 s, 14.2 GB | OOM at load | 0.894 to 0.908 | 0.78 to 0.88 | 0.09 to 0.11 |
 | Scanpy dask (experimental, no DGE) | 77 s, 1.8 GB | 317 s, 7.8 GB | 719 s, 10.8 GB | 0.889 to 0.908 | 0.86 to 0.91 | 0.10 to 0.11 |
 | scrapper | 83 s, 5.5 GB | 481 s, 22.7 GB | OOM at load | 0.926 to 0.929 | 0.94 | 0.13 |
@@ -36,30 +34,28 @@ finished. Stack: bixverse 0.8.1, bixverse.gpu 0.6.1, Scanpy 1.12.4, scrapper
 | Seurat BPCells | 223 s, 2.5 GB | 1140 s, 6.9 GB | 2305 s, 10.8 GB | 0.968 to 0.971 | 0.70 to 0.79 | 0.27 to 0.35 |
 | CyteArc | 164 s, 8.3 GB | 777 s, 11.4 GB | 1617 s, 10.3 GB | 0.949 to 0.956 | 0.95 to 0.97 | 0.14 to 0.34 |
 
-\* Native macOS on Metal, no memory cap, peak is the process memory
-footprint: close to, but not the same metric as, the Docker rows. MLX needs an opt-in build against mlx-c.
+The bixverse GPU runs (wgpu and MLX) need Metal, so they run natively and sit
+in [their own tables](docs/results.md#native-runs-cpu-against-gpu), against
+the same CPU pipeline run natively.
 
-- **bixverse is about 5x faster than scrapper at a quarter to a third of its
-  memory, and 3.6x to 8.7x faster than Scanpy (Dask to h5ad).** At 1M only
-  four out-of-core designs finish: bixverse (3.2 min), Scanpy with Dask
-  (12 min, no DGE), CyteArc (27 min) and Seurat with BPCells (38 min). From 500k the GPU rows
-  halve bixverse's time again (native, so their load also skips the VM); at
-  100k they save 3 to 6 s.
+- **bixverse is about 7x faster than scrapper at a quarter of its memory, and
+  4.5x to 11x faster than Scanpy (Dask to h5ad).** At 1M only four
+  out-of-core designs finish: bixverse (2.6 min), Scanpy with Dask (12 min,
+  no DGE), CyteArc (27 min) and Seurat with BPCells (38 min).
+- **The GPU doubles it again from 500k.** Native wgpu and MLX are 1.8x to
+  2.2x faster than the same pipeline run natively on the CPU from 500k
+  (splat 1M: 57 and 53 s against 115 s), mostly on UMAP; at 100k 1.3x to
+  1.4x. They need up to 1.7x the memory.
 - **Scanpy Dask skips the slowest Scanpy step.** It has no DGE (Wilcoxon fails
   on Dask arrays); in-memory Scanpy spends 454 s of its 766 s on it at 500k.
-- **No compromise on embeddings.** bixverse and Seurat share the top Harmony
-  purity (0.97), ahead of CyteArc (0.95 to 0.96), scrapper (0.93) and Scanpy
-  (0.89 to 0.91), and the best recovery of the rare group, though at rare F1
-  0.26 to 0.35 nobody recovers it well.
-- **CyteArc clusters best from 500k.** ARI 0.96 at 500k and 0.97 at 1M with
-  10 and 11 clusters for 12 groups; at 1M it also finds the rare group as
-  well as bixverse (rare F1 0.34 against 0.35), at 100k and 500k it merges
-  it (0.14 to 0.17). scrapper reaches 0.94 at 100k and 500k from its
-  rank-weighted sNN (no scores at 1M: it OOMs in memory and times out in DGE
-  on HDF5), merging groups (9 clusters for 12) and the rare one. bixverse
-  leads at 100k (0.98) and drops to 0.79 to 0.88, depending on whether
-  Leiden returns 12 or 13 clusters.
-- **DGE in seconds.** 0.5 to 4.2 s for bixverse, against 3.3 to 23 s for
+- **The speed doesn't cut corners.** On the simulation bixverse lands within
+  the spread of the established frameworks on every score: Harmony purity
+  0.97 (others 0.89 to 0.97), ARI 0.87 to 0.98 (others 0.70 to 0.97), DGE on
+  the shared genes level with Seurat's presto. Every framework runs its own
+  defaults on one seed of one simulator, so the scores are a parity check,
+  not a ranking. The rare group (about 1% of cells) is poorly recovered by
+  everyone (rare F1 0.09 to 0.35).
+- **DGE in seconds.** 0.6 to 4.1 s for bixverse, against 3.3 to 23 s for
   scrapper, 6 to 25 s for CyteArc, 46 to 454 s for Scanpy and 57 to 518 s for
   BPCells. On the shared genes it ranks like Seurat's presto; scrapper,
   Scanpy and CyteArc rank detectable markers slightly better.
@@ -86,10 +82,8 @@ subsamples, or where the run died. Same stack.
 
 | framework | 100k | 500k | full |
 |---|---|---|---|
-| bixverse mtx | 18 s, 1.6 GB | 94 s, 6.3 GB | 202 s, 9.5 GB |
-| bixverse h5ad | 15 s, 1.7 GB | 73 s, 6.6 GB | 151 s, 8.7 GB |
-| bixverse GPU (wgpu, native)\* | 10 s, 2.2 GB | 39 s, 5.9 GB | 81 s, 8.5 GB |
-| bixverse MLX (native)\* | 9 s, 1.4 GB | 38 s, 5.9 GB | 75 s, 8.0 GB |
+| bixverse mtx | 14 s, 1.3 GB | 72 s, 5.1 GB | 157 s, 8.4 GB |
+| bixverse h5ad | 12 s, 1.3 GB | 57 s, 5.3 GB | 121 s, 8.7 GB |
 | Scanpy mtx | 137 s, 6.0 GB | OOM at load | OOM at load |
 | Scanpy h5ad | 116 s, 2.0 GB | 832 s, 14.2 GB | OOM at load |
 | Scanpy dask (experimental, no DGE) | 65 s, 1.6 GB | 237 s, 6.7 GB | 490 s, 10.4 GB |
@@ -103,7 +97,7 @@ subsamples, or where the run died. Same stack.
 | CyteArc h5ad | 158 s, 9.1 GB | 683 s, 9.6 GB | 1300 s, 8.8 GB |
 
 The real data agree with the simulation: only the out-of-core designs finish
-the full set (bixverse in 2.5 min from h5ad, Scanpy with Dask in 8.2 min
+the full set (bixverse in 2.0 min from h5ad, Scanpy with Dask in 8.2 min
 without DGE, CyteArc in 22 min, Seurat with BPCells in 50 min, all at 8.4 to
 10.9 GB), and every in-memory path dies at load. CyteArc from h5ad passes
 in-memory Scanpy at 500k (683 against 832 s), mostly on DGE. Per-step tables, the warm start and the scaling
@@ -120,8 +114,12 @@ figures are in [results](docs/results.md).
   real data.
 - Defaults differ between frameworks (scaling before PCA, normalisation,
   graph construction), so cluster counts do not compare.
-- Peak memory is cgroup anon only, which favours the out-of-core rows; the
-  GPU and MLX rows run natively without a cap.
+- Peak memory is cgroup anon only, which favours the out-of-core rows. The
+  native GPU rows report the macOS peak footprint without a cap, so they get
+  their own tables.
+- Docker on macOS runs in a VM: the bixverse CPU pipeline is 1.3x to 1.7x
+  faster run natively, mostly in load. The other frameworks likely pay a
+  similar tax; only bixverse was run both ways.
 - From 500k bixverse's CPU tSNE uses an approximate kNN (IVF), where the
   default Barnes-Hut of Scanpy and Seurat pays for an exact one.
 - Defaults that favour bixverse: its UMAP optimiser is multi-threaded where

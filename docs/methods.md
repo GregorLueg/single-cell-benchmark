@@ -6,14 +6,19 @@
   `--cpus=8 --memory=24g`. The VM itself has ~23.4 GB plus ~4 GB swap, and that
   is the limit that actually bites. Slightly stricter than an Air.
 - **GPU**: Docker has no Metal access, so the bixverse GPU rows run natively on
-  macOS (`scripts/run_native.sh`). No memory cap there. Its peak is the
-  process's peak memory footprint from `/usr/bin/time -l`: dirty anonymous
-  and compressed memory plus the process's Metal allocations, but not clean
-  file-backed pages, so like cgroup anon it does not charge the mapped
-  bixverse store. Max RSS, which does, is much higher (1M simulation:
-  17.4 against 10.9 GB on wgpu). Close to the Docker numbers but not the same
-  metric, and its disk I/O skips the VM, so its load is faster too. Two
-  backends of bixverse.gpu: wgpu (the GPU row) and MLX (the MLX row).
+  macOS (`scripts/run_native.sh`), on macOS 27.0.1 with R 4.6.1. Two backends
+  of bixverse.gpu: wgpu (the GPU row) and MLX (the MLX row). Native runs skip
+  the VM, so their I/O and compute are faster than in Docker; the GPU rows are
+  therefore compared against the bixverse CPU pipeline run natively too
+  (`BACKEND=cpu`, same parameters as the Docker run), in their own tables.
+  No memory cap there. Peak memory is the process's peak footprint from
+  `/usr/bin/time -l`: dirty anonymous and compressed memory plus the
+  process's Metal allocations, but not clean file-backed pages, so like cgroup
+  anon it does not charge the mapped bixverse store. It is not the same
+  metric as cgroup anon and depends on the R build: the same bixverse.gpu
+  0.6.1 tSNE code peaks at 2.0 GB at splat 100k under R 4.5.1 and at 4.2 GB
+  rebuilt for R 4.6.1 (same machine and macOS, one run each). The extra is
+  CPU heap, not GPU memory.
 - **MLX**: experimental, and not what a user gets from a plain install. The
   MLX backend is opt-in at build time: it needs mlx-c installed as a system
   library (`brew install mlx-c`, here mlx-c 0.7.0 against MLX 0.32.3) and
@@ -101,7 +106,7 @@ Every row, PBMC and simulation, runs on the same stack.
 
 | framework | versions |
 |---|---|
-| bixverse | bixverse 0.8.1 (`feat-new-bixverse-rs` bfd56e1), bixverse.gpu 0.6.1 (`fix-windows` 5d86cb4), bixverse-rs 0.9.0, manifoldsR 0.5.0 (manifolds-rs 0.7.2) |
+| bixverse | bixverse 0.8.4 (`no-igraph` df3b39b), bixverse.gpu 0.6.2 (`remove-igraph` b36befe), bixverse-rs 0.9.4 and 0.9.0, manifoldsR 0.5.0 (manifolds-rs 0.7.2; 0.7.3 in bixverse.gpu) |
 | Scanpy | 1.12.4 (anndata 0.13.4, dask 2026.8.0, harmonypy 2.1.0, openTSNE 1.0.4, scikit-learn 1.9.1) |
 | scrapper | 1.6.3 |
 | Seurat | 5.6.0 (SeuratObject 5.4.0, BPCells 0.3.1, harmony 2.0.5, presto 1.1.0, uwot 0.2.5) |
@@ -111,8 +116,7 @@ Every row, PBMC and simulation, runs on the same stack.
 bixverse, bixverse.gpu and manifoldsR are built from source: bixverse and
 bixverse.gpu at the commits in the table, manifoldsR at the commit in
 `vendor/SHAS`. bixverse.gpu uses the bixverse-rs 0.9.0 crates; bixverse
-patches them to the `feat-sc-data-improv` branch (93bf560), which the 0.9.0
-release contains. The single cell store is the v4 format. The GPU and MLX
+patches them to the `feat-faster-i/o` branch (78f5046, version 0.9.4). The single cell store is the v4 format. The GPU and MLX
 rows use the default PCA solver, block Lanczos. Docker:
 `docker/r-local.Dockerfile` on top of `scbench-r`. Native: installed into
 `rlib/`, bixverse.gpu with the MLX backend.
@@ -271,7 +275,15 @@ harmonypy.
   Docker, not a real 24 GB laptop. Reruns of the same bixverse configuration
   moved the load step by up to 35 s, mostly in the MTX reader's file passes.
 - **Peak memory includes tSNE.** For bixverse at 1M the tSNE step sets the
-  run peak (10.5 against 8.3 GB before tSNE, h5ad).
+  run peak (10.0 against 8.2 GB before tSNE, h5ad).
+- **Docker on macOS runs in a VM.** The bixverse CPU pipeline runs 1.3x to
+  1.7x faster natively without tSNE, most of it in load (input files reach
+  the VM through file sharing). The other frameworks likely pay a similar VM
+  tax; only bixverse was run both ways. On a Linux host it should be smaller;
+  not measured.
+- **Not every row ran on the same host OS.** The bixverse rows were rerun
+  after the host moved to macOS 27.0.1; the other frameworks' Docker rows were
+  not. Inside the VM that should not matter much; not measured.
 - **Splat is the easy case.** No gene-gene structure beyond the DE, no
   continuous states, convex groups of similar density, and a multiplicative
   batch effect on every gene. The quality scores rank pipelines on that, not
@@ -283,10 +295,10 @@ harmonypy.
   on the GPU rows is about 0.23 against 0.29 on the CPU at 1M, and Harmony
   itself is not the cause (same-input comparison); which step is, is not
   checked.
-- **Cluster counts flip between 12 and 13 at 500k and 1M.** Across rows and
-  reruns with the same embedding quality, Leiden returns 12 or 13 clusters,
-  and ARI moves with it (about 0.87 against 0.79). It is not tested across
-  Leiden seeds.
+- **Cluster counts flip between 11, 12 and 13.** Across rows and reruns with
+  the same embedding quality, Leiden returns a different count, and ARI moves
+  with it (about 0.87 with 12 clusters against 0.79 with 13 at 1M; 0.98 with
+  11 against 0.89 with 12 at 100k). It is not tested across Leiden seeds.
 - **Harness code.** The R pre-filter for scrapper and Seurat standard counts
   detections from the sparse slots, but subsetting the matrix still copies
   it; part of their in-memory OOMs may be ours. The Scanpy Dask QC is
@@ -365,7 +377,7 @@ splatter-sc sim/splat_100k.json   # and splat_10k (smoke test), splat_500k, spla
 docker build -f docker/r.Dockerfile -t scbench-r .
 docker build -f docker/py.Dockerfile -t scbench-py .
 docker build -f docker/cytearc.Dockerfile -t scbench-cytearc .
-# bixverse, bixverse-rs and manifoldsR sources packed into vendor/ (see the
+# bixverse and manifoldsR sources packed into vendor/ (see the
 # header of docker/r-local.Dockerfile)
 docker build -f docker/r-local.Dockerfile -t scbench-r:local .
 # native library: the same checkouts, bixverse.gpu with the MLX backend (needs mlx-c)
@@ -377,6 +389,7 @@ BIXVERSE_GPU_MLX=true R_LIBS=rlib R CMD INSTALL -l rlib bixverse.gpu
 # INPUT: mtx | h5ad | dask (scanpy only) | hdf5 (scrapper only, with TAG=hdf5)
 [INPUT=h5ad] [BIX_KNN=nndescent] [BIX_TSNE_KNN=ivf] [TAG=suffix] [STEP_TIMEOUT=2700] [R_IMAGE=scbench-r:local] scripts/run.sh <tool> <dataset>
 [BACKEND=mlx] scripts/run_native.sh <dataset>       # bixverse.gpu on Metal: wgpu, or MLX
+BACKEND=cpu BIX_KNN=nndescent [BIX_TSNE_KNN=ivf] scripts/run_native.sh <dataset>   # native CPU control
 LOAD_ONLY=1 TAG=disk scripts/run.sh bixverse <dataset>   # on-disk store only
 
 # warm start: reconnect to what the last cold run left in the scratch volume

@@ -1,0 +1,292 @@
+Text pass (integer): 20 buckets, ~5000 cells/bucket
+Text pass done: 639.12ms (cell-major order)
+Genes passing QC: 30_667 / 60_664
+Cells passing QC: 99_714 / 100_000
+Writing pass: 20 buckets, no sort
+  Wrote bucket 2/20 (10%)
+  Wrote bucket 4/20 (20%)
+  Wrote bucket 6/20 (30%)
+  Wrote bucket 8/20 (40%)
+  Wrote bucket 10/20 (50%)
+  Wrote bucket 12/20 (60%)
+  Wrote bucket 14/20 (70%)
+  Wrote bucket 16/20 (80%)
+  Wrote bucket 18/20 (90%)
+  Wrote bucket 20/20 (100%)
+Writing pass done: 1.09s
+ Converting the cell-based data into the gene-based format.
+  Counted 119_217_125 non-zeros over 30_667 genes in 36.62ms; converting in 1 phase(s).
+  Phase 1/1: genes 0-30667, scatter 149.48ms, compress + write 226.72ms
+  Conversion into gene-friendly format done: 415.54ms
+Loading observations data from flat file into the DuckDB.
+Loading variable data from flat file into the DuckDB.
+>>> load: 3.0 s <<<
+Load in data: 86.27ms
+Finished the gene set proportion calculations: 37.67ms
+>>> qc: 0.4 s <<<
+HVG (VST): 30_667 genes, 1 batches, 1 disk block(s)
+HVG (VST): Calculated gene statistics in 80.22ms
+HVG (VST): Fitted Loess in 1.28ms
+HVG (VST): Standardised variance in 436.46µs (131 gene(s) re-read for the clip)
+HVG (VST): Total run time -> 82.07ms
+>>> hvg: 0.2 s <<<
+Using sparse SVD solving on scaled data on 2000 HVG.
+Sparse PCA: Loaded in data in 13.82ms
+Sparse PCA: finished the data preparations in 2.47ms
+Sparse PCA: finished calculations in 321.43ms
+Sparse PCA: total run time -> 339.88ms
+>>> pca: 0.4 s <<<
+ Auto-determined number of Harmony clusters: 100
+Harmony v2: 69_412 cells, 30 dims, 1 variable(s), 100 clusters
+  Variable 0: 24 levels
+ Initial data preparation done in 2.29ms
+Running initial k-means...
+Initial objective: 300.2603
+
+=== Harmony v2 iteration 1 ===
+  Running k-means clustering...
+  Applying ridge regression correction...
+  Harmony objective: 261.1273
+   Finished iteration in 26.15ms / Total runtime 71.65ms
+
+=== Harmony v2 iteration 2 ===
+  Running k-means clustering...
+  Applying ridge regression correction...
+  Harmony objective: 96.8118
+   Finished iteration in 26.55ms / Total runtime 98.21ms
+
+=== Harmony v2 iteration 3 ===
+  Running k-means clustering...
+  Applying ridge regression correction...
+  Harmony objective: 61.6862
+   Finished iteration in 25.44ms / Total runtime 123.67ms
+
+=== Harmony v2 iteration 4 ===
+  Running k-means clustering...
+  Applying ridge regression correction...
+  Harmony objective: 52.7254
+   Finished iteration in 25.39ms / Total runtime 149.08ms
+
+=== Harmony v2 iteration 5 ===
+  Running k-means clustering...
+  Applying ridge regression correction...
+  Harmony objective: 48.5504
+   Finished iteration in 25.48ms / Total runtime 174.59ms
+
+=== Harmony v2 iteration 6 ===
+  Running k-means clustering...
+  Applying ridge regression correction...
+  Harmony objective: 46.2527
+   Finished iteration in 26.02ms / Total runtime 200.63ms
+
+=== Harmony v2 iteration 7 ===
+  Running k-means clustering...
+  Applying ridge regression correction...
+  Harmony objective: 44.8442
+   Finished iteration in 25.69ms / Total runtime 226.34ms
+
+=== Harmony v2 iteration 8 ===
+  Running k-means clustering...
+  Applying ridge regression correction...
+  Harmony objective: 44.4552
+   Finished iteration in 25.87ms / Total runtime 252.23ms
+
+Harmony v2 converged at iteration 8
+ Finished Harmony 252.25ms
+>>> harmony: 0.5 s <<<
+
+Built forest: 55.11ms
+Running NN-Descent: 69_412 samples, max_candidates=30
+Seeded graph from forest: 110.12ms
+ Starting chunk size 6_472 for memory-bounded updates (200 MiB budget)
+ Preparing candidates for iter 1
+ Processing updates for iter 1
+  3 chunks, next chunk size 51217
+  Iter 1: 389_777 edge updates (rate=0.1872)
+ Preparing candidates for iter 2
+ Processing updates for iter 2
+  2 chunks, next chunk size 69412
+  Iter 2: 7_649 edge updates (rate=0.0037)
+ Preparing candidates for iter 3
+ Processing updates for iter 3
+  1 chunks, next chunk size 69412
+  Iter 3: 368 edge updates (rate=0.0002)
+  Converged after 3 iterations
+
+NN-Descent build breakdown (n=69412, k=30):
+  forest build               0.055 s    7.6%
+  graph seeding              0.110 s   15.2%
+  candidates                 0.095 s   13.1%
+  mark old                   0.002 s    0.2%
+  local join                 0.329 s   45.4%
+  radix sort                 0.063 s    8.7%
+  apply updates              0.071 s    9.8%
+  total                      0.725 s
+  updates: 30_621_848 emitted, 397_794 accepted (1.30%)
+  merged candidate list: mean 47.7, max 369
+  candidate pairs evaluated: 119_737_717
+Generated NNDescent index: 731.65ms
+Extracted NNDescent graph: 1.64ms
+Generating the snn graph.
+Added 0 edges to reconnect components that pruning cut off.
+Built the Snn { similarity: Jaccard, prune: 0.0625, rescue: true } graph: 81.23ms
+>>> knn_snn: 0.8 s <<<
+>>> cluster: 0.4 s <<<
+>>> cluster_fast: 0.7 s <<<
+Running UMAP.
+Using n_epochs = 500 (dataset <10k samples or adam_parallel optimiser)
+Using provided kNN graph.
+Running umap with alpha: 0.59 and beta: 1.33
+Using precomputed kNN graph...
+Constructing fuzzy simplicial set...
+Finalised graph generation in 28.59ms.
+Initialising embedding via spectral layout...
+Initialised embedding in: 109.00ms.
+Optimising embedding via Adam (multi-threaded) (500 epochs) on 1_656_138 edges...
+ Completed epoch 50/500
+ Completed epoch 100/500
+ Completed epoch 150/500
+ Completed epoch 200/500
+ Completed epoch 250/500
+ Completed epoch 300/500
+ Completed epoch 350/500
+ Completed epoch 400/500
+ Completed epoch 450/500
+ Completed epoch 500/500
+Optimised embedding in: 1.88s.
+UMAP complete!
+>>> umap: 2.0 s <<<
+>>> dge: 0.6 s <<<
+Running t-SNE.
+Running kNN search (k=90) using kmknn...
+kNN search done in: 1.46s.
+Computing Gaussian affinities and symmetrising...
+Finalised graph generation in 134.36ms.
+Initialising embedding via pca...
+Initialised embedding in: 10.52ms.
+Optimising via Barnes-Hut t-SNE (1000 epochs)...
+ Epoch 0/1000 | Z = 4_816_045_061
+ Epoch 50/1000 | Z = 1_341_250_690
+ Epoch 100/1000 | Z = 962_206_494
+ Epoch 150/1000 | Z = 872_989_013
+ Epoch 200/1000 | Z = 835_940_438
+ Epoch 250/1000 | Z = 815_802_938
+ Epoch 300/1000 | Z = 132_206_767
+ Epoch 350/1000 | Z = 61_022_196
+ Epoch 400/1000 | Z = 37_503_199
+ Epoch 450/1000 | Z = 26_346_082
+ Epoch 500/1000 | Z = 20_010_402
+ Epoch 550/1000 | Z = 16_018_210
+ Epoch 600/1000 | Z = 13_320_884
+ Epoch 650/1000 | Z = 11_404_629
+ Epoch 700/1000 | Z = 9_980_783
+ Epoch 750/1000 | Z = 8_883_613
+ Epoch 800/1000 | Z = 8_019_838
+ Epoch 850/1000 | Z = 7_323_804
+ Epoch 900/1000 | Z = 6_750_426
+ Epoch 950/1000 | Z = 6_271_704
+ Epoch 999/1000 | Z = 5_876_959
+Optimisation complete in 26.83s.
+>>> tsne_default: 28.5 s <<<
+Running t-SNE.
+Running kNN search (k=90) using kmknn...
+kNN search done in: 1.48s.
+Computing Gaussian affinities and symmetrising...
+Finalised graph generation in 130.60ms.
+Initialising embedding via pca...
+Initialised embedding in: 11.27ms.
+Optimising via three-kernel FFT Interpolation-based t-SNE (1000 epochs)...
+ Epoch 0/1000 | Z = 6_076_781_892 | n_boxes = 50
+ Epoch 50/1000 | Z = 1_275_637_720 | n_boxes = 50
+ Epoch 100/1000 | Z = 950_977_723 | n_boxes = 50
+ Epoch 150/1000 | Z = 871_607_317 | n_boxes = 50
+ Epoch 200/1000 | Z = 835_480_283 | n_boxes = 50
+ Epoch 250/1000 | Z = 815_545_557 | n_boxes = 50
+ Epoch 300/1000 | Z = 131_352_717 | n_boxes = 50
+ Epoch 350/1000 | Z = 60_289_258 | n_boxes = 50
+ Epoch 400/1000 | Z = 36_915_530 | n_boxes = 70
+ Epoch 450/1000 | Z = 25_927_786 | n_boxes = 85
+ Epoch 500/1000 | Z = 19_820_578 | n_boxes = 100
+ Epoch 550/1000 | Z = 16_091_038 | n_boxes = 120
+ Epoch 600/1000 | Z = 13_704_578 | n_boxes = 130
+ Epoch 650/1000 | Z = 12_108_039 | n_boxes = 140
+ Epoch 700/1000 | Z = 10_984_280 | n_boxes = 140
+ Epoch 750/1000 | Z = 10_397_112 | n_boxes = 140
+ Epoch 800/1000 | Z = 10_045_642 | n_boxes = 140
+ Epoch 850/1000 | Z = 9_730_941 | n_boxes = 140
+ Epoch 900/1000 | Z = 9_444_325 | n_boxes = 140
+ Epoch 950/1000 | Z = 9_183_055 | n_boxes = 140
+ Epoch 999/1000 | Z = 8_947_789 | n_boxes = 140
+Optimisation complete in 5.02s.
+>>> tsne_fft: 6.7 s <<<
+Running t-SNE.
+Running kNN search (k=90) using kmknn...
+kNN search done in: 1.51s.
+Computing Gaussian affinities and symmetrising...
+Finalised graph generation in 128.69ms.
+Initialising embedding via pca...
+Initialised embedding in: 11.41ms.
+Optimising via quick-and-dirty Barnes-Hut t-SNE (500 epochs, max depth 7)...
+ Epoch 0/500 | Z = 4_816_060_148
+ Epoch 50/500 | Z = 1_356_409_677
+ Epoch 100/500 | Z = 962_017_214
+ Epoch 150/500 | Z = 868_121_095
+ Epoch 200/500 | Z = 828_852_368
+ Epoch 250/500 | Z = 804_953_740
+ Epoch 300/500 | Z = 136_039_858
+ Epoch 350/500 | Z = 64_628_851
+ Epoch 400/500 | Z = 41_163_581
+ Epoch 450/500 | Z = 31_219_929
+ Epoch 499/500 | Z = 26_817_027
+Optimisation complete in 3.39s.
+>>> tsne_quick: 5.1 s <<<
+cells after QC: 69412, clusters: 26, fast clusters: 10 (res 1), 16 (res 2)
+R version 4.6.1 (2026-06-24)
+Platform: aarch64-apple-darwin23
+Running under: macOS Golden Gate 27.0.1
+
+Matrix products: default
+BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib 
+LAPACK: /Library/Frameworks/R.framework/Versions/4.6/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
+
+locale:
+[1] en_GB.UTF-8/en_GB.UTF-8/en_GB.UTF-8/C/en_GB.UTF-8/en_GB.UTF-8
+
+time zone: Europe/Brussels
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] bixverse_0.8.4      data.table_1.18.6.1
+
+loaded via a namespace (and not attached):
+ [1] vctrs_0.7.3        patchwork_1.3.2    cli_3.6.6          rlang_1.3.0       
+ [5] zeallot_0.2.0      otel_0.2.0         DBI_1.3.0          purrr_1.2.2       
+ [9] generics_0.1.4     S7_0.2.2           glue_1.8.1         backports_1.5.1   
+[13] scales_1.4.0       grid_4.6.1         manifoldsR_0.5.0   tibble_3.3.1      
+[17] lifecycle_1.0.5    duckdb_2.0.0       compiler_4.6.1     dplyr_1.2.1       
+[21] codetools_0.2-20   RColorBrewer_1.1-3 pkgconfig_2.0.3    farver_2.1.2      
+[25] lattice_0.23-1     R6_2.6.1           dichromat_2.0-1    tidyselect_1.2.1  
+[29] pillar_1.11.1      magrittr_2.0.5     checkmate_2.3.4    Matrix_1.7-6      
+[33] gtable_0.3.6       ggplot2_4.0.3     
+       50.40 real       307.24 user        14.19 sys
+          4210655232  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+              515938  page reclaims
+                  29  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                   0  messages sent
+                   0  messages received
+                   0  signals received
+                 761  voluntary context switches
+              947154  involuntary context switches
+       2810851660053  instructions retired
+        945745884184  cycles elapsed
+          3201322296  peak memory footprint
+exit=0

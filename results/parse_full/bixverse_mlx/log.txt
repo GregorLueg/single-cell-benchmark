@@ -1,36 +1,8 @@
-Warning message:
-package ‘data.table’ was built under R version 4.5.2 
-First file pass - getting gene statistics:
-  Processed 9% of chunks (24/248)
-  Processed 19% of chunks (48/248)
-  Processed 29% of chunks (72/248)
-  Processed 38% of chunks (96/248)
-  Processed 48% of chunks (120/248)
-  Processed 58% of chunks (144/248)
-  Processed 67% of chunks (168/248)
-  Processed 77% of chunks (192/248)
-  Processed 87% of chunks (216/248)
-  Processed 96% of chunks (240/248)
-  Processed 100% of chunks (248/248)
-First pass done: 3.60s
-Second pass - cell statistics:
-  Processed 9% of chunks (24/248)
-  Processed 19% of chunks (48/248)
-  Processed 29% of chunks (72/248)
-  Processed 38% of chunks (96/248)
-  Processed 48% of chunks (120/248)
-  Processed 58% of chunks (144/248)
-  Processed 67% of chunks (168/248)
-  Processed 77% of chunks (192/248)
-  Processed 87% of chunks (216/248)
-  Processed 96% of chunks (240/248)
-  Processed 100% of chunks (248/248)
-Second pass done: 3.71s
+Text pass (integer): 128 buckets, ~7716 cells/bucket
+Text pass done: 5.20s (cell-major order)
 Genes passing QC: 39_137 / 60_664
 Cells passing QC: 984_669 / 987_585
-Bucketing pass: 128 buckets, ~7693 cells/bucket
-Bucketing done: 5.93s
-Writing pass: streaming buckets to output
+Writing pass: 128 buckets, no sort
   Wrote bucket 12/128 (9%)
   Wrote bucket 24/128 (18%)
   Wrote bucket 36/128 (28%)
@@ -42,161 +14,161 @@ Writing pass: streaming buckets to output
   Wrote bucket 108/128 (84%)
   Wrote bucket 120/128 (93%)
   Wrote bucket 128/128 (100%)
-Writing pass done: 9.55s
+Writing pass done: 10.15s
  Converting the cell-based data into the gene-based format.
-  Counted 1_176_929_574 non-zeros over 39_137 genes in 876.29ms; converting in 2 phase(s).
-  Phase 1/2: genes 0-10885, scatter 3.87s, compress + write 1.34s
-  Phase 2/2: genes 10885-39137, scatter 1.51s, compress + write 766.39ms
-  Conversion into gene-friendly format done: 8.51s
+  Counted 1_176_929_574 non-zeros over 39_137 genes in 355.92ms; converting in 2 phase(s).
+  Phase 1/2: genes 0-15577, scatter 1.53s, compress + write 1.00s
+  Phase 2/2: genes 15577-39137, scatter 447.98ms, compress + write 315.39ms
+  Conversion into gene-friendly format done: 3.68s
 Loading observations data from flat file into the DuckDB.
 Loading variable data from flat file into the DuckDB.
->>> load: 41.1 s <<<
+>>> load: 20.4 s <<<
 Setting streaming for large data to TRUE.
 Using a streaming approach for gene set percentage calculation.
-Finished the gene set proportion calculations: 1.25s
->>> qc: 2.0 s <<<
+Finished the gene set proportion calculations: 1.46s
+>>> qc: 2.4 s <<<
 Setting streaming for large data to TRUE.
 HVG (VST): 39_137 genes, 1 batches, 40 disk block(s)
-HVG (VST): Calculated gene statistics in 1.46s
-HVG (VST): Fitted Loess in 1.30ms
-HVG (VST): Standardised variance in 1.23ms (80 gene(s) re-read for the clip)
-HVG (VST): Total run time -> 1.46s
->>> hvg: 1.6 s <<<
+HVG (VST): Calculated gene statistics in 711.45ms
+HVG (VST): Fitted Loess in 1.29ms
+HVG (VST): Standardised variance in 501.71µs (80 gene(s) re-read for the clip)
+HVG (VST): Total run time -> 713.43ms
+>>> hvg: 0.8 s <<<
 Using GPU-accelerated sparse SVD (block Lanczos) with 2000 HVG.
-Sparse PCA (MLX): Loaded in data in 197.08ms
-Sparse PCA (MLX): finished the data preparations in 21.16ms
-  Finished Lanczos sparse SVD (MLX) in 1.17s
-Sparse PCA (MLX): finished calculations in 1.19s
-Sparse PCA (MLX): total run time -> 1.42s
->>> pca: 1.7 s <<<
+Sparse PCA (MLX): Loaded in data in 176.94ms
+Sparse PCA (MLX): finished the data preparations in 22.57ms
+  Finished Lanczos sparse SVD (MLX) in 991.34ms
+Sparse PCA (MLX): finished calculations in 1.01s
+Sparse PCA (MLX): total run time -> 1.22s
+>>> pca: 1.5 s <<<
  Auto-determined number of Harmony clusters: 100
 MLX Harmony v2: running initial k-means
- ... done in 314.76ms
+ ... done in 305.88ms
 MLX Harmony v2: initial objective 281.6152
 
 === Harmony MLX v2 iteration 1 ===
   Running k-means clustering...
   Applying ridge regression correction...
   MLX Harmony v2: iteration 1 objective 242.3976
-   Finished iteration in 48.02ms / Total runtime 455.21ms
+   Finished iteration in 52.20ms / Total runtime 439.79ms
 
 === Harmony MLX v2 iteration 2 ===
   Running k-means clustering...
   Applying ridge regression correction...
   MLX Harmony v2: iteration 2 objective 72.6354
-   Finished iteration in 43.55ms / Total runtime 498.77ms
+   Finished iteration in 39.47ms / Total runtime 479.28ms
 
 === Harmony MLX v2 iteration 3 ===
   Running k-means clustering...
   Applying ridge regression correction...
   MLX Harmony v2: iteration 3 objective 53.5003
-   Finished iteration in 37.54ms / Total runtime 536.33ms
+   Finished iteration in 35.70ms / Total runtime 515.00ms
 
 === Harmony MLX v2 iteration 4 ===
   Running k-means clustering...
   Applying ridge regression correction...
   MLX Harmony v2: iteration 4 objective 47.2199
-   Finished iteration in 37.87ms / Total runtime 574.21ms
+   Finished iteration in 33.79ms / Total runtime 548.81ms
 
 === Harmony MLX v2 iteration 5 ===
   Running k-means clustering...
   Applying ridge regression correction...
   MLX Harmony v2: iteration 5 objective 44.7731
-   Finished iteration in 38.94ms / Total runtime 613.16ms
+   Finished iteration in 34.55ms / Total runtime 583.39ms
 
 === Harmony MLX v2 iteration 6 ===
   Running k-means clustering...
   Applying ridge regression correction...
   MLX Harmony v2: iteration 6 objective 43.4894
-   Finished iteration in 37.80ms / Total runtime 651.02ms
+   Finished iteration in 34.30ms / Total runtime 617.70ms
 
 === Harmony MLX v2 iteration 7 ===
   Running k-means clustering...
   Applying ridge regression correction...
   MLX Harmony v2: iteration 7 objective 42.8515
-   Finished iteration in 38.44ms / Total runtime 689.48ms
+   Finished iteration in 38.60ms / Total runtime 656.32ms
 
 === Harmony MLX v2 iteration 8 ===
   Running k-means clustering...
   Applying ridge regression correction...
   MLX Harmony v2: iteration 8 objective 42.2922
-   Finished iteration in 37.57ms / Total runtime 727.06ms
+   Finished iteration in 37.79ms / Total runtime 694.13ms
 
 === Harmony MLX v2 iteration 9 ===
   Running k-means clustering...
   Applying ridge regression correction...
   MLX Harmony v2: iteration 9 objective 41.9197
-   Finished iteration in 39.93ms / Total runtime 767.01ms
+   Finished iteration in 37.37ms / Total runtime 731.52ms
  MLX Harmony v2 converged at iteration 9
-Finished the MLX Harmony (version 2) in 797.10ms
+Finished the MLX Harmony (version 2) in 753.99ms
 >>> harmony: 1.1 s <<<
 Generating GPU kNN data with nndescent method.
 Generating the snn graph.
 Added 1 edges to reconnect components that pruning cut off.
-Built the Snn { similarity: Jaccard, prune: 0.0625, rescue: true } graph: 986.79ms
->>> knn_snn: 11.5 s <<<
->>> cluster: 6.6 s <<<
->>> cluster_fast: 3.8 s <<<
+Built the Snn { similarity: Jaccard, prune: 0.0625, rescue: true } graph: 991.12ms
+>>> knn_snn: 4.9 s <<<
+>>> cluster: 5.2 s <<<
+>>> cluster_fast: 3.9 s <<<
 Running GPU UMAP.
 Using n_epochs = 500 (dataset <10k samples or 'adam_parallel'/'adam_gpu' optimiser)
 Using provided kNN graph.
 Running umap (GPU kNN) with alpha: 0.59 and beta: 1.33
 Using precomputed kNN graph...
 Constructing fuzzy simplicial set...
-Finalised graph generation in 389.80ms.
+Finalised graph generation in 309.42ms.
 Initialising embedding via spectral layout...
-Initialised embedding in: 1.50s.
-Optimising embedding via Adam (MLX) (500 epochs) on 16_721_664 edges...
+Initialised embedding in: 1.41s.
+Optimising embedding via Adam (MLX) (500 epochs) on 16_721_648 edges...
 Running 500 epochs with MLX-accelerated Adam optimisation.
  Epoch 100 / 500
  Epoch 200 / 500
  Epoch 300 / 500
  Epoch 400 / 500
  Epoch 500 / 500
-Optimised embedding in: 3.10s.
+Optimised embedding in: 3.00s.
 UMAP (GPU) complete!
->>> umap: 5.2 s <<<
->>> dge: 4.3 s <<<
+>>> umap: 5.0 s <<<
+>>> dge: 4.2 s <<<
 Running GPU t-SNE.
 Running GPU kNN search (k=90) using ivf_mlx...
-MLX IVF: 684_932 queries in tiles of 81147, nprobe 28 (pool 28), queue 3389.9 ms, wait+copy 2313.9 ms
-GPU kNN search done in: 6.39s.
+MLX IVF: 684_932 queries in tiles of 81147, nprobe 28 (pool 28), queue 2330.5 ms, wait+copy 3129.0 ms
+GPU kNN search done in: 6.20s.
 Computing Gaussian affinities and symmetrising...
-Finalised graph generation in 1.82s.
+Finalised graph generation in 1.65s.
 Initialising embedding via pca...
-Initialised embedding in: 173.46ms.
+Initialised embedding in: 160.07ms.
 Optimising via Barnes-Hut t-SNE (1000 epochs)...
  Epoch 0/1000 | Z = 468_944_815_510
- Epoch 50/1000 | Z = 123_183_711_445
- Epoch 100/1000 | Z = 81_318_495_819
- Epoch 150/1000 | Z = 70_970_471_360
- Epoch 200/1000 | Z = 66_192_874_186
- Epoch 250/1000 | Z = 63_648_628_457
- Epoch 300/1000 | Z = 11_595_779_468
- Epoch 350/1000 | Z = 5_228_230_392
- Epoch 400/1000 | Z = 3_158_860_084
- Epoch 450/1000 | Z = 2_183_602_628
- Epoch 500/1000 | Z = 1_637_996_696
- Epoch 550/1000 | Z = 1_298_307_033
- Epoch 600/1000 | Z = 1_070_579_016
- Epoch 650/1000 | Z = 909_563_739
- Epoch 700/1000 | Z = 790_623_342
- Epoch 750/1000 | Z = 699_696_701
- Epoch 800/1000 | Z = 628_175_839
- Epoch 850/1000 | Z = 570_673_285
- Epoch 900/1000 | Z = 523_395_929
- Epoch 950/1000 | Z = 483_861_709
- Epoch 999/1000 | Z = 450_939_210
-Optimisation complete in 312.59s.
->>> tsne_default: 321.3 s <<<
+ Epoch 50/1000 | Z = 123_241_690_824
+ Epoch 100/1000 | Z = 81_402_338_850
+ Epoch 150/1000 | Z = 71_218_243_756
+ Epoch 200/1000 | Z = 66_352_772_954
+ Epoch 250/1000 | Z = 63_713_179_490
+ Epoch 300/1000 | Z = 11_595_957_852
+ Epoch 350/1000 | Z = 5_226_370_096
+ Epoch 400/1000 | Z = 3_158_118_926
+ Epoch 450/1000 | Z = 2_182_765_073
+ Epoch 500/1000 | Z = 1_638_013_255
+ Epoch 550/1000 | Z = 1_298_339_850
+ Epoch 600/1000 | Z = 1_070_923_459
+ Epoch 650/1000 | Z = 909_796_420
+ Epoch 700/1000 | Z = 790_731_554
+ Epoch 750/1000 | Z = 699_856_598
+ Epoch 800/1000 | Z = 628_416_501
+ Epoch 850/1000 | Z = 570_823_394
+ Epoch 900/1000 | Z = 523_518_653
+ Epoch 950/1000 | Z = 484_025_879
+ Epoch 999/1000 | Z = 451_152_173
+Optimisation complete in 324.49s.
+>>> tsne_default: 332.7 s <<<
 Running GPU t-SNE.
 Running GPU kNN search (k=90) using ivf_mlx...
-MLX IVF: 684_932 queries in tiles of 81147, nprobe 28 (pool 28), queue 3324.6 ms, wait+copy 2307.7 ms
-GPU kNN search done in: 6.31s.
+MLX IVF: 684_932 queries in tiles of 81147, nprobe 28 (pool 28), queue 2356.0 ms, wait+copy 3163.5 ms
+GPU kNN search done in: 6.11s.
 Computing Gaussian affinities and symmetrising...
-Finalised graph generation in 1.75s.
+Finalised graph generation in 1.45s.
 Initialising embedding via pca...
-Initialised embedding in: 97.23ms.
+Initialised embedding in: 90.93ms.
 Optimising via MLX three-kernel FFT t-SNE (1000 epochs)...
 Running 1000 epochs of three-kernel FFT t-SNE on MLX.
  Epoch 50/1000 | extent = 3.2 | n_boxes = 50
@@ -205,51 +177,51 @@ Running 1000 epochs of three-kernel FFT t-SNE on MLX.
  Epoch 200/1000 | extent = 7.1 | n_boxes = 50
  Epoch 250/1000 | extent = 7.7 | n_boxes = 50
  Epoch 300/1000 | extent = 16.3 | n_boxes = 50
- Epoch 350/1000 | extent = 27.1 | n_boxes = 65
- Epoch 400/1000 | extent = 35.2 | n_boxes = 80
- Epoch 450/1000 | extent = 43.7 | n_boxes = 96
- Epoch 500/1000 | extent = 51.3 | n_boxes = 120
- Epoch 550/1000 | extent = 58.3 | n_boxes = 130
- Epoch 600/1000 | extent = 65.1 | n_boxes = 140
- Epoch 650/1000 | extent = 71.5 | n_boxes = 140
- Epoch 700/1000 | extent = 76.4 | n_boxes = 140
- Epoch 750/1000 | extent = 80.5 | n_boxes = 140
- Epoch 800/1000 | extent = 84.2 | n_boxes = 140
- Epoch 850/1000 | extent = 87.4 | n_boxes = 140
- Epoch 900/1000 | extent = 90.4 | n_boxes = 140
- Epoch 950/1000 | extent = 93.1 | n_boxes = 140
-Optimisation complete in 22.30s.
->>> tsne_fft: 30.8 s <<<
+ Epoch 350/1000 | extent = 26.4 | n_boxes = 65
+ Epoch 400/1000 | extent = 36.2 | n_boxes = 85
+ Epoch 450/1000 | extent = 45.2 | n_boxes = 100
+ Epoch 500/1000 | extent = 53.4 | n_boxes = 120
+ Epoch 550/1000 | extent = 60.6 | n_boxes = 140
+ Epoch 600/1000 | extent = 67.1 | n_boxes = 140
+ Epoch 650/1000 | extent = 72.6 | n_boxes = 140
+ Epoch 700/1000 | extent = 77.2 | n_boxes = 140
+ Epoch 750/1000 | extent = 81.6 | n_boxes = 140
+ Epoch 800/1000 | extent = 85.6 | n_boxes = 140
+ Epoch 850/1000 | extent = 89.2 | n_boxes = 140
+ Epoch 900/1000 | extent = 92.6 | n_boxes = 140
+ Epoch 950/1000 | extent = 94.5 | n_boxes = 140
+Optimisation complete in 22.56s.
+>>> tsne_fft: 30.6 s <<<
 Running GPU t-SNE.
 Running GPU kNN search (k=90) using ivf_mlx...
-MLX IVF: 684_932 queries in tiles of 81147, nprobe 28 (pool 28), queue 3367.9 ms, wait+copy 2319.2 ms
-GPU kNN search done in: 6.38s.
+MLX IVF: 684_932 queries in tiles of 81147, nprobe 28 (pool 28), queue 2514.4 ms, wait+copy 2685.6 ms
+GPU kNN search done in: 5.76s.
 Computing Gaussian affinities and symmetrising...
-Finalised graph generation in 1.94s.
+Finalised graph generation in 1.60s.
 Initialising embedding via pca...
-Initialised embedding in: 175.60ms.
+Initialised embedding in: 157.11ms.
 Optimising via quick-and-dirty Barnes-Hut t-SNE (500 epochs, max depth 7)...
  Epoch 0/500 | Z = 468_946_276_510
- Epoch 50/500 | Z = 130_519_184_066
- Epoch 100/500 | Z = 82_100_622_593
- Epoch 150/500 | Z = 71_685_895_935
- Epoch 200/500 | Z = 67_294_423_796
- Epoch 250/500 | Z = 64_897_300_145
- Epoch 300/500 | Z = 11_999_043_717
- Epoch 350/500 | Z = 5_555_952_465
- Epoch 400/500 | Z = 3_453_825_195
- Epoch 450/500 | Z = 2_517_235_601
- Epoch 499/500 | Z = 2_080_753_144
-Optimisation complete in 32.88s.
->>> tsne_quick: 41.7 s <<<
-cells after QC: 684932, clusters: 37, fast clusters: 15 (res 1), 22 (res 2)
-R version 4.5.1 (2025-06-13)
-Platform: aarch64-apple-darwin20
-Running under: macOS Tahoe 26.6.2
+ Epoch 50/500 | Z = 130_648_000_150
+ Epoch 100/500 | Z = 82_456_602_006
+ Epoch 150/500 | Z = 71_806_938_106
+ Epoch 200/500 | Z = 67_397_479_388
+ Epoch 250/500 | Z = 65_095_798_011
+ Epoch 300/500 | Z = 12_210_755_985
+ Epoch 350/500 | Z = 5_616_803_455
+ Epoch 400/500 | Z = 3_480_864_484
+ Epoch 450/500 | Z = 2_532_015_717
+ Epoch 499/500 | Z = 2_092_266_554
+Optimisation complete in 40.06s.
+>>> tsne_quick: 47.9 s <<<
+cells after QC: 684932, clusters: 38, fast clusters: 15 (res 1), 22 (res 2)
+R version 4.6.1 (2026-06-24)
+Platform: aarch64-apple-darwin23
+Running under: macOS Golden Gate 27.0.1
 
 Matrix products: default
 BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib 
-LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
+LAPACK: /Library/Frameworks/R.framework/Versions/4.6/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
 
 locale:
 [1] en_GB.UTF-8/en_GB.UTF-8/en_GB.UTF-8/C/en_GB.UTF-8/en_GB.UTF-8
@@ -261,34 +233,34 @@ attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
 other attached packages:
-[1] bixverse.gpu_0.6.1  bixverse_0.8.1      data.table_1.18.6.1
+[1] bixverse.gpu_0.6.2  bixverse_0.8.4      data.table_1.18.6.1
 
 loaded via a namespace (and not attached):
  [1] vctrs_0.7.3        patchwork_1.3.2    cli_3.6.6          rlang_1.3.0       
  [5] zeallot_0.2.0      otel_0.2.0         DBI_1.3.0          purrr_1.2.2       
  [9] generics_0.1.4     S7_0.2.2           glue_1.8.1         backports_1.5.1   
-[13] scales_1.4.0       grid_4.5.1         manifoldsR_0.5.0   tibble_3.3.1      
-[17] lifecycle_1.0.5    duckdb_1.5.5       compiler_4.5.1     igraph_2.3.3      
-[21] dplyr_1.2.1        codetools_0.2-20   RColorBrewer_1.1-3 pkgconfig_2.0.3   
-[25] farver_2.1.2       lattice_0.22-9     R6_2.6.1           tidyselect_1.2.1  
+[13] scales_1.4.0       grid_4.6.1         manifoldsR_0.5.0   tibble_3.3.1      
+[17] lifecycle_1.0.5    duckdb_2.0.0       compiler_4.6.1     dplyr_1.2.1       
+[21] codetools_0.2-20   RColorBrewer_1.1-3 pkgconfig_2.0.3    farver_2.1.2      
+[25] lattice_0.23-1     R6_2.6.1           dichromat_2.0-1    tidyselect_1.2.1  
 [29] pillar_1.11.1      magrittr_2.0.5     checkmate_2.3.4    Matrix_1.7-6      
 [33] gtable_0.3.6       ggplot2_4.0.3     
-      475.29 real      2821.85 user        40.76 sys
-         19688275968  maximum resident set size
+      463.27 real      2882.25 user        30.52 sys
+         20226768896  maximum resident set size
                    0  average shared memory size
                    0  average unshared data size
                    0  average unshared stack size
-             3765103  page reclaims
-                 359  page faults
+             3651083  page reclaims
+                 316  page faults
                    0  swaps
                    0  block input operations
                    0  block output operations
                    0  messages sent
                    0  messages received
                    0  signals received
-                5263  voluntary context switches
-              651844  involuntary context switches
-      21766233663857  instructions retired
-       8661775389174  cycles elapsed
-          8604706368  peak memory footprint
+                4104  voluntary context switches
+              794823  involuntary context switches
+      20330050088714  instructions retired
+       8785806111844  cycles elapsed
+         15989340800  peak memory footprint
 exit=0
