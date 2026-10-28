@@ -8,6 +8,7 @@ Usage: tables.py <results_dir> [dataset ...]          per-step tables (Docker, n
        tables.py --summary <results_dir> [splat]      one row per framework (Docker)
        tables.py --native <results_dir> [splat]       one row per native run
        tables.py --long <results_dir>                 tidy CSV for plotting (Docker)
+       tables.py --native-long <results_dir>          tidy CSV for plotting (native)
        tables.py --warm <results_dir>                 cold vs warm load CSV
 """
 
@@ -213,12 +214,12 @@ def summary(root, kind, columns=COLUMNS):
     return "\n".join(out)
 
 
-def long(root):
+def long(root, columns=COLUMNS):
     sizes = {"parse_100k": 69412, "parse_500k": 346259, "parse_full": 684932,
              "splat_100k": 96342, "splat_500k": 482409, "splat_1m": 964763}
     mem_rows = ["column,size,cells,step,seconds,peak_gb,status"]
     for ds, cells in sizes.items():
-        for col, (name, steps, peak, _, failed) in collect(root / ds).items():
+        for col, (name, steps, peak, _, failed) in collect(root / ds, columns).items():
             order = TOOL_STEPS[family(name)]
             status = failed[1] if failed else "ok"
             for st in order:
@@ -231,6 +232,8 @@ def long(root):
 
 if sys.argv[1] == "--long":
     print(long(Path(sys.argv[2])))
+elif sys.argv[1] == "--native-long":
+    print(long(Path(sys.argv[2]), NATIVE))
 elif sys.argv[1] == "--warm":
     print(warm_long(Path(sys.argv[2])))
 elif sys.argv[1] == "--summary":

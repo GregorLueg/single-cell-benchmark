@@ -160,6 +160,7 @@ no_step <- list(
   CyteArc = c("cluster_fast", "tsne_default", "tsne_fft", "tsne_quick")
 )
 total_step <- "total (no tSNE)"
+ratio_cap <- log2(32)
 
 step_heatmap <- function(labels, title, file, height, width = 11, base_size = 10, text_size = 2.4) {
   d <- dt_all[size %in% names(labels)]
@@ -184,11 +185,12 @@ step_heatmap <- function(labels, title, file, height, width = 11, base_size = 10
     default = format(round(seconds), big.mark = ",", trim = TRUE)
   )]
   d[!is.na(status) & status != "ok", seconds := NA_real_]
-  # 0 = fastest framework on that step, 1 = slowest, linear in sqrt(seconds)
+  # log2 ratio to the fastest run that finished the step, capped at 32x and put
+  # on 0 to 1: unlike a min-max scale, 200 s against 201 s stays one colour.
+  # Floored at 1 s, so sub-second steps and lazy (0 s) normalisation don't blow up the ratio
   d[, scaled := {
-    seconds <- sqrt(seconds)
-    r <- suppressWarnings(range(seconds, na.rm = TRUE))
-    if (all(is.na(seconds))) NA_real_ else if (r[1] == r[2]) 0 else (seconds - r[1]) / (r[2] - r[1])
+    s <- pmax(seconds, 1)
+    pmin(log2(s / suppressWarnings(min(s, na.rm = TRUE))), ratio_cap) / ratio_cap
   }, by = .(size, step)]
   d <- d[, if (any(!is.na(seconds))) .SD, by = .(size, step)]
   d[, size_label := factor(labels[size], levels = labels)]
@@ -201,16 +203,16 @@ step_heatmap <- function(labels, title, file, height, width = 11, base_size = 10
     geom_text(aes(label = lab, colour = light), size = text_size, lineheight = 0.85, show.legend = FALSE) +
     scale_fill_gradientn(
       colours = step_ramp, limits = c(0, 1), na.value = missing_fill,
-      breaks = c(0, 1), labels = c("fastest", "slowest"), name = "per step"
+      breaks = log2(c(1, 2, 4, 8, 16, 32)) / ratio_cap,
+      labels = c("fastest", "2x", "4x", "8x", "16x", "32x+"), name = "against the fastest"
     ) +
     scale_colour_manual(values = c(`FALSE` = "#ffffff", `TRUE` = ink)) +
     facet_wrap(~size_label, ncol = 1, scales = "free_x") +
     labs(
       title = title,
-      subtitle = "Seconds per step. Colour is scaled per step and size: fastest framework 0, slowest 1, on square-root seconds.",
+      subtitle = "Seconds per step. Colour is the ratio to the fastest run that finished that step at that size (times under 1 s count as 1 s), capped at 32x.",
       caption = paste(
         "Black: n/a (step not in that framework), OOM or TIMEOUT where the run died, - not reached.",
-        "Each step is scaled over the runs that finished it: at 1M the bixverse CPU tSNE is red because the others timed out.",
         "Scanpy dask has no DGE step. Docker runs only; the native bixverse runs are in their own table.",
         "bixverse CPU tSNE builds its kNN with IVF from 500k (kmknn at 100k). (qd) steps are not in the total.",
         sep = "\n"
@@ -363,3 +365,74 @@ fig4 <- ggplot(wl, aes(size_label, seconds, fill = start)) +
 
 ggsave(file.path(fig_dir, "warm_start.png"), fig4, width = 11, height = 3.6, dpi = 300, bg = surface)
 ggsave(file.path(fig_dir, "warm_start.pdf"), fig4, width = 11, height = 3.6, bg = surface)
+
+#### figure 5: native GPU against native CPU ------------------------------------
+
+# native_long.csv: uv run scripts/tables.py --native-long results > docs/figures/native_long.csv
+nl <- fread(file.path(fig_dir, "native_long.csv"))
+native_sizes <- c(
+  splat_100k = "Splat 100k", parse_100k = "PBMC 100k",
+  splat_500k = "Splat 500k", parse_500k = "PBMC 500k",
+  splat_1m = "Splat 1M", parse_full = "PBMC full"
+)
+# the same CPU code in every row: load, QC, HVG, Leiden, DGE and the Barnes-Hut optimiser
+cpu_steps <- c("load", "qc", "hvg", "cluster", "dge", "tsne_default")
+native_cols <- c(step_order[step_order != "normalise"], "total (no tSNE)", "peak footprint")
+native_lab <- setNames(
+  fifelse(native_cols %in% cpu_steps, paste(native_cols, "(CPU)"), native_cols),
+  native_cols
+)
+
+tot <- nl[, .(step = "total (no tSNE)", seconds = sum(seconds[!grepl("^tsne|^cluster_fast", step)])), by = .(column, size)]
+fc <- rbind(nl[, .(column, size, step, seconds)], tot)
+fc <- merge(
+  fc[column != "native CPU"],
+  fc[column == "native CPU", .(size, step, ref_s = seconds)],
+  by = c("size", "step")
+)
+fc[, fold := ref_s / seconds]
+fc[, lab := sprintf(ifelse(fold >= 10, "%.0fx", "%.1fx"), fold)]
+# memory: the label is GPU over CPU footprint; colour as the speed-up, so more memory reads as slower
+mem <- unique(nl[, .(column, size, peak_gb)])
+mem <- merge(mem[column != "native CPU"], mem[column == "native CPU", .(size, ref_gb = peak_gb)], by = "size")
+fc <- rbind(fc[, .(column, size, step, fold, lab)],
+            mem[, .(column, size, step = "peak footprint", fold = ref_gb / peak_gb, lab = sprintf("%.1fx", peak_gb / ref_gb))])
+fc[, cpu_only := step %in% cpu_steps]
+fc[, step := factor(native_lab[step], levels = native_lab)]
+fc[, column := factor(sub("native ", "", column), levels = c("MLX", "wgpu"))]
+fc[, size_label := factor(native_sizes[size], levels = native_sizes)]
+lim <- log2(32)
+fc[, text_col := fcase(cpu_only, "cpu", abs(log2(fold)) > 2, "light", default = "dark")]
+
+fig5 <- ggplot(fc, aes(step, column)) +
+  geom_tile(aes(fill = pmax(pmin(log2(fold), lim), -lim)), colour = surface, linewidth = 0.8) +
+  geom_text(aes(label = lab, colour = text_col), size = 3.4, show.legend = FALSE) +
+  scale_colour_manual(values = c(dark = ink, light = "#ffffff", cpu = ink_2)) +
+  scale_fill_gradientn(
+    colours = rev(step_ramp), values = c(0, 0.125, 0.25, 0.375, 0.5, 2 / 3, 5 / 6, 1),
+    limits = c(-lim, lim),
+    breaks = log2(c(1 / 16, 1 / 4, 1, 4, 16)),
+    labels = c("16x slower", "4x slower", "same", "4x faster", "16x faster"),
+    name = NULL
+  ) +
+  facet_wrap(~size_label, ncol = 2) +
+  labs(
+    title = "Native GPU against native CPU, per step",
+    subtitle = "Speed-up of bixverse.gpu (wgpu, MLX) over the same bixverse pipeline on the CPU, both native on macOS. One repeat each.",
+    caption = paste(
+      "(CPU): the same CPU code in every row, so these tiles show run-to-run noise. Default tSNE runs the Barnes-Hut optimiser on the CPU.",
+      "Peak footprint: GPU over CPU peak (macOS /usr/bin/time -l, whole run), coloured red when the GPU row needs more.",
+      "(qd) steps tsne_quick and cluster_fast are not in the total. M1 Max, 8 threads, R 4.6.1.",
+      sep = "\n"
+    ),
+    x = NULL, y = NULL
+  ) +
+  theme_bench(12) +
+  theme(
+    panel.grid.major = element_blank(),
+    axis.text.x = element_text(angle = 40, hjust = 1),
+    legend.key.width = unit(2.2, "cm")
+  )
+
+ggsave(file.path(fig_dir, "native_gpu_speedup.png"), fig5, width = 16, height = 8, dpi = 300, bg = surface)
+ggsave(file.path(fig_dir, "native_gpu_speedup.pdf"), fig5, width = 16, height = 8, bg = surface)
