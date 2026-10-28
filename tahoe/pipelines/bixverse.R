@@ -53,8 +53,13 @@ step("hvg", {
   sce <- find_hvg_sc(object = sce, hvg_no = 2000L)
 })
 
+# PCA_SOLVER: "auto" (sparse Lanczos, the default) or "covariance" (sparse Gram)
 step("pca", {
-  sce <- calculate_pca_sc(object = sce, no_pcs = 30L)
+  sce <- calculate_pca_sc(
+    object = sce,
+    no_pcs = 30L,
+    pca_params = params_sc_pca(svd_solver = Sys.getenv("PCA_SOLVER", "auto"))
+  )
 })
 
 # bixverse lowercases obs column names on load

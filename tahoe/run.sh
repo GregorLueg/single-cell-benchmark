@@ -20,6 +20,7 @@ DGE_COL="${DGE_COL:-drug}"; DGE_CTRL="${DGE_CTRL:-DMSO_TF}"; DGE_CASE="${DGE_CAS
 MT_MAX="${MT_MAX:-15}"
 # genes detected in fewer cells are dropped at load: about 0.1% of the two plates
 MIN_CELLS="${MIN_CELLS:-9000}"
+PCA_SOLVER="${PCA_SOLVER:-auto}"
 
 case "$tool" in
   scanpy_dask) image=scbench-py; cmd=(python /bench/pipelines/scanpy_dask.py /data /out) ;;
@@ -52,7 +53,7 @@ status=0
 docker run --rm --name scbench-run --cpus=8 --memory="${MEM:-48g}" --memory-swap="${MEMSWAP:-56g}" \
   -e OMP_NUM_THREADS=8 -e OPENBLAS_NUM_THREADS=8 -e RAYON_NUM_THREADS=8 \
   -e CHUNK="${CHUNK:-50000}" -e BIX_CSC_GB="${BIX_CSC_GB:-8}" -e GENE_COL="${GENE_COL:-}" \
-  -e MT_MAX="$MT_MAX" -e MIN_CELLS="$MIN_CELLS" -e TRUTH_COL="$TRUTH_COL" -e BATCH_COL="$BATCH_COL" -e DGE_COL="$DGE_COL" -e DGE_CTRL="$DGE_CTRL" -e DGE_CASE="$DGE_CASE" \
+  -e MT_MAX="$MT_MAX" -e MIN_CELLS="$MIN_CELLS" -e PCA_SOLVER="$PCA_SOLVER" -e TRUTH_COL="$TRUTH_COL" -e BATCH_COL="$BATCH_COL" -e DGE_COL="$DGE_COL" -e DGE_CTRL="$DGE_CTRL" -e DGE_CASE="$DGE_CASE" \
   -v "$data:/data:ro" \
   -v "$out:/out" \
   -v "$root/pipelines:/bench/pipelines:ro" \
