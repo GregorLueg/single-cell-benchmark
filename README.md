@@ -103,6 +103,27 @@ without DGE, CyteArc in 22 min, Seurat with BPCells in 50 min, all at 8.4 to
 in-memory Scanpy at 500k (683 against 832 s), mostly on DGE. Per-step tables, the warm start and the scaling
 figures are in [results](docs/results.md).
 
+## Work in progress: Tahoe-100M
+
+The next step up: two plates of Tahoe-100M (plates 1 and 3, about 10.2M cells
+before QC, 9.2M after), read straight from the gzipped h5ads. Only the
+out-of-core designs run: bixverse (CPU in Docker, MLX natively), Scanpy with
+Dask, Seurat with BPCells and CyteArc. No results yet; runs go one framework
+per night.
+
+- Steps: load, QC, HVG, PCA, Harmony, kNN/sNN, UMAP, DGE. No Leiden, no tSNE.
+- QC: MT <= 15%, UMI >= 750, genes >= 250; genes kept if detected in >= 9,000
+  cells (about 0.1%), the same cut for every framework.
+- Harmony on `plate`, the only covariate with an effect on identical DMSO
+  cells. Plate is confounded with dose (plate 1 at 0.05 uM, plate 3 at 5 uM),
+  so batch mixing gets scored on DMSO cells only.
+- Truth for the embedding scores is `cell_line`; DGE is Gemcitabine against
+  DMSO_TF.
+- Each run gets a 5 h wall and a 48 GB Docker cap (the native MLX run has no
+  cap). PCA, UMAP and the rest stay at each framework's defaults.
+
+The harness lives in `tahoe/`.
+
 ## Caveats
 
 - The benchmark is written by bixverse's author. The methods list every bias
