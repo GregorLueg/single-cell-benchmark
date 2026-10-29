@@ -1,109 +1,148 @@
 # Tahoe-100M out-of-core benchmark: handover
 
-State as of 2026-10-28. Plate 3 pilot done for all four tools and scored. The
-two-plate run (plates 1 and 3) is on hold until Gregor says go.
+State as of 2026-10-29. bixverse 0.8.4 done on plate 3 and on two plates
+(CPU in Docker, MLX native). Scanpy Dask, CyteArc and Seurat BPCells have only
+the plate 3 pilot; their two-plate runs go one per overnight window.
 
 ## Setup
 
-- Harness: `tahoe/run.sh <tool>`, tools `bixverse | seurat_bpcells | scanpy_dask | cytearc`.
-  Pipelines in `tahoe/pipelines/`, mounted at `/bench/pipelines`. The PBMC/sim
-  harness (`scripts/run.sh`, `pipelines/`) is separate and untouched.
+- Harness: `tahoe/run.sh <tool>` (Docker), tools
+  `bixverse | seurat_bpcells | scanpy_dask | cytearc`; `tahoe/run_native.sh`
+  for bixverse.gpu (default MLX). Pipelines in `tahoe/pipelines/`.
 - Data: `~/Desktop/tahoe100m_h5ad/` (plate1 5.48M cells, plate3 4.71M, plus
   `obs_metadata.parquet`). `pilot/` holds a hard link to plate3 only.
-- Pilot command:
-  `DATA=~/Desktop/tahoe100m_h5ad/pilot DATASET=tahoe_pilot tahoe/run.sh <tool>`.
-  bixverse also ran with `BIX_CSC_GB=32 TAG=csc32`.
-- Scoring: `uv run tahoe/score.py tahoe/results/<dataset>`, writes
-  `quality.csv` and `dge_agreement.csv`.
-- Outputs per run in `tahoe/results/<dataset>/<tool>/`: `log.txt`,
-  `steps.csv`, `mem.csv` (anon bytes sampled), `scratch_kb` (store size before
-  deletion), embeddings, `score_cells.csv.gz`, `markers.csv`. Untracked.
+- Two plates: `DATASET=tahoe tahoe/run.sh <tool>`. Single plate:
+  `DATA=~/Desktop/tahoe100m_h5ad/pilot DATASET=tahoe_pilot MIN_CELLS=4000 BATCH_COL=sublibrary tahoe/run.sh <tool>`
+  (plate is constant on one plate).
+- bixverse PCA solver: `PCA_SOLVER=auto|covariance` (default `auto`).
+- Docker on/off without prompts: `osascript -e 'quit app "Docker Desktop"'`,
+  `open -a "Docker Desktop"` (allowed in `.claude/settings.local.json` of the
+  main checkout). Quit Docker before native runs: the VM keeps about 21 GiB.
+- Outputs per run in `tahoe/results/<dataset>/<tool>[_TAG]/`, untracked.
+  Native `mem.csv` adds system swap above start (`swap_bytes`) and `swapouts`.
+- Scoring: `uv run tahoe/score.py tahoe/results/<dataset>`.
 
-## Decisions (Gregor's, do not revisit)
+## Decisions (Gregor's)
 
-- Native multi-file ingest per tool. Steps: load, QC, HVG, PCA, Harmony,
-  kNN/sNN, UMAP, DGE. No Leiden, no tSNE, no cluster_fast.
-- QC: MT <= 15% (deviation from the PBMC 5%), UMI >= 750, genes >= 250.
-- Harmony on `sublibrary`; truth `cell_line`; DGE Gemcitabine vs DMSO_TF.
-- 5 h wall per run, Docker cap 48 GB, stores deleted after each run.
-- Versions unchanged: `scbench-r:local`, CyteArc 1.3.0, `scbench-py`.
-- bixverse at `BIX_CSC_GB` 8 is the main row; 32 gave no net gain.
+- Steps: load, QC, HVG, PCA, Harmony, kNN/sNN, UMAP, DGE. No Leiden, no tSNE.
+  UMAP and PCA at defaults for the reported rows.
+- QC: MT <= 15%, UMI >= 750, genes >= 250. Gene cut: detected in >= 9,000
+  cells (`MIN_CELLS`, about 0.1%), all four tools; 4,000 on one plate.
+- Harmony on `plate`: the only batch with an effect on identical cells (DMSO,
+  neighbour enrichment 1.17x; sublibrary 1.03 to 1.21x). Plate is confounded
+  with dose (plate1 every drug at 0.05 uM, plate3 at 5 uM; only DMSO_TF and
+  Adagrasib 0.05 uM on both). Harmony converges at iteration 1. Score batch
+  mixing on DMSO cells only.
+- Truth `cell_line`; DGE Gemcitabine vs DMSO_TF.
+- 5 h wall, Docker cap 48 GB, stores deleted after each run. Docker disk 200 GB.
+- bixverse `BIX_CSC_GB` 8 in Docker, 24 natively (see findings).
+- Versions: bixverse 0.8.4 (`scbench-r:local`), bixverse.gpu 0.6.2 from the
+  site library for native runs (`rlib/` is stale: 0.5.5 / 0.3.4), CyteArc
+  1.3.0, `scbench-py`. The plate 3 bixverse row from 0.8.0 is obsolete.
 
-## Pilot results (plate 3, 4.02M cells after QC)
+## Results
 
-| step | bixverse 8 GB | Scanpy Dask | Seurat BPCells | CyteArc |
+Seconds / step peak GiB (Docker: cgroup anon; native: RSS incl. file-backed
+pages, footprint from `/usr/bin/time -l`).
+
+Plate 3 (4.02M cells after QC). Other tools from the pilot (5-cell gene cut,
+Harmony on sublibrary); bixverse CPU likewise; MLX with the 4k gene cut and
+24 GB CSC, native.
+
+| step | bixverse CPU | bixverse MLX | Scanpy Dask | Seurat BPCells | CyteArc |
+|---|---|---|---|---|---|
+| load | 166.1 / 8.7 | 121.9 | 867.2 / 8.4 | 1,156.3 / 3.9 | 826.4 / 17.0 |
+| qc | 23.9 / 2.2 | 16.0 | 145.0 / 5.6 | 56.4 / 4.7 | 0.5 / 0.0 |
+| normalise | in load | in load | 0.0 | 25.9 / 5.2 | 147.2 / 3.9 |
+| hvg | 10.8 / 3.6 | 8.0 | 145.9 / 10.4 | 142.2 / 5.7 | 134.5 / 3.7 |
+| pca | 48.1 / 18.8 | 9.2 | 284.7 / 16.9 | 3,087.0 / 8.0 | 225.1 / 3.5 |
+| harmony | 9.4 / 11.7 | 5.2 | 11.0 / 7.5 | 254.8 / 16.4 | 369.0 / 8.1 |
+| knn_snn | 105.6 / 15.6 | 33.2 | 109.5 / 13.8 | 512.8 / 18.4 | 1,426.9 / 4.3 |
+| umap | 449.7 / 20.7 | 94.3 | 2,276.9 / 14.4 | 3,876.7 / 36.5 | 4,126.8 / 7.1 |
+| dge | 9.9 / 11.8 | 4.9 | 354.3 / 20.2 | 51.6 / 31.7 | 118.7 / 4.5 |
+| total | 823.5 / 20.7 | 292.7 / 28.9 footprint | 4,194.5 / 20.2 | 9,163.6 / 36.5 | 7,375.1 / 17.0 |
+| store GB | 12.9 | 12.4 | 0 | 10.3 | 38.4 |
+
+Two plates (9.21M cells after QC, 9k gene cut, Harmony on plate):
+
+| step | CPU `auto` (feasibility: 5-cell cut) | CPU `auto` (x2) | CPU `covariance` | MLX native |
 |---|---|---|---|---|
-| load | 1212 s / 12.3 GB | 867 / 9.0 | 1156 / 4.2 | 826 / 18.3 |
-| qc | 96 / 4.7 | 145 / 6.0 | 56 / 5.1 | 0.5 / 0.0 |
-| normalise | in load | 0 / 0 | 26 / 5.6 | 147 / 4.2 |
-| hvg | 188 / 6.6 | 146 / 11.1 | 142 / 6.1 | 135 / 3.9 |
-| pca | 41 / 12.8 | 285 / 18.1 | 3087 / 8.6 | 225 / 3.8 |
-| harmony | 11 / 11.3 | 11 / 8.1 | 255 / 17.6 | 369 / 8.7 |
-| knn_snn | 194 / 24.5 | 110 / 14.8 | 513 / 19.8 | 1427 / 4.6 |
-| umap | 440 / 34.9 | 2277 / 15.4 | 3877 / 39.2 | 4127 / 7.6 |
-| dge | 13 / 25.2 | 354 / 21.7 | 52 / 34.0 | 119 / 4.9 |
-| total | 2193 / 34.9 | 4195 / 21.7 | 9164 / 39.2 | 7375 / 18.3 |
-| store | 67.3 GB | 0 | 10.8 GB | 40.3 GB |
+| load | 940.9 / 9.7 | 833.3, 870.0 | 837.1 / 10.1 | 300.7 |
+| qc | 56.2 / 3.8 | 49.3, 53.4 | 54.6 / 3.9 | 29.1 |
+| hvg | 27.2 / 5.7 | 28.0, 28.0 | 28.6 / 8.1 | 15.8 |
+| pca | 172.6 / 47.0 | **OOM** both, 47.6 + 3.5 to 3.7 swap | 129.9 / 31.7 | 26.4 |
+| harmony | 27.6 / 24.6 | - | 33.7 / 25.6 | 10.2 |
+| knn_snn | 288.8 / 36.2 | - | 301.6 / 35.8 | 90.5 |
+| umap | 1,212.1 / 41.6 | - | 1,140.3 / 42.6 | 302.0 |
+| dge | 37.7 / 31.8 | - | 35.4 / 31.4 | 15.1 |
+| total | 2,763.1 / 47.0 | failed | 2,561.4 / 42.6 | 789.8 / 57.2 footprint |
+| store GB | 33.6 | - | 30.9 | 30.9 |
 
-Peak GB is container anon memory within the step, so it includes whatever
-earlier steps left resident.
+Result dirs: `tahoe/results/tahoe/bixverse_feasibility`, `bixverse` and
+`bixverse_auto_retry` (the OOMs), `bixverse_covariance`, `bixverse_mlx`.
+Default `auto` PCA survived 1 of 3 two-plate runs at the 48 GB cap. Framing
+agreed with Gregor: default row is the headline, covariance a labelled row
+("one documented option, exact"), and the methods say the other tools ran at
+defaults without exploring their own options.
 
-Scores (50k cells per tool, K = 15): Harmony kNN purity on cell_line 0.904
-bixverse, 0.827 Scanpy, 0.907 Seurat, 0.914 CyteArc. Batch mixing about 1.0
-for all. DGE log fold change Spearman between tools 0.86 to 1.00.
+PCA solver check, plate 3, one session (4k gene cut): `auto` 59.1 s, about
+20 GiB own; `covariance` 41.3 s, about 10 GiB; |cor| 1.000000 on all 30 PCs,
+max subspace angle 0.0000 deg.
 
-## Open issues, harness (fix before the two-plate run)
+## Next
 
-1. `write_embs` (`tahoe/pipelines/common.R`, `common.py`) samples 200k cells
-   independently per tool, so tools share almost no scored cells. Draw one
-   barcode list from the parquet and have every tool write those cells. Cell
-   id formats differ (bixverse `plate1_BC`, CyteArc `plate1__BC`, single plate
-   unprefixed for bixverse and CyteArc).
-2. Batch mixing is about 1.0 everywhere, so it does not discriminate. Save an
-   uncorrected PCA embedding and score it to see whether sublibrary carries a
-   batch effect at all.
-3. Docker disk: the bixverse store took 67 GB on one plate; raise Docker's
-   disk image before two plates.
-4. Seurat may exceed the 5 h wall and 48 GB on two plates (projection from
-   the pilot, unmeasured).
+1. Scanpy Dask and CyteArc two-plate (one night), Seurat BPCells (the next).
+   Projections from the pilot at 2.5x (unmeasured): Scanpy about 10,500 s
+   with a DGE peak near the cap (its DGE groups grow 3.1x); Seurat about
+   22,900 s, over the 5 h wall, and peaks well over 48 GB; CyteArc about
+   18,400 s, at the wall.
+2. Rerun the bixverse rows after Gregor's fixes (Lanczos copies, spectral
+   init). The "reduce-lanczos-svd-memory" session works on the Lanczos path.
+3. Scoring: fix `write_embs` (one shared barcode list from the parquet across
+   tools; cell id formats differ: bixverse `plate1_BC`, CyteArc `plate1__BC`),
+   score batch mixing on DMSO cells only, then `tahoe/score.py`.
+4. Optional, queued by nothing: PCA solver sweep across sizes (for an `auto`
+   switch to covariance) and UMAP init spectral vs PCA (time, peak, purity) on
+   PBMC full and splat 1M, natively, about 30 min in all.
 
-## Open issues, to explain or disclose (no fix yet)
+## bixverse findings (for bixverse-rs; ask Gregor which copy)
 
-- Scanpy purity 0.08 below the rest. Cause unknown (harmonypy, HVG flavour?).
-- CyteArc fold changes sit slightly low: 644 genes where bixverse has a tiny
-  positive LFC (< 0.05) and CyteArc negative; bixverse and Scanpy agree on all.
-  Points at CyteArc's normalisation or averaging.
-- bixverse LFC is about half the others' (MT-ND1 -0.63 vs Scanpy -1.49),
-  probably a different definition; it only reports genes in >= 5% of a group
-  (7,086 genes).
-- Cells after QC differ by up to 76 between tools (bixverse 4,022,932,
-  Scanpy/Seurat 4,023,005, CyteArc 4,023,008). Unexplained.
-- CyteArc QC takes 0.5 s: likely lazy, the cost lands in later steps.
-- Scanpy DGE materialises the two groups in memory (Wilcoxon fails on Dask).
-- `sessionInfo` in `scbench-r:local` says bixverse 0.8.0, README says 0.8.1.
+- PCA (sparse Lanczos) holds about 32 B per HVG non-zero: CSC + transposed CSR
+  + two f64 copies (`bixverse-core/src/core/math/sparse.rs:1827-1860`). The
+  sparse covariance solver halves it but still holds the full CSR; a
+  streaming Gram over cell chunks would take it to a few GB (CyteArc's design,
+  `cytearc/embeddings/reduction.py:207-257`).
+- UMAP spectral init is the peak of the MLX two-plate run: about +22 to 25
+  GiB over the kNN base for 40 s. The MLX optimisation sits at about +12 GiB.
+  macOS swapped out 11,451 pages right after UMAP while the R process was at
+  18 GiB: memory outside RSS (Metal buffers or the compressor), not attributed.
+- `adam_parallel` forces 500 UMAP epochs at any size (umap-learn uses 200
+  above 10k cells); optimisation is edges x epochs.
+- CSC conversion in Docker: `BIX_CSC_GB` 24 is 2x slower than 8 on plate 3
+  (83.2 against 42.6 s) and 5x slower than 24 natively (22.9 s). During the
+  scatter anon is at 23.6 GiB and page cache at 19 to 21.5 GiB, about 45 of
+  48 GB: likely page cache eviction under the cgroup cap (inferred). Deriving
+  the budget from the cgroup limit would avoid it.
+- Load scales worse than linear on two plates (5.7x for 2.5x the non-zeros),
+  mostly the 14-phase CSC conversion; untested whether the multi-file path or
+  the phase count is the cause.
+- `prescan_h5ad_files` does not follow the `/var` `_index` attribute
+  (`var_index` defaults to `"_index"`; Tahoe names it `gene_name`), while
+  `load_h5ad` copes. The pipelines pass it explicitly.
 
-## bixverse findings (fixes go in the bixverse repo; ask Gregor which copy)
+## Open issues to explain or disclose
 
-From `tahoe/results/tahoe_pilot/bixverse/log.txt` and `mem.csv`:
-
-- kNN/sNN 193.7 s: NNDescent 88.8 s, extract 0.2 s, sNN build 22.0 s, about
-  83 s unlogged (Rust -> R -> igraph transfer). Memory 6.4 -> 24.5 GB and
-  still 24.5 GB after the step. Gregor wants this fixed first. A `gc()` after
-  each step would show whether the 18 GB is live or uncollected garbage.
-- UMAP starts at 23.3 GB, peaks at 34.9 (+11.6 GB own). Optimisation 394.5 s
-  of 439.6 s on 98.3M edges.
-- DGE adds only 3.3 GB (21.9 -> 25.2), so the Wilcoxon ranking is not the
-  peak; the retained kNN/sNN memory is.
-- Load 1212 s: CSR -> CSC conversion 457 s (scatter 381 s over 8 phases,
-  uneven at 25 to 80 s; compress + write 76 s), plus about 340 s unaccounted
-  after "Loading observations data from h5ad into the DuckDB".
-- HVG 184 s is all "Calculated gene statistics"; MT proportions in QC 86 s.
-  Gregor suspects gene chunk decompression shared with the CSC scatter;
-  unmeasured until decompression and statistics are timed apart.
+- Scanpy purity 0.08 below the rest on plate 3 (cause unknown).
+- CyteArc fold changes sit slightly low against bixverse and Scanpy.
+- bixverse LFC is about half the others' (different definition; reports only
+  genes in >= 5% of a group).
+- Cells after QC differ by up to 76 between tools on plate 3; MLX and CPU
+  bixverse agree on two plates (9,208,836).
+- CyteArc QC takes 0.5 s (likely lazy). Scanpy DGE materialises the two groups.
 
 ## Docs out of date (remind Gregor, do not edit unasked)
 
-README and `docs/methods.md`: Tahoe not described; methods says loaders run at
-a default `csc_mem_gb = 8`, but `NULL` means a single phase and the 8 comes
-from the run scripts; BPCells uint32 conversion, MT 15% and Scanpy in-memory
-DGE need disclosing; Tahoe scores not described.
+README and `docs/methods.md`: Tahoe not described at all. To disclose: MT 15%,
+the 9k gene cut, Harmony on plate and its dose confound, `BIX_CSC_GB` 8 in
+Docker and why, BPCells uint32 conversion, Scanpy in-memory DGE, the 5 h wall,
+the covariance row and the OOM count of the default.
