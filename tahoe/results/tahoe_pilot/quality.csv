@@ -1,0 +1,6 @@
+tool,cells_scored,harmony_knn_purity,harmony_batch_mix,harmony_asw_truth,umap_knn_purity,umap_batch_mix,umap_asw_truth
+bixverse,50000,0.904,1.0,0.166,0.86,1.0,0.216
+bixverse_csc32,50000,0.904,1.0,0.166,0.861,1.0,0.215
+cytearc,50000,0.914,1.001,0.215,0.902,1.001,0.304
+scanpy_dask,50000,0.827,0.999,0.118,0.799,1.0,0.26
+seurat_bpcells,50000,0.907,1.0,0.173,0.901,1.0,0.452

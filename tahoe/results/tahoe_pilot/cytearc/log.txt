@@ -1,0 +1,43 @@
+WARNING: `obsm` slot in H5ad file is empty.
+WARNING: `obsm` slot in H5ad file is empty.
+WARNING: `obsm` slot in H5ad file is empty.
+WARNING: `obsm` slot in H5ad file is empty.
+WARNING: `obsm` slot in H5ad file is empty.
+INFO: execution countsImportBand: read=1/2 compute=2/2 write=2/2 fetch=0.00s compute=0.00s readerWait=0.00s computeWait=0.00s held=0 reason=full request used
+INFO: execution countsImportBand: read=1/2 compute=2/2 write=2/2 fetch=0.00s compute=0.00s readerWait=0.00s computeWait=0.00s held=0 reason=full request used
+INFO: execution countsImportBand: read=1/2 compute=2/2 write=2/2 fetch=0.00s compute=0.00s readerWait=0.00s computeWait=0.00s held=0 reason=full request used
+INFO: execution countsImportBand: read=1/2 compute=2/2 write=2/2 fetch=0.00s compute=0.00s readerWait=0.00s computeWait=0.00s held=0 reason=full request used
+>>> load: 826.4 s <<<
+>>> qc: 0.5 s <<<
+>>> hvg: 134.5 s <<<
+>>> normalise: 147.2 s <<<
+>>> pca: 225.1 s <<<
+>>> harmony: 369.0 s <<<
+>>> knn_snn: 1426.9 s <<<
+>>> umap: 4126.8 s <<<
+>>> dge: 118.7 s <<<
+cells after QC: 4023008, DGE genes: 49494
+	Command being timed: "python /bench/pipelines/cytearc_pipeline.py /data /out /scratch"
+	User time (seconds): 16591.31
+	System time (seconds): 724.33
+	Percent of CPU this job got: 234%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 2:03:11
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 12896448
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 3610
+	Minor (reclaiming a frame) page faults: 210686902
+	Voluntary context switches: 13603852
+	Involuntary context switches: 1959961
+	Swaps: 0
+	File system inputs: 664952
+	File system outputs: 85917024
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
+exit=0

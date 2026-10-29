@@ -1,0 +1,11 @@
+tool_a,tool_b,shared_genes,lfc_spearman,sign_agreement
+bixverse,bixverse_csc32,7086,1.0,1.0
+bixverse,cytearc,7086,0.924,0.909
+bixverse,scanpy_dask,7086,0.933,1.0
+bixverse,seurat_bpcells,4596,0.856,1.0
+bixverse_csc32,cytearc,7086,0.924,0.909
+bixverse_csc32,scanpy_dask,7086,0.933,1.0
+bixverse_csc32,seurat_bpcells,4596,0.856,1.0
+cytearc,scanpy_dask,49494,0.972,0.931
+cytearc,seurat_bpcells,9428,1.0,1.0
+scanpy_dask,seurat_bpcells,9428,0.993,0.999

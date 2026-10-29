@@ -1,0 +1,223 @@
+Step 1/3: Analysing data structure and calculating QC metrics...
+  Reading CSR matrix structure (shape: 4_705_402 x 62_710 )...
+First pass - gene expression statistics:
+  Processed 10% of chunks (47/471)
+  Processed 20% of chunks (94/471)
+  Processed 30% of chunks (141/471)
+  Processed 40% of chunks (188/471)
+  Processed 50% of chunks (235/471)
+  Processed 60% of chunks (282/471)
+  Processed 70% of chunks (329/471)
+  Processed 80% of chunks (376/471)
+  Processed 90% of chunks (423/471)
+  Processed 100% of chunks (470/471)
+  Processed 100% of chunks (471/471)
+  Gene expression stats: min = 0 | max = 4_704_805 | avg = 90_640 cells per gene
+First pass done: 15.64s
+  Genes passing filter: 49_494 / 62_710
+Second pass - cell statistics:
+  Processed 10% of chunks (47/471)
+  Processed 20% of chunks (94/471)
+  Processed 30% of chunks (141/471)
+  Processed 40% of chunks (188/471)
+  Processed 50% of chunks (235/471)
+  Processed 60% of chunks (282/471)
+  Processed 70% of chunks (329/471)
+  Processed 80% of chunks (376/471)
+  Processed 90% of chunks (423/471)
+  Processed 100% of chunks (470/471)
+  Processed 100% of chunks (471/471)
+  Cell stats: genes per cell: min = 253 | max = 12_600
+  Cell stats: library size: min = 381.0 | max = 101919.0
+Second pass done: 18.02s
+  Cells passing filter: 4_705_402 / 4_705_402
+Step 2/3: QC Results:
+  Genes passing QC: 49_494 / 62_710
+  Cells passing QC: 4_705_402 / 4_705_402
+Step 3/3: Writing cells to CSR format...
+  Processing 4_705_402 cells in batches of 1_000...
+  Processed 1_000 / 4_705_402 cells
+  Processed 471_000 / 4_705_402 cells
+  Processed 941_000 / 4_705_402 cells
+  Processed 1_411_000 / 4_705_402 cells
+  Processed 1_881_000 / 4_705_402 cells
+  Processed 2_351_000 / 4_705_402 cells
+  Processed 2_821_000 / 4_705_402 cells
+  Processed 3_291_000 / 4_705_402 cells
+  Processed 3_761_000 / 4_705_402 cells
+  Processed 4_231_000 / 4_705_402 cells
+  Processed 4_701_000 / 4_705_402 cells
+  Processed 4_705_402 / 4_705_402 cells
+  Writing complete in 43.42s
+ Converting the cell-based data into the gene-based format.
+  Counted 5_684_046_766 non-zeros over 49_494 genes in 2.01s; converting in 6 phase(s).
+  Phase 1/6: genes 0-2556, scatter 4.93s, compress + write 1.94s
+  Phase 2/6: genes 2556-5425, scatter 4.65s, compress + write 1.62s
+  Phase 3/6: genes 5425-8567, scatter 3.44s, compress + write 1.58s
+  Phase 4/6: genes 8567-12205, scatter 3.56s, compress + write 1.69s
+  Phase 5/6: genes 12205-17579, scatter 4.08s, compress + write 1.74s
+  Phase 6/6: genes 17579-49494, scatter 4.92s, compress + write 2.16s
+  Conversion into gene-friendly format done: 38.63s
+Loading observations data from h5ad into the DuckDB.
+Loading variables data from h5ad into the DuckDB.
+>>> load: 166.1 s <<<
+Setting streaming for large data to TRUE.
+Using a streaming approach for gene set percentage calculation.
+Finished the gene set proportion calculations: 8.67s
+>>> qc: 23.9 s <<<
+Warning message:
+In get_gene_indices.ScMap(x = S7::prop(x, "sc_map"), gene_ids = gene_ids,  :
+  With the provided gene_ids a total of 4 could not be matched.
+Setting streaming for large data to TRUE.
+HVG (VST): 49_494 genes, 1 batches, 50 disk block(s)
+HVG (VST): Calculated gene statistics in 4.85s
+HVG (VST): Fitted Loess in 5.45ms
+HVG (VST): Standardised variance in 4.18ms (6 gene(s) re-read for the clip)
+HVG (VST): Total run time -> 4.86s
+>>> hvg: 10.8 s <<<
+Using sparse SVD solving on scaled data on 2000 HVG.
+Sparse PCA: Loaded in data in 2.97s
+Sparse PCA: finished the data preparations in 151.66ms
+Sparse PCA: finished calculations in 43.07s
+Sparse PCA: total run time -> 46.59s
+>>> pca: 48.1 s <<<
+ Auto-determined number of Harmony clusters: 100
+Harmony v2: 4_022_932 cells, 30 dims, 1 variable(s), 100 clusters
+  Variable 0: 105 levels
+ Initial data preparation done in 196.35ms
+Running initial k-means...
+Initial objective: 394.3401
+
+=== Harmony v2 iteration 1 ===
+  Running k-means clustering...
+  Applying ridge regression correction...
+  Harmony objective: 394.1775
+   Finished iteration in 1.37s / Total runtime 4.41s
+
+Harmony v2 converged at iteration 1
+ Finished Harmony 4.41s
+>>> harmony: 9.4 s <<<
+
+Built forest: 26.10s
+Running NN-Descent: 4_022_932 samples, max_candidates=30
+Seeded graph from forest: 19.16s
+ Starting chunk size 6_472 for memory-bounded updates (200 MiB budget)
+ Preparing candidates for iter 1
+ Processing updates for iter 1
+  49 chunks, next chunk size 81281
+  Iter 1: 13_977_906 edge updates (rate=0.1158)
+ Preparing candidates for iter 2
+ Processing updates for iter 2
+  9 chunks, next chunk size 530879
+  Iter 2: 485_648 edge updates (rate=0.0040)
+ Preparing candidates for iter 3
+ Processing updates for iter 3
+  2 chunks, next chunk size 4022932
+  Iter 3: 28_158 edge updates (rate=0.0002)
+  Converged after 3 iterations
+
+NN-Descent build breakdown (n=4022932, k=30):
+  forest build              26.105 s   33.1%
+  graph seeding             19.155 s   24.3%
+  candidates                 6.232 s    7.9%
+  mark old                   0.082 s    0.1%
+  local join                19.514 s   24.8%
+  radix sort                 1.863 s    2.4%
+  apply updates              5.822 s    7.4%
+  total                     78.772 s
+  updates: 952_536_336 emitted, 14_491_712 accepted (1.52%)
+  merged candidate list: mean 49.1, max 760
+  candidate pairs evaluated: 7_425_570_479
+Generated NNDescent index: 80.84s
+Extracted NNDescent graph: 182.94ms
+Generating the snn graph.
+Added 7 edges to reconnect components that pruning cut off.
+Built the Snn { similarity: Jaccard, prune: 0.0625, rescue: true } graph: 21.90s
+>>> knn_snn: 105.6 s <<<
+Running UMAP.
+Using n_epochs = 500 (dataset <10k samples or adam_parallel optimiser)
+Using provided kNN graph.
+Running umap with alpha: 0.59 and beta: 1.33
+Using precomputed kNN graph...
+Constructing fuzzy simplicial set...
+Finalised graph generation in 5.38s.
+Initialising embedding via spectral layout...
+Initialised embedding in: 34.40s.
+Optimising embedding via Adam (multi-threaded) (500 epochs) on 98_335_840 edges...
+ Completed epoch 50/500
+ Completed epoch 100/500
+ Completed epoch 150/500
+ Completed epoch 200/500
+ Completed epoch 250/500
+ Completed epoch 300/500
+ Completed epoch 350/500
+ Completed epoch 400/500
+ Completed epoch 450/500
+ Completed epoch 500/500
+Optimised embedding in: 406.25s.
+UMAP complete!
+>>> umap: 449.7 s <<<
+>>> dge: 9.9 s <<<
+cells after QC: 4022932, DGE genes: 7086
+R version 4.6.1 (2026-06-24)
+Platform: aarch64-unknown-linux-gnu
+Running under: Ubuntu 24.04.4 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/aarch64-linux-gnu/openblas-pthread/libblas.so.3 
+LAPACK: /usr/lib/aarch64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+time zone: Etc/UTC
+tzcode source: system (glibc)
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] bixverse_0.8.4      data.table_1.18.6.1
+
+loaded via a namespace (and not attached):
+ [1] vctrs_0.7.3         patchwork_1.3.2     cli_3.6.6          
+ [4] rlang_1.3.0         zeallot_0.2.0       otel_0.2.0         
+ [7] DBI_1.3.0           purrr_1.2.2         generics_0.1.4     
+[10] S7_0.2.2            glue_1.8.1          backports_1.5.1    
+[13] scales_1.4.0        grid_4.6.1          manifoldsR_0.5.0   
+[16] tibble_3.3.1        lifecycle_1.0.5     Rhdf5lib_2.0.0     
+[19] duckdb_1.5.6        compiler_4.6.1      dplyr_1.2.1        
+[22] codetools_0.2-20    RColorBrewer_1.1-3  pkgconfig_2.0.3    
+[25] rhdf5filters_1.24.1 rhdf5_2.56.1        farver_2.1.2       
+[28] lattice_0.22-9      R6_2.6.1            tidyselect_1.2.1   
+[31] pillar_1.11.1       magrittr_2.0.5      checkmate_2.3.4    
+[34] Matrix_1.7-5        gtable_0.3.6        ggplot2_4.0.3      
+	Command being timed: "Rscript /bench/pipelines/bixverse.R /data /out /scratch"
+	User time (seconds): 5142.80
+	System time (seconds): 123.95
+	Percent of CPU this job got: 632%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 13:52.21
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 26414872
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 379
+	Minor (reclaiming a frame) page faults: 55771936
+	Voluntary context switches: 666856
+	Involuntary context switches: 133334
+	Swaps: 0
+	File system inputs: 37496
+	File system outputs: 28251280
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
+exit=0

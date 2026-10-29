@@ -1,0 +1,194 @@
+Scan 1/2: Counting gene expression across 2 files...
+  Scanning genes in plate1...
+  Scanning genes in plate3...
+  Genes passing global QC: 51_259 / 62_710
+Scan 2/2: Computing cell QC with final gene set...
+  Scanning cells in plate1...
+  Scanning cells in plate3...
+  plate1: 5_481_420 / 5_481_420 cells passing QC
+  plate3: 4_705_402 / 4_705_402 cells passing QC
+  Total cells: 10_186_822
+Writing cells to binary...
+  Writing plate1 (5_481_420 cells)...
+  Writing plate3 (4_705_402 cells)...
+Multi-h5ad loading complete: 350.88s
+ Converting the cell-based data into the gene-based format.
+  Counted 13_960_112_040 non-zeros over 51_259 genes in 34.53s; converting in 14 phase(s).
+  Phase 1/14: genes 0-1882, scatter 50.02s, compress + write 3.53s
+  Phase 2/14: genes 1882-4151, scatter 53.18s, compress + write 4.64s
+  Phase 3/14: genes 4151-6351, scatter 41.74s, compress + write 4.44s
+  Phase 4/14: genes 6351-24687, scatter 29.02s, compress + write 4.69s
+  Phase 5/14: genes 24687-27360, scatter 16.44s, compress + write 5.95s
+  Phase 6/14: genes 27360-29622, scatter 25.48s, compress + write 4.07s
+  Phase 7/14: genes 29622-33964, scatter 26.75s, compress + write 3.78s
+  Phase 8/14: genes 33964-36225, scatter 17.88s, compress + write 2.77s
+  Phase 9/14: genes 36225-39028, scatter 28.32s, compress + write 2.62s
+  Phase 10/14: genes 39028-42124, scatter 19.36s, compress + write 2.42s
+  Phase 11/14: genes 42124-44739, scatter 18.84s, compress + write 2.34s
+  Phase 12/14: genes 44739-46746, scatter 24.78s, compress + write 2.49s
+  Phase 13/14: genes 46746-48930, scatter 24.03s, compress + write 2.57s
+  Phase 14/14: genes 48930-51259, scatter 19.02s, compress + write 2.39s
+  Conversion into gene-friendly format done: 479.37s
+Loading observation data from h5ad files into DuckDB.
+Loading variable data into DuckDB.
+>>> load: 940.9 s <<<
+Setting streaming for large data to TRUE.
+Using a streaming approach for gene set percentage calculation.
+Finished the gene set proportion calculations: 26.22s
+>>> qc: 56.2 s <<<
+Warning message:
+In get_gene_indices.ScMap(x = S7::prop(x, "sc_map"), gene_ids = gene_ids,  :
+  With the provided gene_ids a total of 4 could not be matched.
+Setting streaming for large data to TRUE.
+HVG (VST): 51_259 genes, 1 batches, 52 disk block(s)
+HVG (VST): Calculated gene statistics in 14.35s
+HVG (VST): Fitted Loess in 8.42ms
+HVG (VST): Standardised variance in 8.35ms (6 gene(s) re-read for the clip)
+HVG (VST): Total run time -> 14.37s
+>>> hvg: 27.2 s <<<
+Using sparse SVD solving on scaled data on 2000 HVG.
+Sparse PCA: Loaded in data in 16.25s
+Sparse PCA: finished the data preparations in 1.23s
+Sparse PCA: finished calculations in 148.79s
+Sparse PCA: total run time -> 167.51s
+>>> pca: 172.6 s <<<
+ Auto-determined number of Harmony clusters: 100
+Harmony v2: 9_217_416 cells, 30 dims, 1 variable(s), 100 clusters
+  Variable 0: 2 levels
+ Initial data preparation done in 995.31ms
+Running initial k-means...
+Initial objective: 340.8048
+
+=== Harmony v2 iteration 1 ===
+  Running k-means clustering...
+  Applying ridge regression correction...
+  Harmony objective: 340.2228
+   Finished iteration in 3.81s / Total runtime 13.87s
+
+Harmony v2 converged at iteration 1
+ Finished Harmony 13.87s
+>>> harmony: 27.6 s <<<
+
+Built forest: 81.79s
+Running NN-Descent: 9_217_416 samples, max_candidates=30
+Seeded graph from forest: 45.39s
+ Starting chunk size 6_472 for memory-bounded updates (200 MiB budget)
+ Preparing candidates for iter 1
+ Processing updates for iter 1
+  93 chunks, next chunk size 105780
+  Iter 1: 48_622_387 edge updates (rate=0.1758)
+ Preparing candidates for iter 2
+ Processing updates for iter 2
+  23 chunks, next chunk size 422392
+  Iter 2: 2_363_323 edge updates (rate=0.0085)
+ Preparing candidates for iter 3
+ Processing updates for iter 3
+  3 chunks, next chunk size 9217416
+  Iter 3: 149_963 edge updates (rate=0.0005)
+  Converged after 3 iterations
+
+NN-Descent build breakdown (n=9217416, k=30):
+  forest build              81.794 s   39.6%
+  graph seeding             45.391 s   22.0%
+  candidates                10.492 s    5.1%
+  mark old                   0.243 s    0.1%
+  local join                50.477 s   24.5%
+  radix sort                 4.327 s    2.1%
+  apply updates             13.723 s    6.6%
+  total                    206.448 s
+  updates: 1_973_591_856 emitted, 51_135_673 accepted (2.59%)
+  merged candidate list: mean 49.5, max 817
+  candidate pairs evaluated: 18_938_813_702
+Generated NNDescent index: 213.34s
+Extracted NNDescent graph: 491.41ms
+Generating the snn graph.
+Added 8 edges to reconnect components that pruning cut off.
+Built the Snn { similarity: Jaccard, prune: 0.0625, rescue: true } graph: 67.74s
+>>> knn_snn: 288.8 s <<<
+Running UMAP.
+Using n_epochs = 500 (dataset <10k samples or adam_parallel optimiser)
+Using provided kNN graph.
+Running umap with alpha: 0.59 and beta: 1.33
+Using precomputed kNN graph...
+Constructing fuzzy simplicial set...
+Finalised graph generation in 15.30s.
+Initialising embedding via spectral layout...
+Initialised embedding in: 117.91s.
+Optimising embedding via Adam (multi-threaded) (500 epochs) on 227_398_202 edges...
+ Completed epoch 50/500
+ Completed epoch 100/500
+ Completed epoch 150/500
+ Completed epoch 200/500
+ Completed epoch 250/500
+ Completed epoch 300/500
+ Completed epoch 350/500
+ Completed epoch 400/500
+ Completed epoch 450/500
+ Completed epoch 500/500
+Optimised embedding in: 1068.93s.
+UMAP complete!
+>>> umap: 1212.1 s <<<
+>>> dge: 37.7 s <<<
+cells after QC: 9217416, DGE genes: 7965
+R version 4.6.1 (2026-06-24)
+Platform: aarch64-unknown-linux-gnu
+Running under: Ubuntu 24.04.4 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/aarch64-linux-gnu/openblas-pthread/libblas.so.3 
+LAPACK: /usr/lib/aarch64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+time zone: Etc/UTC
+tzcode source: system (glibc)
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] bixverse_0.8.4      data.table_1.18.6.1
+
+loaded via a namespace (and not attached):
+ [1] vctrs_0.7.3         patchwork_1.3.2     cli_3.6.6          
+ [4] rlang_1.3.0         zeallot_0.2.0       otel_0.2.0         
+ [7] DBI_1.3.0           purrr_1.2.2         generics_0.1.4     
+[10] S7_0.2.2            glue_1.8.1          backports_1.5.1    
+[13] scales_1.4.0        grid_4.6.1          manifoldsR_0.5.0   
+[16] tibble_3.3.1        lifecycle_1.0.5     Rhdf5lib_2.0.0     
+[19] duckdb_1.5.6        compiler_4.6.1      dplyr_1.2.1        
+[22] codetools_0.2-20    RColorBrewer_1.1-3  pkgconfig_2.0.3    
+[25] rhdf5filters_1.24.1 rhdf5_2.56.1        farver_2.1.2       
+[28] lattice_0.22-9      R6_2.6.1            tidyselect_1.2.1   
+[31] pillar_1.11.1       magrittr_2.0.5      checkmate_2.3.4    
+[34] Matrix_1.7-5        gtable_0.3.6        ggplot2_4.0.3      
+	Command being timed: "Rscript /bench/pipelines/bixverse.R /data /out /scratch"
+	User time (seconds): 14683.24
+	System time (seconds): 557.32
+	Percent of CPU this job got: 548%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 46:20.24
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 49377904
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 4619777
+	Minor (reclaiming a frame) page faults: 143207635
+	Voluntary context switches: 6610190
+	Involuntary context switches: 4793685
+	Swaps: 0
+	File system inputs: 40985408
+	File system outputs: 72416632
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
+exit=0

@@ -1,0 +1,138 @@
+Scan 1/2: Counting gene expression across 2 files...
+  Scanning genes in plate1...
+  Scanning genes in plate3...
+  Genes passing global QC: 23_030 / 62_710
+Scan 2/2: Computing cell QC with final gene set...
+  Scanning cells in plate1...
+  Scanning cells in plate3...
+  plate1: 5_481_420 / 5_481_420 cells passing QC
+  plate3: 4_705_402 / 4_705_402 cells passing QC
+  Total cells: 10_186_822
+Writing cells to binary...
+  Writing plate1 (5_481_420 cells)...
+  Writing plate3 (4_705_402 cells)...
+Multi-h5ad loading complete: 191.96s
+ Converting the cell-based data into the gene-based format.
+  Counted 13_920_081_123 non-zeros over 23_030 genes in 4.44s; converting in 5 phase(s).
+  Phase 1/5: genes 0-4184, scatter 6.36s, compress + write 5.31s
+  Phase 2/5: genes 4184-12045, scatter 6.48s, compress + write 5.44s
+  Phase 3/5: genes 12045-16729, scatter 6.16s, compress + write 5.32s
+  Phase 4/5: genes 16729-20293, scatter 5.91s, compress + write 4.74s
+  Phase 5/5: genes 20293-23030, scatter 4.80s, compress + write 3.12s
+  Conversion into gene-friendly format done: 58.54s
+Loading observation data from h5ad files into DuckDB.
+Loading variable data into DuckDB.
+>>> load: 300.7 s <<<
+Setting streaming for large data to TRUE.
+Using a streaming approach for gene set percentage calculation.
+Finished the gene set proportion calculations: 14.93s
+>>> qc: 29.1 s <<<
+Warning message:
+In get_gene_indices.ScMap(x = S7::prop(x, "sc_map"), gene_ids = gene_ids,  :
+  With the provided gene_ids a total of 20 could not be matched.
+Setting streaming for large data to TRUE.
+HVG (VST): 23_030 genes, 1 batches, 24 disk block(s)
+HVG (VST): Calculated gene statistics in 10.83s
+HVG (VST): Fitted Loess in 4.99ms
+HVG (VST): Standardised variance in 7.18ms (1 gene(s) re-read for the clip)
+HVG (VST): Total run time -> 10.84s
+>>> hvg: 15.8 s <<<
+Using GPU-accelerated sparse SVD (block Lanczos) with 2000 HVG.
+Sparse PCA (MLX): Loaded in data in 3.31s
+Sparse PCA (MLX): finished the data preparations in 419.93ms
+  Finished Lanczos sparse SVD (MLX) in 19.94s
+Sparse PCA (MLX): finished calculations in 20.46s
+Sparse PCA (MLX): total run time -> 24.79s
+>>> pca: 26.4 s <<<
+ Auto-determined number of Harmony clusters: 100
+MLX Harmony v2: running initial k-means
+ ... done in 3.76s
+MLX Harmony v2: initial objective 342.3829
+
+=== Harmony MLX v2 iteration 1 ===
+  Running k-means clustering...
+  Applying ridge regression correction...
+  MLX Harmony v2: iteration 1 objective 341.6652
+   Finished iteration in 721.63ms / Total runtime 5.22s
+ MLX Harmony v2 converged at iteration 1
+Finished the MLX Harmony (version 2) in 5.53s
+>>> harmony: 10.2 s <<<
+Generating GPU kNN data with nndescent method.
+Generating the snn graph.
+Added 11 edges to reconnect components that pruning cut off.
+Built the Snn { similarity: Jaccard, prune: 0.0625, rescue: true } graph: 22.54s
+>>> knn_snn: 90.5 s <<<
+Running GPU UMAP.
+Using n_epochs = 500 (dataset <10k samples or 'adam_parallel'/'adam_gpu' optimiser)
+Using provided kNN graph.
+Running umap (GPU kNN) with alpha: 0.59 and beta: 1.33
+Using precomputed kNN graph...
+Constructing fuzzy simplicial set...
+Finalised graph generation in 5.30s.
+Initialising embedding via spectral layout...
+Initialised embedding in: 40.10s.
+Optimising embedding via Adam (MLX) (500 epochs) on 226_691_972 edges...
+Running 500 epochs with MLX-accelerated Adam optimisation.
+ Epoch 100 / 500
+ Epoch 200 / 500
+ Epoch 300 / 500
+ Epoch 400 / 500
+ Epoch 500 / 500
+Optimised embedding in: 251.93s.
+UMAP (GPU) complete!
+>>> umap: 302.0 s <<<
+>>> dge: 15.1 s <<<
+cells after QC: 9208836, DGE genes: 7968
+R version 4.6.1 (2026-06-24)
+Platform: aarch64-apple-darwin23
+Running under: macOS Golden Gate 27.0.1
+
+Matrix products: default
+BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib 
+LAPACK: /Library/Frameworks/R.framework/Versions/4.6/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
+
+locale:
+[1] en_GB.UTF-8/en_GB.UTF-8/en_GB.UTF-8/C/en_GB.UTF-8/en_GB.UTF-8
+
+time zone: Europe/Brussels
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] bixverse.gpu_0.6.2  bixverse_0.8.4      data.table_1.18.6.1
+
+loaded via a namespace (and not attached):
+ [1] vctrs_0.7.3         patchwork_1.3.2     cli_3.6.6          
+ [4] rlang_1.3.0         zeallot_0.2.0       otel_0.2.0         
+ [7] DBI_1.3.0           purrr_1.2.2         generics_0.1.4     
+[10] S7_0.2.2            glue_1.8.1          backports_1.5.1    
+[13] scales_1.4.0        grid_4.6.1          manifoldsR_0.5.0   
+[16] tibble_3.3.1        lifecycle_1.0.5     Rhdf5lib_2.0.0     
+[19] duckdb_2.0.0        compiler_4.6.1      dplyr_1.2.1        
+[22] codetools_0.2-20    RColorBrewer_1.1-3  pkgconfig_2.0.3    
+[25] rhdf5filters_1.24.1 rhdf5_2.56.1        farver_2.1.2       
+[28] lattice_0.23-1      R6_2.6.1            dichromat_2.0-1    
+[31] tidyselect_1.2.1    pillar_1.11.1       magrittr_2.0.5     
+[34] checkmate_2.3.4     Matrix_1.7-6        gtable_0.3.6       
+[37] ggplot2_4.0.3      
+      799.14 real      2084.97 user       127.35 sys
+         57663700992  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+            23292804  page reclaims
+               15960  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                   0  messages sent
+                   0  messages received
+                   0  signals received
+              406300  voluntary context switches
+             2632284  involuntary context switches
+      20352115748358  instructions retired
+       6703279868496  cycles elapsed
+         61388427872  peak memory footprint
+exit=0

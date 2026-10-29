@@ -16,3 +16,6 @@ scripts/harmony_bench/.venv/
 tahoe/results/**/emb_*
 tahoe/results/**/score_cells.csv.gz
 tahoe/results/**/markers.csv
+tahoe/results/*.out
+tahoe/results/tahoe_pilot/bixverse/
+tahoe/results/tahoe_pilot/bixverse_csc32/

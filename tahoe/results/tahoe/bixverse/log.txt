@@ -1,0 +1,76 @@
+Scan 1/2: Counting gene expression across 2 files...
+  Scanning genes in plate1...
+  Scanning genes in plate3...
+  Genes passing global QC: 23_030 / 62_710
+Scan 2/2: Computing cell QC with final gene set...
+  Scanning cells in plate1...
+  Scanning cells in plate3...
+  plate1: 5_481_420 / 5_481_420 cells passing QC
+  plate3: 4_705_402 / 4_705_402 cells passing QC
+  Total cells: 10_186_822
+Writing cells to binary...
+  Writing plate1 (5_481_420 cells)...
+  Writing plate3 (4_705_402 cells)...
+Multi-h5ad loading complete: 321.98s
+ Converting the cell-based data into the gene-based format.
+  Counted 13_920_081_123 non-zeros over 23_030 genes in 16.89s; converting in 14 phase(s).
+  Phase 1/14: genes 0-1283, scatter 33.96s, compress + write 2.85s
+  Phase 2/14: genes 1283-2809, scatter 48.46s, compress + write 2.56s
+  Phase 3/14: genes 2809-4181, scatter 39.33s, compress + write 3.17s
+  Phase 4/14: genes 4181-9093, scatter 23.19s, compress + write 2.65s
+  Phase 5/14: genes 9093-10690, scatter 22.25s, compress + write 2.51s
+  Phase 6/14: genes 10690-12043, scatter 17.89s, compress + write 2.79s
+  Phase 7/14: genes 12043-14076, scatter 22.31s, compress + write 3.01s
+  Phase 8/14: genes 14076-15357, scatter 20.05s, compress + write 3.45s
+  Phase 9/14: genes 15357-16721, scatter 22.62s, compress + write 2.92s
+  Phase 10/14: genes 16721-17890, scatter 20.49s, compress + write 2.61s
+  Phase 11/14: genes 17890-18990, scatter 16.39s, compress + write 2.58s
+  Phase 12/14: genes 18990-20265, scatter 18.66s, compress + write 2.39s
+  Phase 13/14: genes 20265-21653, scatter 22.40s, compress + write 2.56s
+  Phase 14/14: genes 21653-23030, scatter 16.16s, compress + write 3.06s
+  Conversion into gene-friendly format done: 401.88s
+Loading observation data from h5ad files into DuckDB.
+Loading variable data into DuckDB.
+>>> load: 833.3 s <<<
+Setting streaming for large data to TRUE.
+Using a streaming approach for gene set percentage calculation.
+Finished the gene set proportion calculations: 22.69s
+>>> qc: 49.3 s <<<
+Warning message:
+In get_gene_indices.ScMap(x = S7::prop(x, "sc_map"), gene_ids = gene_ids,  :
+  With the provided gene_ids a total of 20 could not be matched.
+Setting streaming for large data to TRUE.
+HVG (VST): 23_030 genes, 1 batches, 24 disk block(s)
+HVG (VST): Calculated gene statistics in 16.11s
+HVG (VST): Fitted Loess in 7.68ms
+HVG (VST): Standardised variance in 8.41ms (1 gene(s) re-read for the clip)
+HVG (VST): Total run time -> 16.12s
+>>> hvg: 28.0 s <<<
+Using sparse SVD solving on scaled data on 2000 HVG.
+Sparse PCA: Loaded in data in 12.41s
+Sparse PCA: finished the data preparations in 942.26ms
+Command terminated by signal 9
+	Command being timed: "Rscript /bench/pipelines/bixverse.R /data /out /scratch"
+	User time (seconds): 5269.21
+	System time (seconds): 424.88
+	Percent of CPU this job got: 459%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 20:40.43
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 50071412
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 3470142
+	Minor (reclaiming a frame) page faults: 88555396
+	Voluntary context switches: 5270992
+	Involuntary context switches: 3563651
+	Swaps: 0
+	File system inputs: 29157680
+	File system outputs: 66584880
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
+exit=137
