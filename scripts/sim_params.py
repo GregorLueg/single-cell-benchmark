@@ -46,6 +46,6 @@ params |= {
     "de.prob": 0.03,
     "de.facLoc": 1.5,
     "batch.groupProb": batch_group_prob,
-    "output": {"dir": out_dir, "layouts": ["parse", "h5ad"]},
+    "output": {"dir": out_dir, "layouts": ["parse", "h5ad"], "parse_gzip": True},
 }
 json.dump(params, sys.stdout, indent=1)

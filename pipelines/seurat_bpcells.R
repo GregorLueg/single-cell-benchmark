@@ -12,7 +12,7 @@ suppressPackageStartupMessages({
 # >= 100 genes and >= 250 UMIs
 step("load", {
   mat <- import_matrix_market(
-    file.path(data, "DGE.mtx"),
+    file.path(data, "DGE.mtx.gz"),
     outdir = file.path(scratch, "raw"),
     row_names = meta$bc_wells,
     col_names = genes$gene_id,

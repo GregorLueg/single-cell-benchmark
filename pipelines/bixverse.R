@@ -36,7 +36,7 @@ step("load", {
     load_mtx(
       object = sce,
       sc_mtx_io_param = params_sc_mtx_io(
-        path_mtx = file.path(data, "DGE.mtx"),
+        path_mtx = file.path(data, "DGE.mtx.gz"),
         path_obs = file.path(data, "cell_metadata.csv"),
         path_var = file.path(data, "all_genes.csv"),
         cells_as_rows = TRUE,

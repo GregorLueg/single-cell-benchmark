@@ -4,6 +4,7 @@
 # ///
 """Subsample the Parse 1M PBMC mtx (cells as rows) to n random cells."""
 
+import gzip
 import sys
 from pathlib import Path
 
@@ -38,9 +39,10 @@ triplets = (
 )
 
 n_genes = pl.read_csv(src / "all_genes_1M_PBMC.csv").height
-with open(dst / "DGE.mtx", "w") as f:
-    f.write("%%MatrixMarket matrix coordinate integer general\n")
-    f.write(f"{n} {n_genes} {triplets.height}\n")
+# level 6 as splatter-sc's parse_gzip (flate2 default)
+with gzip.open(dst / "DGE.mtx.gz", "wb", compresslevel=6) as f:
+    f.write(b"%%MatrixMarket matrix coordinate integer general\n")
+    f.write(f"{n} {n_genes} {triplets.height}\n".encode())
     triplets.write_csv(f, separator=" ", include_header=False)
 
 keep.drop("old", "new").write_csv(dst / "cell_metadata.csv")

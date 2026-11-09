@@ -2,7 +2,7 @@
 # requires-python = ">=3.12"
 # dependencies = ["anndata>=0.11", "scipy>=1.13", "pandas<3", "h5py"]
 # ///
-"""Convert a subsample dir (DGE.mtx, cells as rows) to DGE.h5ad with raw counts in X."""
+"""Convert a subsample dir (DGE.mtx.gz, cells as rows) to DGE.h5ad with raw counts in X."""
 
 import sys
 from pathlib import Path
@@ -13,7 +13,7 @@ import pandas as pd
 import scipy.io
 
 d = Path(sys.argv[1]).expanduser()
-x = scipy.io.mmread(d / "DGE.mtx").tocsr().astype(np.float32)
+x = scipy.io.mmread(d / "DGE.mtx.gz").tocsr().astype(np.float32)
 obs = pd.read_csv(d / "cell_metadata.csv", index_col=0)
 var = pd.read_csv(d / "all_genes.csv", index_col=0)
 # Plain object indices so anndata writes them as string-array datasets. With

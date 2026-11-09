@@ -38,7 +38,9 @@ def main():
             reader = cytearc.H5adReader.from_inspect(cytearc.inspect_h5ad(str(data / "DGE.h5ad")))
             cytearc.H5adToZarr(reader, zarr_loc=store).dump()
         else:
-            reader = cytearc.MtxReader(cytearc.inspect_mtx(str(data))[0])
+            # inspect_mtx lists every mtx in the dir, plain DGE.mtx first
+            mtx = next(c for c in cytearc.inspect_mtx(str(data)) if c.matrixPath.endswith("DGE.mtx.gz"))
+            reader = cytearc.MtxReader(mtx)
             cytearc.MtxToZarr(reader, zarr_loc=store).dump()
         # -1 keeps the open from dropping cells; the pre-filter below does it
         ds = cytearc.DataStore(store, min_features_per_cell=-1)

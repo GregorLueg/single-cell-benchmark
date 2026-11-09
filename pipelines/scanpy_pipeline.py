@@ -49,7 +49,7 @@ with step("load"):
             adata = ad.AnnData(obs=ad.io.read_elem(f["obs"]), var=ad.io.read_elem(f["var"]))
             adata.X = ad.experimental.read_elem_lazy(f["X"], chunks=(chunk, adata.n_vars))
     else:
-        adata = sc.read_mtx(data / "DGE.mtx")
+        adata = sc.read_mtx(data / "DGE.mtx.gz")
         adata.obs = pd.read_csv(data / "cell_metadata.csv", index_col=0)
         adata.var = pd.read_csv(data / "all_genes.csv", index_col=0)
     # same pre-filter as bixverse: genes first, then cells

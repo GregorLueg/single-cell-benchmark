@@ -19,7 +19,7 @@ meta <- fread(file.path(data, "cell_metadata.csv"))
 set.seed(42L)
 pick <- sort(sample(nrow(meta), min(4L * n_cells, nrow(meta))))
 # cells x genes, 1-based, two header lines
-trip <- fread(file.path(data, "DGE.mtx"), skip = 2, col.names = c("i", "j", "x"))
+trip <- fread(file.path(data, "DGE.mtx.gz"), skip = 2, col.names = c("i", "j", "x"))
 trip <- trip[i %in% pick]
 counts <- sparseMatrix(
   i = trip$j,

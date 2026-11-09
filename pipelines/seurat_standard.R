@@ -15,7 +15,7 @@ step("load", {
     counts <- read_h5ad_counts(file.path(data, "DGE.h5ad"))
     meta <- meta[match(colnames(counts), bc_wells)]
   } else {
-    counts <- Matrix::readMM(file.path(data, "DGE.mtx"))
+    counts <- Matrix::readMM(file.path(data, "DGE.mtx.gz"))
     counts <- as(Matrix::t(counts), "CsparseMatrix")
     dimnames(counts) <- list(genes$gene_id, meta$bc_wells)
   }
