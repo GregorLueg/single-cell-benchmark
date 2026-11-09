@@ -23,5 +23,6 @@ var = pd.read_csv(d / "all_genes.csv", index_col=0)
 obs.index = pd.Index(obs.index.to_numpy(dtype=object), name=obs.index.name)
 var.index = pd.Index(var.index.to_numpy(dtype=object), name=var.index.name)
 adata = ad.AnnData(X=x, obs=obs, var=var)
-adata.write_h5ad(d / "DGE.h5ad")
+# gzip 4 without shuffle, what sc.write gives by default
+adata.write_h5ad(d / "DGE.h5ad", compression="gzip")
 print(adata)
