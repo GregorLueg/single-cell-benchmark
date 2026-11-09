@@ -48,6 +48,7 @@ COLUMNS = {
     "CyteArc mtx": ["cytearc"],
     "CyteArc h5ad": ["cytearc_h5ad"],
     "brisc h5ad": ["brisc_h5ad"],
+    "brisc h5ad hogwild": ["brisc_h5ad_hogwild"],
 }
 # native macOS runs (scripts/run_native.sh): another environment and memory
 # metric (peak footprint), so they get their own tables

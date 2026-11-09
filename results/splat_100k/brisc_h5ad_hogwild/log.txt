@@ -1,0 +1,36 @@
+brisc 0.2.5, BLAS: openblas
+>>> load: 0.9 s <<<
+>>> qc: 0.0 s <<<
+>>> hvg: 0.2 s <<<
+>>> normalise: 0.1 s <<<
+>>> pca: 0.8 s <<<
+>>> harmony: 0.3 s <<<
+>>> knn_snn: 1.0 s <<<
+>>> cluster: 0.2 s <<<
+>>> umap: 6.0 s <<<
+>>> dge: 0.0 s <<<
+cells after QC: 96342, clusters: 11
+	Command being timed: "python /bench/pipelines/brisc_pipeline.py /data /out"
+	User time (seconds): 56.44
+	System time (seconds): 3.03
+	Percent of CPU this job got: 314%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:18.92
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 1886852
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 8632
+	Minor (reclaiming a frame) page faults: 546835
+	Voluntary context switches: 18930
+	Involuntary context switches: 1161
+	Swaps: 0
+	File system inputs: 395504
+	File system outputs: 1716496
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
+exit=0

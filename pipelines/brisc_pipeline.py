@@ -76,7 +76,8 @@ with step("cluster"):
     sc = sc.cluster(resolution=1)
 
 with step("umap"):
-    sc = sc.umap(PC_key="harmony")
+    # BRISC_HOGWILD=1: multi-threaded optimiser, not reproducible
+    sc = sc.umap(PC_key="harmony", hogwild=os.environ.get("BRISC_HOGWILD") == "1")
 
 with step("dge"):
     markers = sc.find_markers(DGE_COL, all_genes=True)
