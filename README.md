@@ -186,7 +186,7 @@ with the call you'd use instead. The pipelines are in `pipelines/`.
 ## Running it
 
 ```bash
-# simulation (splatter-sc 0.1.0): writes DGE.mtx.gz and a gzipped DGE.h5ad
+# simulation (splatter-sc 0.1.1): writes DGE.mtx.gz and a gzipped DGE.h5ad
 python3 scripts/sim_params.py sim/splat_fit.json 100000 data/splat_100k > sim/splat_100k.json
 splatter-sc sim/splat_100k.json
 # PBMC
