@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Usage: [INPUT=h5ad|hdf5] [BIX_KNN=nndescent] [BIX_TSNE_KNN=nndescent] [TAG=suffix] [STEP_TIMEOUT=2700] [R_IMAGE=scbench-r] scripts/run.sh <tool> <dataset>
+# Usage: [COLD=1|0] [INPUT=h5ad|hdf5] [BIX_KNN=nndescent] [BIX_TSNE_KNN=nndescent] [TAG=suffix] [STEP_TIMEOUT=2700] [R_IMAGE=scbench-r] scripts/run.sh <tool> <dataset>
 #   tool: scanpy | cytearc | brisc | seurat_bpcells | seurat_standard | scrapper | bixverse
 # WARM=1 reconnects to the on-disk data the last cold run left in the scratch
 # volume (bixverse | seurat_bpcells | cytearc only), so run the cold run first.
@@ -29,6 +29,13 @@ if [ "$warm" != 1 ]; then
 fi
 
 docker rm -f scbench-run > /dev/null 2>&1 || true
+
+# cold read: empty the macOS file cache under the bind mount (COLD=0 skips it).
+# Dropping the VM's page cache had no measurable effect. Needs a sudoers entry:
+#   <user> ALL=(root) NOPASSWD: /usr/sbin/purge
+if [ "${COLD:-1}" = 1 ]; then
+  sudo -n /usr/sbin/purge || { echo "purge failed: add the sudoers entry or set COLD=0" >&2; exit 1; }
+fi
 
 # watchdog: steps.csv gains a line per finished step, so its mtime is the end
 # of the last step (or the pipeline start)
