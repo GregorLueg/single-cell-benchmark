@@ -27,6 +27,7 @@ TOOL_STEPS = {
     "scrapper": [s for s in STEPS if s not in ("tsne_default", "tsne_fft")],
     "seurat": [s for s in STEPS if s not in ("cluster_fast", "tsne_quick")],
     "cytearc": [s for s in STEPS if s != "cluster_fast" and not s.startswith("tsne")],
+    "brisc": [s for s in STEPS if s != "cluster_fast" and not s.startswith("tsne")],
 }
 # alternative takes on a step: listed, but not in the totals
 EXTRA = ("tsne", "cluster_fast")
@@ -46,6 +47,7 @@ COLUMNS = {
     "Seurat BPCells": ["seurat_bpcells"],
     "CyteArc mtx": ["cytearc"],
     "CyteArc h5ad": ["cytearc_h5ad"],
+    "brisc h5ad": ["brisc_h5ad"],
 }
 # native macOS runs (scripts/run_native.sh): another environment and memory
 # metric (peak footprint), so they get their own tables

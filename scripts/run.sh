@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Usage: [INPUT=h5ad|hdf5] [BIX_KNN=nndescent] [BIX_TSNE_KNN=nndescent] [TAG=suffix] [STEP_TIMEOUT=2700] [R_IMAGE=scbench-r] scripts/run.sh <tool> <dataset>
-#   tool: scanpy | cytearc | seurat_bpcells | seurat_standard | scrapper | bixverse
+#   tool: scanpy | cytearc | brisc | seurat_bpcells | seurat_standard | scrapper | bixverse
 # WARM=1 reconnects to the on-disk data the last cold run left in the scratch
 # volume (bixverse | seurat_bpcells | cytearc only), so run the cold run first.
 # Container is capped like a MacBook Air: 8 cores, 24 GB RAM plus swap.
@@ -15,6 +15,7 @@ rm -rf "$out"; mkdir -p "$out"
 
 case "$tool" in
   scanpy) image=scbench-py; cmd=(python /bench/pipelines/scanpy_pipeline.py /data /out) ;;
+  brisc)  image=scbench-brisc; cmd=(python /bench/pipelines/brisc_pipeline.py /data /out) ;;
   cytearc)
     image=scbench-cytearc; script=cytearc_pipeline.py; [ "$warm" = 1 ] && script=cytearc_warm.py
     cmd=(python "/bench/pipelines/$script" /data /out /scratch) ;;
@@ -46,7 +47,7 @@ step_timeout="${STEP_TIMEOUT:-2700}"
 watchdog=$!
 
 status=0
-docker run --rm --name scbench-run --cpus=8 --memory="$mem" --memory-swap="$memswap" \
+docker run --rm --name scbench-run --cpus=8 --memory="$mem" --memory-swap="$memswap" --shm-size="${SHM:-64m}" \
   -e LOAD_ONLY="${LOAD_ONLY:-0}" -e OMP_NUM_THREADS=8 -e OPENBLAS_NUM_THREADS=8 -e RAYON_NUM_THREADS=8 -e INPUT="${INPUT:-mtx}" -e CHUNK="${CHUNK:-50000}" -e BIX_CSC_GB="${BIX_CSC_GB:-8}" -e BIX_KNN="${BIX_KNN:-kmknn}" -e BIX_TSNE_KNN="${BIX_TSNE_KNN:-kmknn}" \
   -v "$root/data/$dataset:/data:ro" \
   -v "$out:/out" \
