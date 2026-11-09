@@ -14,6 +14,15 @@ truth is known, so every run is scored on clustering, embeddings, batch
 integration, HVGs and markers, not just timed. The Parse Biosciences 1M PBMC
 data set (987,585 cells) is the real-data check on speed and memory.
 
+Every data set comes as two compressed inputs, the way they sit on most
+people's disks: `DGE.mtx.gz` (gzip level 6) and `DGE.h5ad` (gzip level 4, no
+shuffle, the layout `sc.write` and `anndata.write_h5ad(compression="gzip")`
+give). Decompression counts as part of the load. All six data sets take 19 GB
+on disk, down from 75 GB as plain text and uncompressed HDF5.
+
+The tables below predate that switch: they were measured on plain `DGE.mtx`
+and uncompressed h5ads, and get replaced in the next full rerun.
+
 The benchmarks ran within Docker on a MacBook M1 Max.
 
 ## Headline
@@ -71,7 +80,8 @@ the same CPU pipeline run natively.
   harmonypy 2.1.0 (2.1 against 4.2 s) and MLX 4.2x; at 100k both are 1.8x.
   97% of harmonypy's neighbours kept, at 1.1 GB more memory for v2.
 - **Smallest on disk.** bixverse's store takes 2.7 GB at 1M, against 3.7 GB
-  for the BPCells store and 8.1 GB for the h5ad. BPCells' DGE step adds a
+  for the BPCells store and 8.1 GB for the uncompressed h5ad (2.6 GB
+  gzipped). BPCells' DGE step adds a
   gene-major copy of the normalised data, 12.5 GB on disk in all; CyteArc's
   store holds the counts cell- and gene-major, 8.3 GB.
 
@@ -154,6 +164,11 @@ The harness lives in `tahoe/`.
   `calculate_qc_metrics` blows up under Dask, and has no DGE. scrapper HDF5
   and Scanpy Dask need an h5ad (or 10x `.h5`); their MTX conversion is not
   timed.
+- Every mtx reader has to inflate one gzip stream, and gzip doesn't split, so
+  that part of the load runs on one thread whatever the parser does after.
+- The splat h5ads come straight from splatter-sc. They match anndata's layout
+  except the `X` chunk length, which splatter-sc sizes from its nonzero
+  estimate: within 3% of what h5py would pick.
 
 Details in [methods](docs/methods.md).
 
@@ -171,7 +186,7 @@ with the call you'd use instead. The pipelines are in `pipelines/`.
 ## Running it
 
 ```bash
-# simulation (splatter-sc 0.1.0)
+# simulation (splatter-sc 0.1.0): writes DGE.mtx.gz and a gzipped DGE.h5ad
 python3 scripts/sim_params.py sim/splat_fit.json 100000 data/splat_100k > sim/splat_100k.json
 splatter-sc sim/splat_100k.json
 # PBMC
