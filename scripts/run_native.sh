@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Usage: [BACKEND=wgpu|mlx|cpu] [BIX_KNN=nndescent] [BIX_TSNE_KNN=kmknn] scripts/run_native.sh <dataset>
+# Usage: [COLD=1|0] [BACKEND=wgpu|mlx|cpu] [BIX_KNN=nndescent] [BIX_TSNE_KNN=kmknn] scripts/run_native.sh <dataset>
 # Runs bixverse on the host: bixverse_gpu.R on Metal via wgpu or, with
 # BACKEND=mlx, MLX (needs bixverse.gpu built against mlx-c); BACKEND=cpu runs
 # the Docker CPU pipeline bixverse.R natively, the control for the GPU rows.
@@ -18,6 +18,12 @@ esac
 out="$root/results/$dataset/$run"
 scratch="$root/scratch_native"
 rm -rf "$out" "$scratch"; mkdir -p "$out" "$scratch"
+
+# cold read: empty the macOS file cache (COLD=0 skips it).
+# Needs a sudoers entry: <user> ALL=(root) NOPASSWD: /usr/sbin/purge
+if [ "${COLD:-1}" = 1 ]; then
+  sudo -n /usr/sbin/purge || { echo "purge failed: add the sudoers entry or set COLD=0" >&2; exit 1; }
+fi
 
 BACKEND="$backend" BIX_CSC_GB="${BIX_CSC_GB:-8}" BIX_KNN="${BIX_KNN:-kmknn}" BIX_TSNE_KNN="${BIX_TSNE_KNN:-kmknn}" \
   R_LIBS="$root/rlib" RAYON_NUM_THREADS=8 OMP_NUM_THREADS=8 OPENBLAS_NUM_THREADS=8 BENCH_DIR="$root" /usr/bin/time -l \

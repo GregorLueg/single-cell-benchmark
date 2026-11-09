@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Same-input Harmony benchmark: 3 reps per implementation and size, one process each
+# Same-input Harmony benchmark: 3 reps per implementation and size, one process each.
+# Usage: [COLD=1|0] scripts/harmony_bench/drive.sh
 cd "$(dirname "$0")/../.."
 B=scripts/harmony_bench
 R=results/harmony_bench
@@ -17,6 +18,10 @@ for ds in splat_100k splat_1m; do
         harmonypy) cmd=($PY $B/run_py.py "$in" harmonypy "$out") ;;
         *) cmd=(Rscript $B/run_bix.R "$in" "$impl" "$out") ;;
       esac
+      # cold read of the input, as in the pipeline runs (COLD=0 skips it)
+      if [ "${COLD:-1}" = 1 ]; then
+        sudo -n /usr/sbin/purge || { echo "purge failed: add the sudoers entry or set COLD=0" >&2; exit 1; }
+      fi
       /usr/bin/time -l "${cmd[@]}" 2> "$out.log"
       rss=$(grep "maximum resident set size" "$out.log" | awk '{print $1}')
       echo "$ds,$impl,$rep,$(cat "$out.time" 2>/dev/null),$rss" >> $R/runs.csv

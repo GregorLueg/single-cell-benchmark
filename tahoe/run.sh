@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Usage: [DATA=dir] [WALL=18000] [R_IMAGE=scbench-r:local] tahoe/run.sh <tool>
+# Usage: [COLD=1|0] [DATA=dir] [WALL=18000] [R_IMAGE=scbench-r:local] tahoe/run.sh <tool>
 #   tool: bixverse | seurat_bpcells | scanpy_dask | cytearc
 # Every *.h5ad in DATA is one plate; each tool reads them all natively.
 # Container capped at 48 GB RAM plus 8 GB swap, 8 cores. A run is killed once
@@ -31,6 +31,12 @@ esac
 docker volume rm -f scbench-scratch > /dev/null
 docker volume create scbench-scratch > /dev/null
 docker rm -f scbench-run > /dev/null 2>&1 || true
+
+# cold read: empty the macOS file cache under the bind mount (COLD=0 skips it).
+# Needs a sudoers entry: <user> ALL=(root) NOPASSWD: /usr/sbin/purge
+if [ "${COLD:-1}" = 1 ]; then
+  sudo -n /usr/sbin/purge || { echo "purge failed: add the sudoers entry or set COLD=0" >&2; exit 1; }
+fi
 
 wall="${WALL:-18000}"
 # poll rather than one long sleep, so killing the subshell leaves no timer behind
