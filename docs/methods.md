@@ -88,15 +88,20 @@
   the cap. h5ad only: its MTX reader wants the 10x layout. The simulated h5ad
   stores X chunked, which sends brisc to its fallback reader (forked h5py
   workers into shared buffers) instead of its threaded one; on an unchunked
-  copy the warm load at 100k drops from 0.7 to 0.4 s. All rows read the same
+  copy the warm load at 100k drops from 0.7 to 0.4 s. Since the gzip switch
+  every h5ad is chunked, the Parse ones included. All rows read the same
   file, so the harness keeps it.
 
 ## Data
 
 **Simulation**: [splatter-sc](https://github.com/GregorLueg/splatter-sc)
-v0.1.0, a streaming Rust port of splatter's Splat simulator. It writes the
-Parse layout and an h5ad, plus the truth (`cells_truth.tsv.gz`: batch and
-group per cell; `genes_truth.tsv.gz`: DE factors per group).
+v0.1.1, a streaming Rust port of splatter's Splat simulator. It writes the
+Parse layout (`DGE.mtx.gz` with `parse_gzip`) and an h5ad, plus the truth
+(`cells_truth.tsv.gz`: batch and group per cell; `genes_truth.tsv.gz`: DE
+factors per group). The h5ad follows `anndata.write_h5ad(compression="gzip")`
+(dtypes, filters, h5py's chunk guess, resizable `X`) except the `X/data` and
+`X/indices` chunk length: splatter-sc streams `X` and sizes its chunks from
+the expected nonzeros, 0.9% to 2.8% off what h5py picks for the final count.
 
 1. `scripts/estimate_splat.R` fits `splatter::splatEstimate` (splatter 1.32.0)
    on 5,000 PBMC cells that pass the benchmark QC, so means, library sizes and
@@ -114,10 +119,35 @@ group per cell; `genes_truth.tsv.gz`: DE factors per group).
 
 **Parse 1M PBMC**: 987,585 cells, 60,664 genes, 24 samples, plus random 100k
 and 500k cell subsamples (`scripts/subsample.py`, seed 42). The mtx rows read
-the Parse mtx; the h5ad rows read `scripts/to_h5ad.py` output. That
+the subsampled mtx; the h5ad rows read `scripts/to_h5ad.py` output. That
 conversion runs once, outside the timings, and is in memory; every h5ad row
 (bixverse, Scanpy, Scanpy Dask, scrapper, scrapper HDF5, Seurat, CyteArc,
 brisc) is spared it. Only the mtx rows pay for parsing text.
+
+**Compressed inputs**: every data set ships as `DGE.mtx.gz` (gzip level 6,
+splatter-sc's default and what `subsample.py` writes) and `DGE.h5ad` (gzip
+level 4 without shuffle on every dataset, what `sc.write` and
+`write_h5ad(compression="gzip")` give). That's how count matrices sit on most
+people's disks, so decompression is part of the load. Before the switch the
+inputs were plain `DGE.mtx` and uncompressed h5ads, 80.5 GB for the six data
+sets against 20.2 GB now; the counts are identical, checked value by value.
+The tables in [results](results.md) were measured on the uncompressed inputs
+and get replaced in the next full rerun.
+
+| data set | `DGE.mtx` | `DGE.mtx.gz` | h5ad uncompressed | h5ad gzip |
+|---|---|---|---|---|
+| splat_100k | 1.43 GB | 0.33 GB | 0.87 GB | 0.28 GB |
+| splat_500k | 7.62 GB | 1.68 GB | 4.33 GB | 1.38 GB |
+| splat_1m | 15.38 GB | 3.35 GB | 8.67 GB | 2.76 GB |
+| parse_100k | 1.57 GB | 0.36 GB | 0.97 GB | 0.28 GB |
+| parse_500k | 8.37 GB | 1.81 GB | 4.82 GB | 1.40 GB |
+| parse_full | 16.68 GB | 3.58 GB | 9.54 GB | 2.75 GB |
+
+Sizes in 10^9 bytes. Every mtx reader in the stack reads the `.gz` directly
+(`Matrix::readMM`, BPCells `import_matrix_market`, `sc.read_mtx`, CyteArc's
+`MtxReader`, bixverse from 0.8.4), checked against the plain file on 10k
+simulated cells. CyteArc's `inspect_mtx` lists every mtx in the directory, so
+its pipeline picks `DGE.mtx.gz` by name.
 
 ## Versions
 
@@ -320,6 +350,13 @@ harmonypy.
 - **One repeat, one machine, one simulation seed.** Apple Silicon under
   Docker, not a real 24 GB laptop. Reruns of the same bixverse configuration
   moved the load step by up to 35 s, mostly in the MTX reader's file passes.
+- **Results predate the compressed inputs.** Every table so far was measured
+  on plain `DGE.mtx` and uncompressed h5ads (see Data); the next full rerun
+  replaces them.
+- **gzip doesn't split.** Every mtx reader has to inflate one gzip stream, so
+  that part of the load runs on one thread whatever the parser does after.
+  The h5ad readers inflate chunk by chunk. How much either costs is not
+  measured yet.
 - **Peak memory includes tSNE.** For bixverse at 1M the tSNE step sets the
   run peak (10.0 against 8.2 GB before tSNE, h5ad).
 - **Docker on macOS runs in a VM.** The bixverse CPU pipeline runs 1.3x to
@@ -426,7 +463,7 @@ harmonypy.
 uv run scripts/subsample.py ~/Desktop/parse_pbmc_1m data/parse_100k 100000
 uv run scripts/to_h5ad.py data/parse_100k
 
-# simulation (splatter-sc 0.1.0: cargo install splatter-sc --version 0.1.0).
+# simulation (splatter-sc 0.1.1: cargo install splatter-sc --version 0.1.1).
 # The configs in sim/ are committed; they came from these two lines
 Rscript scripts/estimate_splat.R data/parse_100k sim/splat_fit.json   # needs splatter
 python3 scripts/sim_params.py sim/splat_fit.json 100000 data/splat_100k > sim/splat_100k.json
