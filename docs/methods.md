@@ -31,6 +31,16 @@
   scrapper HDF5, CyteArc): the file pages they read or map do not count, while an
   in-memory row pays for every byte it holds. The cgroup cap counts cached
   pages too and reclaims them under pressure, so it still bounds every run.
+  The monitor also logs `shmem` and `file_mapped`, to catch tools that hold
+  data in shared memory rather than anon.
+- **Cold reads**: every run script (`run.sh`, `run_native.sh`,
+  `tahoe/run.sh`, the Harmony driver) empties the macOS file cache with
+  `purge` before each run, so every load reads its input from disk. The cache
+  that matters sits on the macOS side of the bind mount: dropping the VM's
+  page cache did nothing (brisc at 100k loads in 0.7 s warm, 0.7 s after a VM
+  drop, 1.6 to 1.9 s after `purge`). `purge` needs root, so it runs through a
+  sudoers entry, `<user> ALL=(root) NOPASSWD: /usr/sbin/purge`; `COLD=0`
+  skips it.
 - **Disk**: `run.sh` records what a run leaves in its scratch volume
   (`scratch_kb`): the bixverse store and the BPCells matrix dirs. Input files
   are not counted. For bixverse and CyteArc that is the store written at load
@@ -71,6 +81,15 @@
   `reduction.pca`, ...) rather than the `ds.pipeline.rna` recipe, which adds
   cell cycle, doublet scores and four Leiden resolutions; the order and the
   inputs of each call follow the recipe.
+- **brisc**: in memory. The whole count matrix is read at load and stays in
+  RAM; QC tabulates which cells pass rather than subsetting. Its own Python
+  3.12 image (`docker/brisc.Dockerfile`), wheels from PyPI. `num_threads = 8`
+  is set at load, as its default `os.cpu_count()` sees the VM's 10 cores, not
+  the cap. h5ad only: its MTX reader wants the 10x layout. The simulated h5ad
+  stores X chunked, which sends brisc to its fallback reader (forked h5py
+  workers into shared buffers) instead of its threaded one; on an unchunked
+  copy the warm load at 100k drops from 0.7 to 0.4 s. All rows read the same
+  file, so the harness keeps it.
 
 ## Data
 
@@ -91,14 +110,14 @@ group per cell; `genes_truth.tsv.gz`: DE factors per group).
    effects and non-trivial clustering.
 3. Three sizes, the same parameters: 100k, 500k and 1M cells (96,342, 482,409
    and 964,763 after QC). The simulation has no MT genes, so the MT filter
-   is a no-op there.
+   is a no-op there. No MALAT1 either.
 
 **Parse 1M PBMC**: 987,585 cells, 60,664 genes, 24 samples, plus random 100k
 and 500k cell subsamples (`scripts/subsample.py`, seed 42). The mtx rows read
 the Parse mtx; the h5ad rows read `scripts/to_h5ad.py` output. That
 conversion runs once, outside the timings, and is in memory; every h5ad row
-(bixverse, Scanpy, Scanpy Dask, scrapper, scrapper HDF5, Seurat) is spared
-it. Only the mtx rows pay for parsing text.
+(bixverse, Scanpy, Scanpy Dask, scrapper, scrapper HDF5, Seurat, CyteArc,
+brisc) is spared it. Only the mtx rows pay for parsing text.
 
 ## Versions
 
@@ -112,6 +131,7 @@ Every row, PBMC and simulation, runs on the same stack.
 | Seurat | 5.6.0 (SeuratObject 5.4.0, BPCells 0.3.1, harmony 2.0.5, presto 1.1.0, uwot 0.2.5) |
 | scrapper HDF5 | scrapper 1.6.3, HDF5Array 1.40.0, DelayedArray 0.38.2, beachmat.hdf5 1.10.0 |
 | CyteArc | 1.3.0 (PyPI), Python 3.13 |
+| brisc | 0.2.5 (PyPI), Python 3.12, OpenBLAS |
 
 bixverse, bixverse.gpu and manifoldsR are built from source: bixverse and
 bixverse.gpu at the commits in the table, manifoldsR at the commit in
@@ -131,28 +151,42 @@ scrapper's batch correction via `block =` plus MNN, Seurat's sketching.
 1. **load**: pre-filter as bixverse does it. Genes in at least 5 cells first,
    then cells with at least 100 genes and 250 UMIs. bixverse fuses the
    log-normalisation into this streaming pass, so it has no separate
-   normalise step.
-2. **qc**: MT < 5%, total UMIs >= 750, detected genes >= 250.
+   normalise step. brisc keeps every gene and cell at load: its QC cuts
+   (250 genes, 750 UMIs) cover the cell pre-filter, and the 5-cell gene set
+   is counted at load and only used to restrict its markers.
+2. **qc**: MT < 5%, total UMIs >= 750, detected genes >= 250. brisc's `qc`
+   runs with its MALAT1 filter off (not part of the harness QC) and its MT
+   filter off where there are no MT genes, as both raise otherwise.
 3. **normalise**: library size to 1e4 and log1p (bixverse, Scanpy, Seurat);
    centred size factors and log2 (scrapper defaults); CyteArc's default,
    library size to 1000 over the HVGs and log1p, computed lazily, so it runs
-   after HVG selection and its cost lands in PCA.
-4. **hvg**: 2000 genes, each framework's default method.
+   after HVG selection and its cost lands in PCA. brisc's default, log1pPF
+   (Ahlmann-Eltze and Huber 2023), after HVG selection, since its HVGs come
+   from the raw counts.
+4. **hvg**: 2000 genes, each framework's default method. brisc: Seurat v3 on
+   raw counts, genes in at least 5 cells, no batch column (as for Scanpy; its
+   tutorial passes one for multi-batch data).
 5. **pca**: 30 components on the HVGs (scrapper via `runPca(subset =)`, as in
    its vignette). Scanpy and scrapper centre only; Seurat, bixverse and
-   CyteArc also scale to unit variance.
+   CyteArc also scale to unit variance. brisc runs its `pca` at its defaults
+   otherwise; whether it scales is not checked.
 6. **harmony**: by sample. Scanpy runs harmonypy with `ncores = 8`, the CPU
    cap; Seurat calls `setThreads(8)`, as its 5.6.0 kernels default to one
-   thread. CyteArc runs its own Harmony2 (`reduction.harmony`).
+   thread. CyteArc runs its own Harmony2 (`reduction.harmony`), brisc its own
+   `harmonize`.
 7. **knn_snn**: k = 15. scrapper builds the kNN once (`findKNN` with Annoy)
    and hands it to both `buildSnnGraph` and `runUmap`, as
    `runAllNeighborSteps` in its vignette does; the harness calls the steps one
    by one to keep the per-step times. CyteArc: hnswlib index, k = 15
-   neighbours and its fuzzy connectivity graph.
+   neighbours and its fuzzy connectivity graph. brisc: its approximate
+   `neighbors` at k = 15 (its default is 20), then `shared_neighbors`.
 8. **cluster**: Leiden, resolution 1. The graphs differ, so the cluster counts
    do not compare: Scanpy and CyteArc cluster a UMAP-style fuzzy graph, Seurat and bixverse a
    Jaccard sNN pruned at 1/15 and 1/16, scrapper a rank-weighted sNN
-   without pruning.
+   without pruning, brisc an sNN that keeps pairs sharing at least 3
+   neighbours. brisc's default minimum cluster size is 5, so tiny fragments
+   survive: at 1M it reports 76 clusters, of which 65 hold 393 cells between
+   them.
    - `cluster_fast (qd)`: k-means on the Harmony embedding down to
      4 x sqrt(n) centroids, a graph over the centroids (k = 15), Leiden at
      resolutions 1 and 2 on the same k-means, and each cell takes its
@@ -166,9 +200,13 @@ scrapper's batch correction via `block =` plus MNN, Seurat's sketching.
      package's defaults otherwise. scrapper has no single call for it, so the
      harness composes `clusterKmeans`, `buildSnnGraph` on the centroids and
      `clusterGraph`, as bluster's `TwoStepParam` does. An extra row: not in
-     the totals. CyteArc has no equivalent.
+     the totals. CyteArc and brisc have no equivalent.
 9. **umap**: defaults. CyteArc's step includes its k-means initialisation
    (`embeddings.initialization`) on the Harmony coordinates, as its recipe does.
+   brisc's default optimiser is single-threaded (`hogwild = False`). The
+   `brisc h5ad hogwild` column (`BRISC_HOGWILD=1`) switches on its
+   multi-threaded Hogwild optimiser, which brisc documents as not
+   reproducible between runs. A column of its own, totals included.
 10. **dge**: one-vs-rest markers, each framework's default test: bixverse
     `find_all_markers_sc` (Wilcoxon, `min_prop = 0.05`), Scanpy
     `rank_genes_groups` (Wilcoxon), Seurat `FindAllMarkers` (presto),
@@ -181,7 +219,14 @@ scrapper's batch correction via `block =` plus MNN, Seurat's sketching.
     `transpose_storage_order`, as the warning advises, inside the DGE step:
     its time and its disk copy count against BPCells. It cut DGE from 404 to
     260 s on the 500k simulation and from 1,348 to 1,137 s on the full PBMC
-    data, at 0.4 to 1.4 GB more peak memory and three times the disk. On the simulation the groups are
+    data, at 0.4 to 1.4 GB more peak memory and three times the disk. brisc's
+    `find_markers` is not a test: it scores each gene by its detection rate
+    in the group and the fold change of that rate against the rest, with no
+    p-values. The harness takes every gene (`all_genes = True`) in at least
+    5 cells and ranks on that fold change; a gene detected only in the group
+    has an infinite fold change and is set just above the largest finite
+    one. Ranking on detection rate instead scored worse at 100k (DGE AUROC
+    0.69 against 0.95). On the simulation the groups are
     the true ones, so this tests the DE engine rather than the clustering. On
     PBMC they are the 24 samples, the same workload for everyone.
 11. **tsne**: perplexity 30, each tSNE builds its own kNN at k = 3 x
@@ -201,6 +246,7 @@ scrapper's batch correction via `block =` plus MNN, Seurat's sketching.
     - CyteArc has no tSNE row. Its only tSNE is SG-t-SNE-Pi on the
       connectivity graph (no perplexity), comparable to none of the above, and
       its `sgtsnepi` dependency has no linux/arm64 wheel.
+    - brisc has no tSNE.
 
 On the simulation the score inputs (clusters, HVGs, embeddings, markers) are
 written right after DGE, so a tSNE timeout only loses the tSNE rows.
@@ -349,14 +395,27 @@ harmonypy.
   Scanpy, uwot under Seurat (`n_sgd_threads = 0`) and scrapper's `runUmap`
   (`parallel.optimization = FALSE`) run the SGD on one thread by default;
   bixverse's default optimiser (`adam_parallel`) uses all 8. CyteArc's
-  `embeddings.umap` defaults to `parallel = False` as well. This favours
-  bixverse; none of the four is switched to a parallel mode here.
+  `embeddings.umap` and brisc's `umap` default to one thread as well. This
+  favours bixverse. Only brisc gets an extra parallel column (Hogwild); at
+  100k it cut UMAP from 27.3 to 6.0 s and at 1M from 290 to 71 s, and
+  dropped the rare group's UMAP purity from 0.36 to 0.33 at 100k (one run
+  each). The other four stay on one thread.
 - **Harmony is not one implementation.** Seurat runs the R harmony package
-  (with `project.dim = TRUE`), Scanpy harmonypy, scrapper, bixverse and
-  CyteArc their own. The same-input comparison covers bixverse and harmonypy only.
+  (with `project.dim = TRUE`), Scanpy harmonypy, scrapper, bixverse,
+  CyteArc and brisc their own. The same-input comparison covers bixverse and harmonypy only.
 - **Per-step times of the lazy rows shift work between steps.** Scanpy Dask,
   scrapper HDF5, BPCells and CyteArc defer computation, so a step can pay for work
   queued earlier. Compare their totals, not single steps.
+- **brisc's DGE is not like-for-like.** A detection-rate count with no test
+  is cheaper than any Wilcoxon or AUC, so its 0.0 to 0.3 s DGE step does not
+  compare with the others. It also ranks detectable markers worse (R-precision
+  0.29 at 100k and 0.34 at 1M, against 0.88 to 0.94 for the rest).
+- **brisc runs on OpenBLAS.** MKL is x86-only and Accelerate macOS-only, so
+  linux/arm64 gets OpenBLAS, which brisc's docs call slower. This works
+  against brisc; by how much is not measured.
+- **brisc's anon peak runs short.** At 1M its max RSS (16.2 GiB) sits about
+  1.2 GB above the cgroup anon peak (15.0 GB); `shmem` and `file_mapped` do
+  not account for the gap. At 100k the two are within 0.3 GB.
 - **Defaults differ** in scaling, normalisation and graph construction; see
   Workflow.
 
@@ -377,6 +436,7 @@ splatter-sc sim/splat_100k.json   # and splat_10k (smoke test), splat_500k, spla
 docker build -f docker/r.Dockerfile -t scbench-r .
 docker build -f docker/py.Dockerfile -t scbench-py .
 docker build -f docker/cytearc.Dockerfile -t scbench-cytearc .
+docker build -f docker/brisc.Dockerfile -t scbench-brisc .
 # bixverse and manifoldsR sources packed into vendor/ (see the
 # header of docker/r-local.Dockerfile)
 docker build -f docker/r-local.Dockerfile -t scbench-r:local .
@@ -385,12 +445,18 @@ R_LIBS=rlib R CMD INSTALL -l rlib manifoldsR
 R_LIBS=rlib R CMD INSTALL -l rlib bixverse
 BIXVERSE_GPU_MLX=true R_LIBS=rlib R CMD INSTALL -l rlib bixverse.gpu
 
-# tool: bixverse | scanpy | cytearc | scrapper | seurat_standard | seurat_bpcells
-# INPUT: mtx | h5ad | dask (scanpy only) | hdf5 (scrapper only, with TAG=hdf5)
-[INPUT=h5ad] [BIX_KNN=nndescent] [BIX_TSNE_KNN=ivf] [TAG=suffix] [STEP_TIMEOUT=2700] [R_IMAGE=scbench-r:local] scripts/run.sh <tool> <dataset>
+# cold reads: every run script calls `sudo -n /usr/sbin/purge` first (COLD=0 skips it).
+# Once, in a real terminal:  sudo visudo -f /etc/sudoers.d/purge
+#   and add:                 <user> ALL=(root) NOPASSWD: /usr/sbin/purge
+
+# tool: bixverse | scanpy | cytearc | brisc | scrapper | seurat_standard | seurat_bpcells
+# INPUT: mtx | h5ad | dask (scanpy only) | hdf5 (scrapper only, with TAG=hdf5); brisc h5ad only
+[COLD=0] [INPUT=h5ad] [BIX_KNN=nndescent] [BIX_TSNE_KNN=ivf] [TAG=suffix] [STEP_TIMEOUT=2700] [R_IMAGE=scbench-r:local] scripts/run.sh <tool> <dataset>
 [BACKEND=mlx] scripts/run_native.sh <dataset>       # bixverse.gpu on Metal: wgpu, or MLX
 BACKEND=cpu BIX_KNN=nndescent [BIX_TSNE_KNN=ivf] scripts/run_native.sh <dataset>   # native CPU control
 LOAD_ONLY=1 TAG=disk scripts/run.sh bixverse <dataset>   # on-disk store only
+INPUT=h5ad TAG=h5ad scripts/run.sh brisc <dataset>
+BRISC_HOGWILD=1 INPUT=h5ad TAG=h5ad_hogwild scripts/run.sh brisc <dataset>   # multi-threaded UMAP
 
 # warm start: reconnect to what the last cold run left in the scratch volume
 WARM=1 scripts/run.sh bixverse parse_100k          # or seurat_bpcells, cytearc
