@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Usage: [COLD=1|0] [INPUT=mtx|h5ad|dask] [BIX_KNN=kmknn] [BIX_TSNE_KNN=nndescent] [TAG=suffix] [STEP_TIMEOUT=2700] [R_IMAGE=scbench-r] scripts/run.sh <tool> <dataset>
-#   tool: scanpy | cytearc | brisc | seurat_bpcells | seurat_standard | scrapper | bixverse
+#   tool: scanpy | cytearc | brisc | bixverse_py | seurat_bpcells | seurat_standard | scrapper | bixverse
 # WARM=1 reconnects to the on-disk data the last cold run left in the scratch
 # volume (bixverse | seurat_bpcells | cytearc only), so run the cold run first.
 # Container is capped like a MacBook Air: 8 cores, 24 GB RAM plus swap.
@@ -16,6 +16,7 @@ rm -rf "$out"; mkdir -p "$out"
 case "$tool" in
   scanpy) image=scbench-py; cmd=(python /bench/pipelines/scanpy_pipeline.py /data /out) ;;
   brisc)  image=scbench-brisc; cmd=(python /bench/pipelines/brisc_pipeline.py /data /out) ;;
+  bixverse_py) image=scbench-bixverse-py; cmd=(python /bench/pipelines/bixverse_pipeline.py /data /out /scratch) ;;
   cytearc)
     image=scbench-cytearc; script=cytearc_pipeline.py; [ "$warm" = 1 ] && script=cytearc_warm.py
     cmd=(python "/bench/pipelines/$script" /data /out /scratch) ;;
