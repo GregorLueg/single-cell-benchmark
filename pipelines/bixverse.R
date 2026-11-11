@@ -76,13 +76,13 @@ step("pca", {
 })
 
 step("harmony", {
-  sce <- harmony_v2_sc(object = sce, batch_column = "sample")
+  sce <- harmony_sc(object = sce, batch_column = "sample")
 })
 
 step("knn_snn", {
   sce <- find_neighbours_sc(
     object = sce,
-    embd_to_use = "harmony_v2",
+    embd_to_use = "harmony",
     neighbours_params = params_sc_neighbours(knn = knn_params)
   )
 })
@@ -97,10 +97,10 @@ step("cluster", {
 step("cluster_fast", {
   fc <- fast_cluster_sc(
     object = sce,
-    embd_to_use = "harmony_v2",
+    embd_to_use = "harmony",
     resolutions = c(1.0, 2.0),
     fc_params = params_sc_fast_cluster(
-      n_centroids = as.integer(4 * sqrt(nrow(get_embedding(sce, "harmony_v2")))),
+      n_centroids = as.integer(4 * sqrt(nrow(get_embedding(sce, "harmony")))),
       algorithm = "leiden"
     ),
     .verbose = FALSE
@@ -111,7 +111,7 @@ step("cluster_fast", {
 })
 
 step("umap", {
-  sce <- umap_sc(object = sce, embd_to_use = "harmony_v2")
+  sce <- umap_sc(object = sce, embd_to_use = "harmony")
 })
 
 # bixverse lowercases obs column names on load
@@ -129,7 +129,7 @@ if (truth) {
     hvg = get_gene_names_from_idx(sce, get_hvg(sce), rust_based = TRUE),
     embs = list(
       pca = get_embedding(sce, "pca"),
-      harmony = get_embedding(sce, "harmony_v2"),
+      harmony = get_embedding(sce, "harmony"),
       umap = get_embedding(sce, "umap")
     ),
     markers = markers[, .(group = grp, gene = gene_id, score = z_scores)]
@@ -139,7 +139,7 @@ if (truth) {
 step("tsne_default", {
   sce <- tsne_sc(
     object = sce,
-    embd_to_use = "harmony_v2",
+    embd_to_use = "harmony",
     perplexity = 30,
     approx_type = "bh",
     knn_method = tsne_knn_method
@@ -150,7 +150,7 @@ if (truth) write_truth_outputs(embs = list(tsne = get_embedding(sce, "tsne")))
 step("tsne_fft", {
   sce <- tsne_sc(
     object = sce,
-    embd_to_use = "harmony_v2",
+    embd_to_use = "harmony",
     slot_name = "tsne_fft",
     perplexity = 30,
     approx_type = "fft_3k",
@@ -164,7 +164,7 @@ step("tsne_fft", {
 step("tsne_quick", {
   sce <- tsne_sc(
     object = sce,
-    embd_to_use = "harmony_v2",
+    embd_to_use = "harmony",
     slot_name = "tsne_quick",
     perplexity = 30,
     approx_type = "bh_qd",
