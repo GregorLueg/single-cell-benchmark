@@ -19,7 +19,7 @@ RUN Rscript -e 'remotes::install_github("bnprks/BPCells/r", upgrade = "never")'
 RUN apt-get update && apt-get install -y --no-install-recommends libbz2-dev liblzma-dev libzstd-dev \
     && rm -rf /var/lib/apt/lists/*
 RUN Rscript -e 'BiocManager::install(c("scrapper", "rhdf5"), ask = FALSE, update = FALSE, Ncpus = 8)'
-RUN Rscript -e 'install.packages(c("manifoldsR", "bixverse"), repos = c("https://gregorlueg.r-universe.dev", getOption("repos")), type = "source", Ncpus = 8); stopifnot(packageVersion("bixverse") >= "0.5.5")'
+RUN Rscript -e 'install.packages(c("manifoldsR", "bixverse"), repos = c("https://gregorlueg.r-universe.dev", getOption("repos")), type = "source", Ncpus = 8); stopifnot(packageVersion("manifoldsR") >= "0.6.0")'
 
 COPY docker/monitor.sh docker/entrypoint.sh /bench/
 ENTRYPOINT ["/bench/entrypoint.sh"]
@@ -30,5 +30,5 @@ RUN Rscript -e 'BiocManager::install(c("HDF5Array", "DelayedArray", "beachmat.hd
 # presto: Seurat 5 FindAllMarkers switches to its fast Wilcoxon when installed
 RUN Rscript -e 'remotes::install_github("immunogenomics/presto", upgrade = "never"); stopifnot(requireNamespace("presto"))'
 
-# Seurat 5.6.0: threaded C++ kernels (NormalizeData, VST, ScaleData, PCA, Annoy, FindAllMarkers via one presto call)
-RUN Rscript -e 'install.packages(c("Seurat", "uwot"), repos = "https://cloud.r-project.org", Ncpus = 8); stopifnot(packageVersion("Seurat") >= "5.6.0")'
+# Seurat >= 5.6.0 has the threaded C++ kernels (NormalizeData, VST, ScaleData, PCA, Annoy, FindAllMarkers via one presto call)
+RUN Rscript -e 'install.packages(c("Seurat", "uwot"), repos = "https://cloud.r-project.org", Ncpus = 8); stopifnot(packageVersion("Seurat") >= "6.0.0")'

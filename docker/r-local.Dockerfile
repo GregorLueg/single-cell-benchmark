@@ -1,14 +1,11 @@
-# scbench-r plus bixverse and manifoldsR from local checkouts, until they are on
-# r-universe. Both patch their crates to pushed bixverse-rs / manifolds-rs
-# branches, so cargo fetches those itself; NOT_CRAN=true keeps manifoldsR off
-# its offline vendored build. Pack without build artefacts or vendored crates
-# first (commits in vendor/SHAS):
-#   COPYFILE_DISABLE=1 tar czf vendor/<pkg>.tar.gz --exclude target --exclude .git --exclude '*.o' --exclude '*.so' --exclude src/vendor --exclude src/.cargo --exclude src/rust/vendor.tar.xz -C <parent> <pkg>
-#   for bixverse and manifoldsR
+# scbench-r plus bixverse from a local checkout, until it is on r-universe.
+# Its crates come from crates.io; NOT_CRAN=true keeps it off the offline
+# vendored build. Pack the committed tree first (commit in vendor/SHAS):
+#   git -C <bixverse> archive --format=tar.gz --prefix=bixverse/ -o $PWD/vendor/bixverse.tar.gz <branch>
 #   docker build -f docker/r-local.Dockerfile -t scbench-r:local .
 #   R_IMAGE=scbench-r:local scripts/run.sh bixverse <dataset>
 FROM scbench-r
-COPY vendor/bixverse.tar.gz vendor/manifoldsR.tar.gz /tmp/
-RUN cd /tmp && for p in bixverse manifoldsR; do tar xzf $p.tar.gz; done \
-    && NOT_CRAN=true Rscript -e 'install.packages(c("/tmp/manifoldsR", "/tmp/bixverse"), repos = NULL, type = "source", Ncpus = 8); stopifnot(packageVersion("bixverse") >= "0.8.4", packageVersion("manifoldsR") >= "0.6.0")' \
-    && rm -rf /tmp/bixverse* /tmp/manifoldsR*
+COPY vendor/bixverse.tar.gz /tmp/
+RUN cd /tmp && tar xzf bixverse.tar.gz \
+    && NOT_CRAN=true Rscript -e 'install.packages("/tmp/bixverse", repos = NULL, type = "source", Ncpus = 8); stopifnot(packageVersion("bixverse") >= "0.9.0")' \
+    && rm -rf /tmp/bixverse*
