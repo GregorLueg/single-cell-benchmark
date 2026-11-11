@@ -64,19 +64,19 @@ step("pca", {
 
 # bixverse lowercases obs column names on load
 step("harmony", {
-  sce <- harmony_v2_sc(object = sce, batch_column = tolower(batch_col))
+  sce <- harmony_sc(object = sce, batch_column = tolower(batch_col))
 })
 
 step("knn_snn", {
   sce <- find_neighbours_sc(
     object = sce,
-    embd_to_use = "harmony_v2",
-    neighbours_params = params_sc_neighbours(knn = list(knn_method = "nndescent", extract_knn = TRUE))
+    embd_to_use = "harmony",
+    neighbours_params = params_sc_neighbours(knn = list(knn_method = "nndescent"))
   )
 })
 
 step("umap", {
-  sce <- umap_sc(object = sce, embd_to_use = "harmony_v2")
+  sce <- umap_sc(object = sce, embd_to_use = "harmony")
 })
 
 step("dge", {
@@ -90,7 +90,7 @@ step("dge", {
   )
 })
 
-harmony <- get_embedding(sce, "harmony_v2")
+harmony <- get_embedding(sce, "harmony")
 labels <- sce[[c("cell_id", tolower(truth_col), tolower(batch_col))]]
 labels <- setnames(labels, c("cell_id", "truth", "batch"))[match(rownames(harmony), cell_id)]
 write_embs(list(harmony = harmony, umap = get_embedding(sce, "umap")), labels)

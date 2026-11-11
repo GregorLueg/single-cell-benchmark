@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Usage: [COLD=1|0] [DATA=dir] [WALL=18000] [R_IMAGE=scbench-r:local] tahoe/run.sh <tool>
-#   tool: bixverse | seurat_bpcells | scanpy_dask | cytearc
+#   tool: bixverse | bixverse_py | seurat_bpcells | scanpy_dask | cytearc
 # Every *.h5ad in DATA is one plate; each tool reads them all natively.
 # Container capped at 48 GB RAM plus 8 GB swap, 8 cores. A run is killed once
 # it has run for WALL seconds in total.
@@ -24,6 +24,7 @@ PCA_SOLVER="${PCA_SOLVER:-auto}"
 
 case "$tool" in
   scanpy_dask) image=scbench-py; cmd=(python /bench/pipelines/scanpy_dask.py /data /out) ;;
+  bixverse_py) image=scbench-bixverse-py; cmd=(python /bench/pipelines/bixverse_py.py /data /out /scratch) ;;
   cytearc) image=scbench-cytearc; cmd=(python /bench/pipelines/cytearc_pipeline.py /data /out /scratch) ;;
   *) image="${R_IMAGE:-scbench-r:local}"; cmd=(Rscript "/bench/pipelines/$tool.R" /data /out /scratch) ;;
 esac
@@ -58,7 +59,7 @@ status=0
 # slower than natively at 24 GB)
 docker run --rm --name scbench-run --cpus=8 --memory="${MEM:-48g}" --memory-swap="${MEMSWAP:-56g}" \
   -e OMP_NUM_THREADS=8 -e OPENBLAS_NUM_THREADS=8 -e RAYON_NUM_THREADS=8 \
-  -e CHUNK="${CHUNK:-50000}" -e BIX_CSC_GB="${BIX_CSC_GB:-8}" -e GENE_COL="${GENE_COL:-}" \
+  -e CHUNK="${CHUNK:-50000}" -e BIX_CSC_GB="${BIX_CSC_GB:-8}" -e GENE_COL="${GENE_COL:-}" -e VAR_INDEX="${VAR_INDEX:-gene_name}" \
   -e MT_MAX="$MT_MAX" -e MIN_CELLS="$MIN_CELLS" -e PCA_SOLVER="$PCA_SOLVER" -e TRUTH_COL="$TRUTH_COL" -e BATCH_COL="$BATCH_COL" -e DGE_COL="$DGE_COL" -e DGE_CTRL="$DGE_CTRL" -e DGE_CASE="$DGE_CASE" \
   -v "$data:/data:ro" \
   -v "$out:/out" \
