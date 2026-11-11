@@ -6,7 +6,7 @@ suppressPackageStartupMessages(library(bixverse))
 # BIX_KNN sets the kNN for the sNN graph, BIX_TSNE_KNN the one tSNE builds
 # internally (k = 3 x perplexity). nndescent uses extract_knn as in the big
 # data vignette.
-knn_method <- Sys.getenv("BIX_KNN", "kmknn")
+knn_method <- Sys.getenv("BIX_KNN", "nndescent")
 tsne_knn_method <- Sys.getenv("BIX_TSNE_KNN", "kmknn")
 knn_params <- list(knn_method = knn_method)
 if (knn_method == "nndescent") knn_params$extract_knn <- TRUE

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Usage: [COLD=1|0] [INPUT=h5ad|hdf5] [BIX_KNN=nndescent] [BIX_TSNE_KNN=nndescent] [TAG=suffix] [STEP_TIMEOUT=2700] [R_IMAGE=scbench-r] scripts/run.sh <tool> <dataset>
+# Usage: [COLD=1|0] [INPUT=mtx|h5ad|dask] [BIX_KNN=kmknn] [BIX_TSNE_KNN=nndescent] [TAG=suffix] [STEP_TIMEOUT=2700] [R_IMAGE=scbench-r] scripts/run.sh <tool> <dataset>
 #   tool: scanpy | cytearc | brisc | seurat_bpcells | seurat_standard | scrapper | bixverse
 # WARM=1 reconnects to the on-disk data the last cold run left in the scratch
 # volume (bixverse | seurat_bpcells | cytearc only), so run the cold run first.
@@ -55,7 +55,7 @@ watchdog=$!
 
 status=0
 docker run --rm --name scbench-run --cpus=8 --memory="$mem" --memory-swap="$memswap" --shm-size="${SHM:-64m}" \
-  -e LOAD_ONLY="${LOAD_ONLY:-0}" -e OMP_NUM_THREADS=8 -e OPENBLAS_NUM_THREADS=8 -e RAYON_NUM_THREADS=8 -e INPUT="${INPUT:-mtx}" -e CHUNK="${CHUNK:-50000}" -e BIX_CSC_GB="${BIX_CSC_GB:-8}" -e BIX_KNN="${BIX_KNN:-kmknn}" -e BIX_TSNE_KNN="${BIX_TSNE_KNN:-kmknn}" -e BRISC_HOGWILD="${BRISC_HOGWILD:-0}" \
+  -e LOAD_ONLY="${LOAD_ONLY:-0}" -e OMP_NUM_THREADS=8 -e OPENBLAS_NUM_THREADS=8 -e RAYON_NUM_THREADS=8 -e INPUT="${INPUT:-mtx}" -e CHUNK="${CHUNK:-50000}" -e BIX_CSC_GB="${BIX_CSC_GB:-8}" -e BIX_KNN="${BIX_KNN:-nndescent}" -e BIX_TSNE_KNN="${BIX_TSNE_KNN:-kmknn}" -e BRISC_HOGWILD="${BRISC_HOGWILD:-0}" \
   -v "$root/data/$dataset:/data:ro" \
   -v "$out:/out" \
   -v "$root/pipelines:/bench/pipelines:ro" \
