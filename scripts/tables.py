@@ -41,7 +41,6 @@ COLUMNS = {
     "Scanpy dask": ["scanpy_dask"],
     "scrapper mtx": ["scrapper"],
     "scrapper h5ad": ["scrapper_h5ad"],
-    "scrapper HDF5": ["scrapper_hdf5"],
     "Seurat std mtx": ["seurat_standard"],
     "Seurat std h5ad": ["seurat_standard_h5ad"],
     "Seurat BPCells": ["seurat_bpcells"],

@@ -28,7 +28,7 @@ grid_col <- "#e4e3df"
 column_order <- c(
   "bixverse mtx", "bixverse h5ad",
   "Scanpy mtx", "Scanpy h5ad", "Scanpy dask",
-  "scrapper mtx", "scrapper h5ad", "scrapper HDF5",
+  "scrapper mtx", "scrapper h5ad",
   "Seurat std mtx", "Seurat std h5ad", "Seurat BPCells",
   "CyteArc mtx", "CyteArc h5ad"
 )
@@ -257,7 +257,7 @@ for (lst in list(
 
 # normalisation is deferred in Dask, scrapper (normalizeCounts(delayed = TRUE)) and CyteArc:
 # the cost lands in later steps, so a fold change against or of it is meaningless
-lazy_cols <- c("Scanpy dask", "scrapper h5ad", "scrapper HDF5", "CyteArc mtx", "CyteArc h5ad")
+lazy_cols <- c("Scanpy dask", "scrapper h5ad", "CyteArc mtx", "CyteArc h5ad")
 
 speedup_plot <- function(size_key, ref_col, title, subtitle, caption, file, height) {
   d <- dt[size == size_key & status == "ok"]
