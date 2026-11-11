@@ -15,10 +15,12 @@ dt <- dt_all[startsWith(size, "parse")]
 # one per framework family, from the lto "hat" palette
 family_cols <- c(
   bixverse = "#0F8096",
+  `bixverse-py` = "#6FB7C4",
   Scanpy = "#E8351E",
   scrapper = "#17A769",
   Seurat = "#852F88",
-  CyteArc = "#D98E04"
+  CyteArc = "#D98E04",
+  brisc = "#5C6B73"
 )
 surface <- "#fcfcfb"
 ink <- "#0b0b0b"
@@ -26,11 +28,11 @@ ink_2 <- "#52514e"
 grid_col <- "#e4e3df"
 
 column_order <- c(
-  "bixverse mtx", "bixverse h5ad",
+  "bixverse mtx", "bixverse h5ad", "bixverse-py mtx", "bixverse-py h5ad",
   "Scanpy mtx", "Scanpy h5ad", "Scanpy dask",
   "scrapper mtx", "scrapper h5ad",
   "Seurat std mtx", "Seurat std h5ad", "Seurat BPCells",
-  "CyteArc mtx", "CyteArc h5ad"
+  "CyteArc mtx", "CyteArc h5ad", "brisc h5ad", "brisc h5ad hogwild"
 )
 step_order <- c(
   "load", "qc", "normalise", "hvg", "pca", "harmony", "knn_snn", "cluster",
@@ -154,48 +156,63 @@ step_ramp <- c("#005F73", "#0A9396", "#94D2BD", "#E9D8A6", "#EE9B00", "#CA6702",
 missing_fill <- "#001219"
 no_step <- list(
   bixverse = "normalise",
+  `bixverse-py` = "normalise",
   Scanpy = c("cluster_fast", "tsne_quick"),
   Seurat = c("cluster_fast", "tsne_quick"),
   scrapper = c("tsne_default", "tsne_fft"),
-  CyteArc = c("cluster_fast", "tsne_default", "tsne_fft", "tsne_quick")
+  CyteArc = c("cluster_fast", "tsne_default", "tsne_fft", "tsne_quick"),
+  brisc = c("cluster_fast", "tsne_default", "tsne_fft", "tsne_quick")
 )
-total_step <- "total (no tSNE)"
+total_step <- c(time = "total (no tSNE)", memory = "peak (whole run)")
 ratio_cap <- log2(32)
 
-step_heatmap <- function(labels, title, file, height, width = 11, base_size = 10, text_size = 2.4) {
+# metric "time": seconds per step; "memory": peak anon GB inside each step's
+# window, from the 1 s samples. The memory a step holds includes what earlier
+# steps left resident, so it is the footprint during the step, not its increment.
+step_heatmap <- function(labels, title, file, height, width = 11, base_size = 10, text_size = 2.4,
+                         metric = "time") {
+  tot_name <- total_step[[metric]]
   d <- dt_all[size %in% names(labels)]
   d[, family := sub(" .*", "", column)]
+  d[, value := if (metric == "time") seconds else step_peak_gb]
   # a run that died in a tSNE step still has a total without tSNE
   tot <- d[, {
     died <- any(status != "ok" & !grepl("^tsne", step))
     .(
-      step = total_step,
-      seconds = if (died) NA_real_ else sum(seconds[!grepl("^tsne|^cluster_fast", step)], na.rm = TRUE),
+      step = tot_name,
+      value = if (died) NA_real_ else if (metric == "time") {
+        sum(seconds[!grepl("^tsne|^cluster_fast", step)], na.rm = TRUE)
+      } else {
+        peak_gb[1]
+      },
       status = if (died) "failed" else "ok"
     )
   }, by = .(column, size, family)]
-  d <- rbind(d[, .(column, size, family, step, seconds, status)], tot)
-  grid <- unique(d[, .(column, size, family)])[, .(step = c(step_order, total_step)), by = .(column, size, family)]
+  d <- rbind(d[, .(column, size, family, step, value, status)], tot)
+  grid <- unique(d[, .(column, size, family)])[, .(step = c(step_order, tot_name)), by = .(column, size, family)]
   d <- merge(grid, d, by = c("column", "size", "family", "step"), all.x = TRUE)
   d[, lab := fcase(
     mapply(function(f, s) s %in% no_step[[f]], family, step), "n/a",
     !is.na(status) & status != "ok", sub(" ", "\n", status),
-    is.na(seconds), "-",
-    seconds < 10, sprintf("%.1f", seconds),
-    default = format(round(seconds), big.mark = ",", trim = TRUE)
+    is.na(value), "-",
+    rep(metric == "memory", .N), sprintf("%.1f", value),
+    value < 10, sprintf("%.1f", value),
+    default = format(round(value), big.mark = ",", trim = TRUE)
   )]
-  d[!is.na(status) & status != "ok", seconds := NA_real_]
-  # log2 ratio to the fastest run that finished the step, capped at 32x and put
+  d[!is.na(status) & status != "ok", value := NA_real_]
+  # log2 ratio to the best run that finished the step, capped at 32x and put
   # on 0 to 1: unlike a min-max scale, 200 s against 201 s stays one colour.
-  # Floored at 1 s, so sub-second steps and lazy (0 s) normalisation don't blow up the ratio
+  # Floored (1 s, 0.25 GB), so sub-second steps, lazy (0 s) normalisation and
+  # near-empty processes don't blow up the ratio
+  floor_val <- if (metric == "time") 1 else 0.25
   d[, scaled := {
-    s <- pmax(seconds, 1)
+    s <- pmax(value, floor_val)
     pmin(log2(s / suppressWarnings(min(s, na.rm = TRUE))), ratio_cap) / ratio_cap
   }, by = .(size, step)]
-  d <- d[, if (any(!is.na(seconds))) .SD, by = .(size, step)]
+  d <- d[, if (any(!is.na(value))) .SD, by = .(size, step)]
   d[, size_label := factor(labels[size], levels = labels)]
   d[, column := factor(column, levels = column_order)]
-  d[, step := factor(step, levels = rev(c(step_order, total_step)))]
+  d[, step := factor(step, levels = rev(c(step_order, tot_name)))]
   d[, light := !is.na(scaled) & scaled > 0.2 & scaled < 0.6]
 
   p <- ggplot(d, aes(column, step)) +
@@ -204,17 +221,27 @@ step_heatmap <- function(labels, title, file, height, width = 11, base_size = 10
     scale_fill_gradientn(
       colours = step_ramp, limits = c(0, 1), na.value = missing_fill,
       breaks = log2(c(1, 2, 4, 8, 16, 32)) / ratio_cap,
-      labels = c("fastest", "2x", "4x", "8x", "16x", "32x+"), name = "against the fastest"
+      labels = c(if (metric == "time") "fastest" else "leanest", "2x", "4x", "8x", "16x", "32x+"),
+      name = if (metric == "time") "against the fastest" else "against the leanest"
     ) +
     scale_colour_manual(values = c(`FALSE` = "#ffffff", `TRUE` = ink)) +
     facet_wrap(~size_label, ncol = 1, scales = "free_x") +
     labs(
       title = title,
-      subtitle = "Seconds per step. Colour is the ratio to the fastest run that finished that step at that size (times under 1 s count as 1 s), capped at 32x.",
+      subtitle = if (metric == "time") {
+        "Seconds per step. Colour is the ratio to the fastest run that finished that step at that size (times under 1 s count as 1 s), capped at 32x."
+      } else {
+        paste(
+          "Peak memory (GB, anon) during each step, including what earlier steps keep resident; sampled once a second.",
+          "Colour is the ratio to the leanest run at that step and size (under 0.25 GB counts as 0.25 GB), capped at 32x.",
+          sep = "\n"
+        )
+      },
       caption = paste(
         "Black: n/a (step not in that framework), OOM or TIMEOUT where the run died, - not reached.",
         "Scanpy dask has no DGE step. Docker runs only; the native bixverse runs are in their own table.",
         "bixverse CPU tSNE builds its kNN with IVF from 500k (kmknn at 100k). (qd) steps are not in the total.",
+        if (metric == "memory") "Steps under ~1 s read the sample nearest their midpoint." else NULL,
         sep = "\n"
       ),
       x = NULL, y = NULL
@@ -232,24 +259,23 @@ step_heatmap <- function(labels, title, file, height, width = 11, base_size = 10
   ggsave(file.path(fig_dir, paste0(file, ".pdf")), p, width = width, height = height, bg = surface)
 }
 
-step_heatmap(
-  c(splat_100k = "100k (96,342 cells)", splat_500k = "500k (482,409 cells)", splat_1m = "1M (964,763 cells)"),
-  "Wall time per step: Splat simulation", "steps_heatmap_splat", 16
-)
-step_heatmap(size_labels, "Wall time per step: Parse 1M PBMC", "steps_heatmap_pbmc", 16)
+splat_labels <- c(splat_100k = "100k (96,342 cells)", splat_500k = "500k (482,409 cells)", splat_1m = "1M (964,763 cells)")
+metric_title <- c(time = "Wall time per step", memory = "Peak memory per step")
+metric_file <- c(time = "steps_heatmap", memory = "steps_memory_heatmap")
 
-# one figure per size, larger type
-for (lst in list(
-  list(c(splat_100k = "100k (96,342 cells)", splat_500k = "500k (482,409 cells)", splat_1m = "1M (964,763 cells)"),
-       "Splat simulation", "splat"),
-  list(size_labels, "Parse 1M PBMC", "pbmc")
-)) {
-  for (k in names(lst[[1]])) {
-    step_heatmap(
-      lst[[1]][k], paste0("Wall time per step: ", lst[[2]], ", ", lst[[1]][k]),
-      paste0("steps_heatmap_", lst[[3]], "_", sub(".*_", "", k)),
-      height = 9.5, width = 13, base_size = 14, text_size = 3.6
-    )
+for (m in names(metric_title)) {
+  step_heatmap(splat_labels, paste0(metric_title[[m]], ": Splat simulation"), paste0(metric_file[[m]], "_splat"), 16, metric = m)
+  step_heatmap(size_labels, paste0(metric_title[[m]], ": Parse 1M PBMC"), paste0(metric_file[[m]], "_pbmc"), 16, metric = m)
+
+  # one figure per size, larger type
+  for (lst in list(list(splat_labels, "Splat simulation", "splat"), list(size_labels, "Parse 1M PBMC", "pbmc"))) {
+    for (k in names(lst[[1]])) {
+      step_heatmap(
+        lst[[1]][k], paste0(metric_title[[m]], ": ", lst[[2]], ", ", lst[[1]][k]),
+        paste0(metric_file[[m]], "_", lst[[3]], "_", sub(".*_", "", k)),
+        height = 9.5, width = 13, base_size = 14, text_size = 3.6, metric = m
+      )
+    }
   }
 }
 

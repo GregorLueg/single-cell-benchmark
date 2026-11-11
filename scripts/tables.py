@@ -34,8 +34,10 @@ EXTRA = ("tsne", "cluster_fast")
 LABELS = {"cluster_fast": "cluster_fast (qd)", "tsne_quick": "tsne_quick (qd)"}
 # column -> result dir name, in display order; Docker runs only
 COLUMNS = {
-    "bixverse mtx": ["bixverse_mtx_snn_nndescent", "bixverse_mtx", "bixverse"],
+    "bixverse mtx": ["bixverse_mtx"],
     "bixverse h5ad": ["bixverse_h5ad"],
+    "bixverse-py mtx": ["bixverse_py_mtx"],
+    "bixverse-py h5ad": ["bixverse_py_h5ad"],
     "Scanpy mtx": ["scanpy_mtx", "scanpy"],
     "Scanpy h5ad": ["scanpy_h5ad"],
     "Scanpy dask": ["scanpy_dask"],
@@ -95,6 +97,27 @@ def load_run(d):
     return steps, peak, swap, failed_at
 
 
+def step_peaks(d):
+    """Peak anon GB per step from the 1 s memory samples. A step with no
+    sample inside its window (under ~1 s) reads the sample nearest its middle;
+    a failed run's last, unfinished step runs from the last end to the kill."""
+    mem = pl.read_csv(d / "mem.csv")
+    windows = []
+    if (d / "steps.csv").stat().st_size > 20:
+        windows = [(r["step"], r["start"], r["end"]) for r in pl.read_csv(d / "steps.csv").iter_rows(named=True)]
+    last = windows[-1][2] if windows else mem["t"][0]
+    windows.append((None, last, mem["t"][-1]))
+    peaks = {}
+    for name, start, end in windows:
+        inside = mem.filter(pl.col("t").is_between(start, end))["anon_bytes"]
+        if inside.len():
+            peak = inside.max()
+        else:
+            peak = mem.sort((pl.col("t") - (start + end) / 2).abs())["anon_bytes"][0]
+        peaks[name] = peak / GB
+    return peaks
+
+
 def collect(ds_dir, columns=COLUMNS):
     runs = {}
     for col, names in columns.items():
@@ -106,7 +129,7 @@ def collect(ds_dir, columns=COLUMNS):
 
 # framework -> (cold result dirs, warm result dir); the warm run is load only
 WARM = {
-    "bixverse": (["bixverse_mtx_snn_nndescent", "bixverse_mtx", "bixverse"], "bixverse_warm"),
+    "bixverse": (["bixverse_mtx"], "bixverse_warm"),
     "Seurat BPCells": (["seurat_bpcells"], "seurat_bpcells_warm"),
     "CyteArc": (["cytearc"], "cytearc_warm"),
 }
@@ -219,16 +242,17 @@ def summary(root, kind, columns=COLUMNS):
 def long(root, columns=COLUMNS):
     sizes = {"parse_100k": 69412, "parse_500k": 346259, "parse_full": 684932,
              "splat_100k": 96342, "splat_500k": 482409, "splat_1m": 964763}
-    mem_rows = ["column,size,cells,step,seconds,peak_gb,status"]
+    mem_rows = ["column,size,cells,step,seconds,peak_gb,step_peak_gb,status"]
     for ds, cells in sizes.items():
         for col, (name, steps, peak, _, failed) in collect(root / ds, columns).items():
             order = TOOL_STEPS[family(name)]
             status = failed[1] if failed else "ok"
+            sp = step_peaks(root / ds / name)
             for st in order:
                 if st in steps:
-                    mem_rows.append(f"{col},{ds},{cells},{st},{steps[st]:.2f},{peak:.2f},ok")
+                    mem_rows.append(f"{col},{ds},{cells},{st},{steps[st]:.2f},{peak:.2f},{sp[st]:.2f},ok")
                 elif failed and st == failed[0]:
-                    mem_rows.append(f"{col},{ds},{cells},{st},,{peak:.2f},{status}")
+                    mem_rows.append(f"{col},{ds},{cells},{st},,{peak:.2f},{sp[None]:.2f},{status}")
     return "\n".join(mem_rows)
 
 
