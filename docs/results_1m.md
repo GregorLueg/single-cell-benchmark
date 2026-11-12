@@ -1,13 +1,17 @@
-# Results
+# Results: up to 1M cells
 
 Seconds per step, one repeat each. **OOM** marks the step where the container
 was killed; **TIMEOUT** where no step finished for 45 min. Peak GB is cgroup
-anon memory over the whole run, tSNE included. On-disk store GB is what
-a run leaves in its scratch volume. Everything above the
-[native runs](#native-runs-cpu-against-gpu) ran in Docker; the native bixverse
-runs (CPU, wgpu, MLX) are another environment and memory metric, so they have
-their own tables. Setup, versions and caveats:
-[methods](methods.md).
+anon memory over the whole run, tSNE included. On-disk store GB is what a run
+leaves in its scratch volume. Everything above the
+[native runs](#native-runs-cpu-against-gpu-old-stack) ran in Docker (8 cores,
+24 GB); the native bixverse runs (CPU, wgpu, MLX) are another environment and
+memory metric, so they have their own tables. Setup, versions and caveats:
+[methods](methods.md). The 10M run is in [results_10m](results_10m.md).
+
+Stack: bixverse 0.9.0 (R) and 0.3.1 (Python), manifoldsR 0.6.0, Scanpy
+1.12.5, scrapper 1.6.3, Seurat 6.0.0, CyteArc 1.3.0, brisc 0.2.5. Inputs are
+`DGE.mtx.gz` and the gzipped h5ad; every run starts from a cold file cache.
 
 Regenerate the timing tables with `uv run scripts/tables.py results <dataset>`
 and the quality scores with `uv run scripts/score.py results/<dataset> data/<dataset>`.
@@ -21,146 +25,156 @@ iterations, depth-capped tree), not a standard Barnes-Hut tSNE.
 `cluster_fast` is Leiden on k-means centroids, labels handed back to the
 cells. Neither counts towards the totals.
 
-Scanpy dask has no DGE step (Wilcoxon fails on Dask arrays), so its totals
-miss the step that costs in-memory Scanpy 46 to 602 s. It is an experimental
-path; see [methods](methods.md#caveats).
+Two DGE steps are not Wilcoxon: Scanpy dask runs the t-test (Wilcoxon fails on
+Dask arrays) and brisc ranks by detection rate with no test at all. Both are
+marked * in the heatmaps; see [methods](methods.md#caveats).
 
 ## Simulation
 
 Splat data with 24 batches, 12 groups and uneven group composition per batch,
-fitted to the PBMC data ([methods](methods.md#data)). Stack: bixverse 0.8.4,
-bixverse.gpu 0.6.2, manifoldsR 0.5.0, Scanpy 1.12.4, scrapper 1.6.3, Seurat
-5.6.0, CyteArc 1.3.0.
+fitted to the PBMC data ([methods](methods.md#data)).
 
 ![Time without tSNE and peak memory on the simulation](figures/scaling_splat.png)
 
 ![Wall time per step on the simulation, against the fastest per step](figures/steps_heatmap_splat.png)
 
+![Peak memory per step on the simulation, against the leanest per step](figures/steps_memory_heatmap_splat.png)
+
 ### 100k cells (96,342 after QC)
 
-| step | bixverse mtx | bixverse h5ad | Scanpy mtx | Scanpy h5ad | Scanpy dask | scrapper mtx | scrapper h5ad | scrapper HDF5 | Seurat std mtx | Seurat std h5ad | Seurat BPCells | CyteArc mtx | CyteArc h5ad |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| load | 4.4 | 4.0 | 17.8 | 2.3 | 5.1 | 34.2 | 4.8 | 46.7 | 36.5 | 8.5 | 13.3 | 32.3 | 11.1 |
-| qc | 0.1 | 0.1 | 0.6 | 0.6 | 0.9 | 0.4 | 0.4 | 1.3 | 2.6 | 2.7 | 1.1 | 0.0 | 0.0 |
-| normalise | n/a | n/a | 2.0 | 1.9 | 0.0 | 0.1 | 0.1 | 0.0 | 0.2 | 0.2 | 0.4 | 2.8 | 2.9 |
-| hvg | 0.2 | 0.4 | 1.4 | 1.4 | 1.4 | 0.1 | 0.1 | 3.8 | 3.7 | 3.8 | 2.9 | 2.2 | 2.3 |
-| pca | 0.7 | 0.6 | 2.2 | 2.2 | 3.9 | 2.0 | 2.0 | 13.1 | 10.3 | 10.5 | 58.2 | 6.0 | 6.1 |
-| harmony | 0.5 | 0.5 | 0.5 | 0.5 | 0.4 | 12.1 | 14.2 | 12.2 | 13.3 | 13.5 | 13.8 | 13.7 | 13.1 |
-| knn_snn | 1.7 | 1.6 | 26.9 | 26.5 | 24.2 | 6.5 | 6.3 | 6.8 | 7.5 | 7.6 | 7.9 | 24.3 | 23.6 |
-| cluster | 0.6 | 0.7 | 3.0 | 2.7 | 2.7 | 15.4 | 13.3 | 12.6 | 19.9 | 19.9 | 20.6 | 13.9 | 13.9 |
-| cluster_fast (qd) | 1.1 | 1.1 | n/a | n/a | n/a | 17.7 | 17.3 | 17.5 | n/a | n/a | n/a | n/a | n/a |
-| umap | 3.7 | 3.7 | 39.0 | 37.7 | 37.8 | 37.5 | 38.1 | 38.4 | 45.8 | 46.7 | 47.4 | 84.4 | 84.2 |
-| dge | 0.6 | 0.6 | 47.4 | 46.1 | - | 3.3 | 3.3 | 81.5 | 10.8 | 11.1 | 57.0 | 6.3 | 6.2 |
-| tsne_default | 43.2 | 42.9 | 161.7 | 167.1 | 154.7 | n/a | n/a | n/a | 125.5 | 125.1 | 141.8 | n/a | n/a |
-| tsne_fft | 15.2 | 14.9 | 37.8 | 38.4 | 35.8 | n/a | n/a | n/a | 32.8 | 32.6 | 32.0 | n/a | n/a |
-| tsne_quick (qd) | 11.4 | 11.0 | n/a | n/a | n/a | 20.0 | 21.0 | 20.6 | n/a | n/a | n/a | n/a | n/a |
-| **total** | **82** | **81** | **340** | **327** | **267** | **132** | **104** | **237** | **309** | **282** | **397** | **186** | **164** |
-| total without tSNE | 13 | 12 | 141 | 122 | 77 | 112 | 83 | 216 | 151 | 125 | 223 | 186 | 164 |
-| **peak GB** | **1.3** | **1.3** | **4.8** | **2.6** | **1.8** | **5.5** | **5.5** | **3.3** | **8.9** | **8.9** | **2.5** | **7.7** | **8.3** |
-| peak swap GB | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
-| on-disk store GB | 0.3 | 0.3 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 1.2 | 0.8 | 0.8 |
+| step | bixverse mtx | bixverse h5ad | bixverse-py mtx | bixverse-py h5ad | Scanpy mtx | Scanpy h5ad | Scanpy dask | scrapper mtx | scrapper h5ad | Seurat std mtx | Seurat std h5ad | Seurat BPCells | CyteArc mtx | CyteArc h5ad | brisc h5ad | brisc h5ad hogwild |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| load | 6.7 | 3.7 | 5.8 | 2.9 | 21.5 | 4.1 | 17.9 | 37.9 | 7.0 | 40.6 | 10.1 | 15.6 | 38.4 | 13.9 | 1.0 | 0.9 |
+| qc | 0.2 | 0.2 | 0.1 | 0.1 | 0.6 | 0.6 | 3.0 | 0.4 | 0.5 | 2.7 | 2.6 | 1.1 | 0.0 | 0.0 | 0.0 | 0.0 |
+| normalise | n/a | n/a | n/a | n/a | 2.0 | 1.9 | 0.0 | 0.1 | 0.1 | 0.2 | 0.2 | 0.4 | 2.9 | 3.0 | 0.1 | 0.1 |
+| hvg | 0.3 | 0.4 | 0.2 | 0.2 | 1.4 | 1.4 | 3.5 | 0.1 | 0.1 | 3.8 | 3.8 | 3.1 | 2.2 | 2.2 | 0.2 | 0.1 |
+| pca | 0.8 | 0.8 | 0.7 | 0.7 | 2.2 | 2.2 | 8.2 | 2.0 | 2.2 | 11.6 | 10.2 | 58.2 | 6.2 | 6.1 | 0.3 | 0.3 |
+| harmony | 0.5 | 0.7 | 0.4 | 0.4 | 0.5 | 0.5 | 0.5 | 14.5 | 12.6 | 13.2 | 13.6 | 13.8 | 14.6 | 13.8 | 0.2 | 0.2 |
+| knn_snn | 0.9 | 0.8 | 0.8 | 0.8 | 56.8 | 56.8 | 53.8 | 6.4 | 6.4 | 7.6 | 7.5 | 7.7 | 25.8 | 26.1 | 0.9 | 0.9 |
+| cluster | 0.7 | 0.8 | 0.6 | 0.6 | 2.8 | 2.9 | 2.9 | 13.4 | 14.0 | 18.5 | 19.5 | 20.7 | 14.4 | 14.8 | 0.2 | 0.2 |
+| cluster_fast (qd) | 1.0 | 1.4 | 1.0 | 1.0 | n/a | n/a | n/a | 17.5 | 17.3 | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
+| umap | 3.2 | 3.3 | 3.0 | 3.0 | 37.5 | 37.9 | 37.6 | 37.0 | 37.1 | 45.5 | 45.8 | 45.7 | 84.2 | 84.2 | 27.2 | 5.6 |
+| dge | 0.6 | 0.6 | 0.5 | 0.5 | 49.5 | 48.5 | 12.4 | 3.5 | 3.5 | 11.2 | 10.8 | 57.3 | 6.5 | 6.4 | 0.0 | 0.0 |
+| tsne_default | 41.8 | 44.6 | 41.2 | 41.4 | 164.6 | 166.2 | 160.8 | n/a | n/a | 124.0 | 132.1 | 130.6 | n/a | n/a | n/a | n/a |
+| tsne_fft | 15.4 | 16.0 | 15.0 | 14.7 | 38.2 | 77.9 | 36.3 | n/a | n/a | 32.1 | 33.9 | 32.4 | n/a | n/a | n/a | n/a |
+| tsne_quick (qd) | 11.2 | 11.4 | 11.0 | 10.9 | n/a | n/a | n/a | 20.7 | 20.7 | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
+| **total** | **82** | **83** | **79** | **76** | **378** | **401** | **337** | **136** | **104** | **311** | **290** | **386** | **195** | **171** | **30** | **9** |
+| total without tSNE | 14 | 11 | 12 | 9 | 175 | 157 | 140 | 115 | 83 | 155 | 124 | 223 | 195 | 171 | 30 | 9 |
+| **peak GB** | **1.2** | **1.2** | **0.9** | **0.9** | **5.5** | **2.6** | **3.2** | **5.5** | **5.5** | **8.9** | **8.8** | **2.3** | **7.7** | **6.8** | **0.7** | **0.7** |
+| peak swap GB | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
+| on-disk store GB | 0.3 | 0.3 | 0.3 | 0.3 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 1.2 | 0.8 | 0.8 | 0.0 | 0.0 |
 
 ### 500k cells (482,409 after QC)
 
-| step | bixverse mtx | bixverse h5ad | Scanpy mtx | Scanpy h5ad | Scanpy dask | scrapper mtx | scrapper h5ad | scrapper HDF5 | Seurat std mtx | Seurat std h5ad | Seurat BPCells | CyteArc mtx | CyteArc h5ad |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| load | 29.4 | 18.6 | **OOM** | 11.4 | 20.7 | 203.2 | 18.4 | 227.7 | 215.5 | 34.9 | 64.8 | 156.0 | 36.9 |
-| qc | 0.3 | 0.3 | - | 2.8 | 3.8 | 2.2 | 2.2 | 6.3 | 13.4 | 13.4 | 4.0 | 0.0 | 0.0 |
-| normalise | n/a | n/a | - | 3.6 | 0.0 | 0.4 | 0.4 | 0.0 | 0.8 | 0.9 | 1.9 | 12.7 | 13.0 |
-| hvg | 0.5 | 0.5 | - | 3.2 | 4.4 | 0.5 | 0.5 | 19.2 | 19.1 | 19.5 | 12.8 | 7.2 | 7.2 |
-| pca | 2.2 | 2.4 | - | 10.4 | 10.8 | 14.9 | 14.9 | 71.2 | **OOM** | **OOM** | 273.6 | 22.6 | 27.5 |
-| harmony | 1.6 | 1.7 | - | 2.2 | 2.0 | 100.1 | 83.3 | 83.7 | - | - | 87.8 | 72.4 | 80.6 |
-| knn_snn | 8.7 | 9.1 | - | 32.7 | 29.5 | 40.4 | 40.0 | 41.7 | - | - | 45.2 | 145.0 | 159.3 |
-| cluster | 2.8 | 2.7 | - | 19.5 | 19.8 | 114.9 | 122.8 | 103.3 | - | - | 133.2 | 16.2 | 16.2 |
-| cluster_fast (qd) | 14.4 | 15.3 | n/a | n/a | n/a | 196.3 | 194.4 | 196.7 | n/a | n/a | n/a | n/a | n/a |
-| umap | 33.2 | 32.8 | - | 226.2 | 226.2 | 181.6 | 175.4 | 178.2 | - | - | 256.8 | 421.0 | 422.9 |
-| dge | 2.1 | 2.2 | - | 454.2 | - | 22.4 | 22.7 | 1716.6 | - | - | 259.7 | 13.3 | 13.0 |
-| tsne_default | 252.7 | 259.3 | - | 1315.2 | 1319.4 | n/a | n/a | n/a | - | - | 1389.9 | n/a | n/a |
-| tsne_fft | 62.1 | 63.7 | - | 152.7 | 155.6 | n/a | n/a | n/a | - | - | 156.4 | n/a | n/a |
-| tsne_quick (qd) | 40.3 | 40.8 | n/a | n/a | n/a | 131.8 | 133.4 | 135.0 | n/a | n/a | n/a | n/a | n/a |
-| **total** | **436** | **434** | failed | **2234** | **1792** | **812** | **614** | **2583** | failed | failed | **2686** | **866** | **777** |
-| total without tSNE | 81 | 70 | failed | 766 | 317 | 681 | 481 | 2448 | failed | failed | 1140 | 866 | 777 |
-| **peak GB** | **5.3** | **5.4** | **22.1** | **14.2** | **7.8** | **22.6** | **22.7** | **12.3** | **22.8** | **22.8** | **6.9** | **9.6** | **11.4** |
-| peak swap GB | 0.0 | 0.0 | 4.0 | 0.0 | 0.0 | 2.8 | 2.6 | 0.0 | 3.7 | 3.7 | 0.0 | 0.0 | 0.0 |
-| on-disk store GB | 1.4 | 1.4 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 6.2 | 4.1 | 4.1 |
+| step | bixverse mtx | bixverse h5ad | bixverse-py mtx | bixverse-py h5ad | Scanpy mtx | Scanpy h5ad | Scanpy dask | scrapper mtx | scrapper h5ad | Seurat std mtx | Seurat std h5ad | Seurat BPCells | CyteArc mtx | CyteArc h5ad | brisc h5ad | brisc h5ad hogwild |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| load | 27.8 | 15.1 | 26.8 | 13.7 | **OOM** | 21.5 | 81.0 | 215.7 | 28.5 | 222.7 | 44.1 | 76.5 | 177.8 | 47.5 | 4.5 | 4.3 |
+| qc | 0.4 | 0.4 | 0.2 | 0.2 | - | 2.8 | 13.5 | 2.1 | 2.2 | 12.8 | 12.5 | 4.4 | 0.0 | 0.0 | 0.0 | 0.1 |
+| normalise | n/a | n/a | n/a | n/a | - | 3.6 | 0.0 | 0.4 | 0.4 | 0.8 | 0.8 | 2.0 | 13.0 | 13.0 | 0.5 | 0.5 |
+| hvg | 0.5 | 0.5 | 0.4 | 0.4 | - | 3.2 | 14.2 | 0.5 | 0.5 | 22.5 | 22.5 | 12.6 | 7.2 | 7.2 | 0.3 | 0.3 |
+| pca | 1.9 | 1.8 | 1.7 | 1.8 | - | 10.3 | 29.3 | 14.7 | 14.9 | **OOM** | **OOM** | 281.2 | 27.3 | 27.6 | 1.9 | 2.2 |
+| harmony | 1.6 | 1.6 | 1.5 | 1.5 | - | 2.1 | 2.1 | 83.7 | 83.4 | - | - | 89.0 | 83.3 | 73.6 | 1.0 | 1.3 |
+| knn_snn | 4.8 | 5.0 | 4.7 | 4.8 | - | 61.3 | 58.0 | 39.5 | 39.7 | - | - | 45.8 | 174.0 | 167.2 | 6.5 | 6.6 |
+| cluster | 2.8 | 2.9 | 2.8 | 2.9 | - | 20.7 | 21.3 | 114.0 | 114.0 | - | - | 136.4 | 16.4 | 16.6 | 0.7 | 0.7 |
+| cluster_fast (qd) | 14.2 | 15.1 | 15.7 | 15.2 | n/a | n/a | n/a | 192.4 | 192.4 | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
+| umap | 20.4 | 20.5 | 19.9 | 20.0 | - | 225.9 | 230.0 | 173.0 | 174.2 | - | - | 254.9 | 423.9 | 422.5 | 137.1 | 28.4 |
+| dge | 2.2 | 2.2 | 1.8 | 1.8 | - | 449.0 | 46.4 | 21.9 | 22.4 | - | - | 260.4 | 13.4 | 13.3 | 0.1 | 0.1 |
+| tsne_default | 217.6 | 220.7 | 208.9 | 210.0 | - | 1316.1 | 1331.3 | n/a | n/a | - | - | 1392.4 | n/a | n/a | n/a | n/a |
+| tsne_fft | 39.5 | 39.8 | 39.1 | 39.2 | - | 152.9 | 158.0 | n/a | n/a | - | - | 155.9 | n/a | n/a | n/a | n/a |
+| tsne_quick (qd) | 24.9 | 24.9 | 23.8 | 24.3 | n/a | n/a | n/a | 132.6 | 128.8 | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
+| **total** | **344** | **335** | **332** | **321** | failed | **2270** | **1985** | **798** | **609** | failed | failed | **2712** | **936** | **788** | **153** | **45** |
+| total without tSNE | 62 | 50 | 60 | 47 | failed | 801 | 496 | 665 | 480 | failed | failed | 1163 | 936 | 788 | 153 | 45 |
+| **peak GB** | **4.5** | **4.3** | **4.2** | **4.2** | **23.9** | **10.8** | **13.4** | **23.9** | **23.9** | **23.9** | **24.0** | **5.9** | **9.8** | **10.9** | **3.1** | **4.1** |
+| peak swap GB | 0.0 | 0.0 | 0.0 | 0.0 | 4.0 | 0.0 | 0.0 | 1.3 | 1.4 | 3.7 | 4.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
+| on-disk store GB | 1.4 | 1.4 | 1.4 | 1.4 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 6.2 | 4.1 | 4.1 | 0.0 | 0.0 |
 
 ### 1M cells (964,763 after QC)
 
-| step | bixverse mtx | bixverse h5ad | Scanpy mtx | Scanpy h5ad | Scanpy dask | scrapper mtx | scrapper h5ad | scrapper HDF5 | Seurat std mtx | Seurat std h5ad | Seurat BPCells | CyteArc mtx | CyteArc h5ad |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| load | 61.8 | 35.8 | **OOM** | **OOM** | 39.3 | **OOM** | **OOM** | 405.2 | **OOM** | **OOM** | 129.0 | 302.6 | 66.9 |
-| qc | 0.6 | 1.1 | - | - | 7.2 | - | - | 12.5 | - | - | 8.5 | 0.1 | 0.1 |
-| normalise | n/a | n/a | - | - | 0.0 | - | - | 0.0 | - | - | 4.1 | 27.3 | 28.1 |
-| hvg | 0.8 | 0.9 | - | - | 8.2 | - | - | 37.6 | - | - | 24.5 | 12.7 | 13.6 |
-| pca | 4.8 | 4.8 | - | - | 18.2 | - | - | 143.6 | - | - | 463.0 | 49.8 | 54.5 |
-| harmony | 3.0 | 2.9 | - | - | 4.2 | - | - | 166.0 | - | - | 175.1 | 163.2 | 148.4 |
-| knn_snn | 20.3 | 19.9 | - | - | 39.6 | - | - | 86.7 | - | - | 94.8 | 364.3 | 392.8 |
-| cluster | 5.7 | 5.9 | - | - | 46.8 | - | - | 269.1 | - | - | 342.7 | 19.3 | 19.6 |
-| cluster_fast (qd) | 45.5 | 46.9 | n/a | n/a | n/a | - | - | 544.6 | n/a | n/a | n/a | n/a | n/a |
-| umap | 77.4 | 77.8 | - | - | 555.3 | - | - | 361.8 | - | - | 545.8 | 863.0 | 868.9 |
-| dge | 4.0 | 4.1 | - | - | - | - | - | **TIMEOUT** | - | - | 517.6 | 24.0 | 24.5 |
-| tsne_default | 629.2 | 629.0 | - | - | **TIMEOUT** | n/a | n/a | n/a | - | - | **TIMEOUT** | n/a | n/a |
-| tsne_fft | 192.8 | 191.5 | - | - | - | n/a | n/a | n/a | - | - | - | n/a | n/a |
-| tsne_quick (qd) | 132.4 | 132.7 | n/a | n/a | n/a | - | - | - | n/a | n/a | n/a | n/a | n/a |
-| **total** | **1133** | **1106** | failed | failed | failed | failed | failed | failed | failed | failed | failed | **1826** | **1617** |
-| total without tSNE | 178 | 153 | failed | failed | 719 | failed | failed | failed | failed | failed | 2305 | 1826 | 1617 |
-| **peak GB** | **9.9** | **10.0** | **22.3** | **22.0** | **10.8** | **22.8** | **22.9** | **22.5** | **22.9** | **22.9** | **10.8** | **10.0** | **10.3** |
-| peak swap GB | 0.0 | 0.0 | 3.9 | 3.9 | 0.0 | 3.7 | 3.3 | 1.3 | 3.5 | 3.3 | 0.0 | 0.0 | 0.0 |
-| on-disk store GB | 2.7 | 2.7 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 12.5 | 8.3 | 8.3 |
+| step | bixverse mtx | bixverse h5ad | bixverse-py mtx | bixverse-py h5ad | Scanpy mtx | Scanpy h5ad | Scanpy dask | scrapper mtx | scrapper h5ad | Seurat std mtx | Seurat std h5ad | Seurat BPCells | CyteArc mtx | CyteArc h5ad | brisc h5ad | brisc h5ad hogwild |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| load | 59.9 | 30.4 | 57.1 | 28.2 | **OOM** | 76.8 | 155.8 | **OOM** | **OOM** | **OOM** | **OOM** | 152.6 | 329.6 | 89.7 | 12.6 | 10.7 |
+| qc | 0.8 | 0.6 | 0.4 | 0.4 | - | 15.7 | 26.1 | - | - | - | - | 8.3 | 0.1 | 0.1 | 0.2 | 0.2 |
+| normalise | n/a | n/a | n/a | n/a | - | 10.2 | 0.0 | - | - | - | - | 4.2 | 27.7 | 27.8 | 1.9 | 1.5 |
+| hvg | 0.9 | 0.8 | 0.8 | 1.4 | - | 10.3 | 26.8 | - | - | - | - | 24.8 | 12.9 | 12.9 | 0.7 | 0.6 |
+| pca | 3.6 | 3.5 | 3.4 | 3.5 | - | 23.1 | 55.0 | - | - | - | - | 466.5 | 54.7 | 55.0 | 4.5 | 4.9 |
+| harmony | 3.0 | 3.0 | 2.8 | 2.9 | - | 4.8 | 4.3 | - | - | - | - | 174.6 | 152.2 | 154.3 | 2.0 | 1.9 |
+| knn_snn | 11.8 | 11.7 | 11.1 | 11.8 | - | 68.3 | 63.1 | - | - | - | - | 94.3 | 397.8 | 394.2 | 15.0 | 15.0 |
+| cluster | 6.4 | 6.1 | 6.7 | 6.6 | - | 50.5 | 46.4 | - | - | - | - | 340.5 | 19.4 | 19.6 | 1.4 | 1.4 |
+| cluster_fast (qd) | 46.6 | 47.3 | 47.1 | 48.3 | n/a | n/a | n/a | - | - | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
+| umap | 48.1 | 48.6 | 47.7 | 48.0 | - | 555.8 | 560.7 | - | - | - | - | 544.6 | 866.9 | 862.3 | 278.1 | 63.7 |
+| dge | 4.1 | 4.1 | 3.2 | 3.2 | - | 1592.6 | **OOM** | - | - | - | - | 533.2 | 23.6 | 24.1 | 0.3 | 0.3 |
+| tsne_default | 525.9 | 500.3 | 515.9 | 512.3 | - | **TIMEOUT** | - | n/a | n/a | - | - | **TIMEOUT** | n/a | n/a | n/a | n/a |
+| tsne_fft | 105.5 | 104.9 | 101.6 | 105.1 | - | - | - | n/a | n/a | - | - | - | n/a | n/a | n/a | n/a |
+| tsne_quick (qd) | 69.8 | 70.7 | 70.8 | 68.0 | n/a | n/a | n/a | - | - | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
+| **total** | **840** | **785** | **821** | **791** | failed | failed | failed | failed | failed | failed | failed | failed | **1885** | **1640** | **317** | **100** |
+| total without tSNE | 139 | 109 | 133 | 106 | failed | 2408 | failed | failed | failed | failed | failed | 2344 | 1885 | 1640 | 317 | 100 |
+| **peak GB** | **8.2** | **8.1** | **7.9** | **7.8** | **23.9** | **23.9** | **23.9** | **23.9** | **24.0** | **23.9** | **24.0** | **11.5** | **10.6** | **10.9** | **8.1** | **8.1** |
+| peak swap GB | 0.0 | 0.0 | 0.0 | 0.0 | 3.8 | 2.5 | 3.6 | 4.0 | 3.8 | 4.0 | 3.8 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
+| on-disk store GB | 2.7 | 2.7 | 2.7 | 2.7 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 12.5 | 8.3 | 8.3 | 0.0 | 0.0 |
 
 ### Quality
 
 A parity check: do the fast paths give the answers the established frameworks
 give? Every framework runs its own defaults on one seed of one simulator, so
 the scores don't rank anything finer than that. The GPU and MLX rows are the
-native runs. Against the truth, h5ad paths, Scanpy Dask and BPCells as they are. Purity
-is the share of the 15 nearest neighbours in the same true group; rare is the
-smallest group (about 1%, in 6 of 24 batches). (qd) columns score
-`cluster_fast` at resolution 1. DGE R-precision is against markers detectable
-in at least 10% of their group, and on the genes every tool reported
-(shared). Definitions in [methods](methods.md#quality-scores).
+old native runs. Against the truth, h5ad paths, Scanpy dask and BPCells as
+they are. Purity is the share of the 15 nearest neighbours in the same true
+group; rare is the smallest group (about 1%, in 6 of 24 batches). (qd)
+columns score `cluster_fast` at resolution 1. DGE R-precision is against
+markers detectable in at least 10% of their group, and on the genes every tool
+reported (shared). Scanpy dask has no scores at 1M: it OOMs in DGE, before the
+score inputs are written. Definitions in [methods](methods.md#quality-scores).
 
 #### 100k
 
 | tool | clusters | ARI | NMI | rare F1 | ARI (qd) | rare F1 (qd) | HVG prec. | Harmony purity | rare purity | batch mix | UMAP purity | tSNE purity | tSNE (qd) purity | DGE R-prec. | DGE R-prec. shared |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| bixverse | 11 | 0.976 | 0.958 | 0.261 | 0.860 | 0.275 | 0.430 | 0.970 | 0.260 | 0.990 | 0.973 | 0.975 | 0.976 | 0.895 | 0.975 |
-| bixverse GPU | 12 | 0.886 | 0.930 | 0.231 | 0.858 | 0.263 | 0.430 | 0.968 | 0.226 | 1.010 | 0.972 | 0.974 | 0.975 | 0.895 | 0.975 |
-| bixverse MLX | 12 | 0.886 | 0.930 | 0.217 | 0.857 | 0.262 | 0.430 | 0.967 | 0.222 | 1.011 | 0.971 | 0.973 | 0.974 | 0.895 | 0.975 |
-| Scanpy | 11 | 0.884 | 0.855 | 0.091 | - | - | 0.390 | 0.908 | 0.130 | 0.993 | 0.917 | 0.922 | - | 0.927 | 0.881 |
-| Scanpy dask | 10 | 0.909 | 0.873 | 0.095 | - | - | 0.390 | 0.908 | 0.130 | 0.993 | 0.916 | 0.922 | - | - | - |
-| scrapper | 9 | 0.942 | 0.943 | 0.132 | 0.937 | 0.130 | 0.439 | 0.928 | 0.169 | 0.968 | 0.933 | - | 0.933 | 0.939 | 0.896 |
-| scrapper HDF5 | 9 | 0.942 | 0.944 | 0.133 | 0.935 | 0.129 | 0.439 | 0.929 | 0.165 | 0.968 | 0.934 | - | 0.930 | 0.939 | 0.896 |
+| bixverse | 11 | 0.976 | 0.958 | 0.264 | 0.974 | 0.274 | 0.430 | 0.970 | 0.260 | 0.990 | 0.972 | 0.975 | 0.977 | 0.895 | 0.975 |
+| bixverse-py | 11 | 0.976 | 0.958 | 0.264 | 0.869 | 0.274 | 0.430 | 0.970 | 0.260 | 0.990 | 0.972 | 0.975 | 0.977 | 0.895 | 0.975 |
+| bixverse GPU (old stack) | 11 | 0.977 | 0.956 | 0.235 | 0.858 | 0.263 | 0.430 | 0.968 | 0.226 | 1.010 | 0.972 | 0.974 | 0.975 | 0.895 | 0.975 |
+| bixverse MLX (old stack) | 11 | 0.974 | 0.955 | 0.218 | 0.857 | 0.262 | 0.430 | 0.967 | 0.222 | 1.011 | 0.970 | 0.973 | 0.974 | 0.895 | 0.975 |
+| Scanpy | 11 | 0.853 | 0.854 | 0.089 | - | - | 0.390 | 0.908 | 0.130 | 0.993 | 0.916 | 0.922 | - | 0.927 | 0.881 |
+| Scanpy dask | 10 | 0.895 | 0.874 | 0.048 | - | - | 0.390 | 0.908 | 0.130 | 0.993 | 0.916 | 0.922 | - | 0.924 | 0.956 |
+| scrapper | 9 | 0.942 | 0.944 | 0.133 | 0.825 | 0.130 | 0.439 | 0.929 | 0.163 | 0.968 | 0.933 | - | 0.934 | 0.939 | 0.896 |
 | Seurat std | 13 | 0.812 | 0.911 | 0.269 | - | - | 0.430 | 0.971 | 0.268 | 0.989 | 0.972 | 0.978 | - | 0.876 | 0.975 |
 | Seurat BPCells | 13 | 0.788 | 0.907 | 0.270 | - | - | 0.430 | 0.971 | 0.268 | 0.989 | 0.972 | 0.978 | - | 0.876 | 0.975 |
 | CyteArc | 10 | 0.954 | 0.925 | 0.144 | - | - | 0.366 | 0.949 | 0.120 | 0.972 | 0.954 | - | - | 0.927 | 0.881 |
+| brisc | 11 | 0.977 | 0.959 | 0.277 | - | - | 0.430 | 0.974 | 0.343 | 0.982 | 0.977 | - | - | 0.291 | 0.984 |
+| brisc hogwild | 11 | 0.977 | 0.959 | 0.277 | - | - | 0.430 | 0.974 | 0.343 | 0.982 | 0.978 | - | - | 0.291 | 0.984 |
 
 #### 500k
 
 | tool | clusters | ARI | NMI | rare F1 | ARI (qd) | rare F1 (qd) | HVG prec. | Harmony purity | rare purity | batch mix | UMAP purity | tSNE purity | tSNE (qd) purity | DGE R-prec. | DGE R-prec. shared |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| bixverse | 12 | 0.881 | 0.932 | 0.301 | 0.862 | 0.295 | 0.426 | 0.969 | 0.291 | 0.982 | 0.973 | 0.978 | 0.979 | 0.894 | 0.976 |
-| bixverse GPU | 12 | 0.873 | 0.927 | 0.302 | 0.789 | 0.284 | 0.426 | 0.965 | 0.262 | 1.004 | 0.970 | 0.972 | 0.974 | 0.894 | 0.976 |
-| bixverse MLX | 12 | 0.863 | 0.927 | 0.308 | 0.782 | 0.272 | 0.426 | 0.967 | 0.268 | 1.004 | 0.971 | 0.974 | 0.976 | 0.894 | 0.976 |
-| Scanpy | 12 | 0.777 | 0.826 | 0.110 | - | - | 0.398 | 0.894 | 0.131 | 0.984 | 0.907 | 0.916 | - | 0.934 | 0.883 |
-| Scanpy dask | 11 | 0.871 | 0.852 | 0.108 | - | - | 0.398 | 0.894 | 0.131 | 0.984 | 0.906 | 0.916 | - | - | - |
-| scrapper | 9 | 0.944 | 0.946 | 0.136 | 0.940 | 0.134 | 0.440 | 0.928 | 0.184 | 0.961 | 0.934 | - | 0.918 | 0.940 | 0.905 |
-| scrapper HDF5 | 9 | 0.943 | 0.945 | 0.135 | 0.939 | 0.133 | 0.440 | 0.927 | 0.185 | 0.961 | 0.933 | - | 0.921 | 0.940 | 0.905 |
+| bixverse | 12 | 0.863 | 0.929 | 0.304 | 0.867 | 0.298 | 0.426 | 0.969 | 0.291 | 0.982 | 0.973 | 0.978 | 0.979 | 0.894 | 0.976 |
+| bixverse-py | 12 | 0.869 | 0.930 | 0.297 | 0.871 | 0.297 | 0.426 | 0.969 | 0.291 | 0.982 | 0.972 | 0.978 | 0.979 | 0.894 | 0.976 |
+| bixverse GPU (old stack) | 13 | 0.796 | 0.904 | 0.281 | 0.789 | 0.284 | 0.426 | 0.965 | 0.262 | 1.004 | 0.970 | 0.972 | 0.974 | 0.894 | 0.976 |
+| bixverse MLX (old stack) | 12 | 0.869 | 0.928 | 0.307 | 0.807 | 0.284 | 0.426 | 0.967 | 0.268 | 1.004 | 0.971 | 0.975 | 0.976 | 0.894 | 0.976 |
+| Scanpy | 10 | 0.904 | 0.868 | 0.110 | - | - | 0.398 | 0.894 | 0.131 | 0.984 | 0.909 | 0.916 | - | 0.934 | 0.883 |
+| Scanpy dask | 11 | 0.836 | 0.838 | 0.113 | - | - | 0.398 | 0.894 | 0.131 | 0.984 | 0.906 | 0.916 | - | 0.928 | 0.957 |
+| scrapper | 9 | 0.943 | 0.944 | 0.134 | 0.938 | 0.132 | 0.440 | 0.927 | 0.183 | 0.962 | 0.933 | - | 0.919 | 0.940 | 0.905 |
 | Seurat BPCells | 15 | 0.702 | 0.878 | 0.315 | - | - | 0.428 | 0.970 | 0.309 | 0.981 | 0.972 | 0.980 | - | 0.694 | 0.966 |
 | CyteArc | 10 | 0.962 | 0.937 | 0.169 | - | - | 0.393 | 0.954 | 0.159 | 0.970 | 0.960 | - | - | 0.934 | 0.883 |
+| brisc | 19 | 0.979 | 0.960 | 0.344 | - | - | 0.427 | 0.974 | 0.401 | 0.975 | 0.981 | - | - | 0.321 | 0.987 |
+| brisc hogwild | 19 | 0.979 | 0.960 | 0.344 | - | - | 0.427 | 0.974 | 0.401 | 0.975 | 0.981 | - | - | 0.321 | 0.987 |
 
 #### 1M
 
 | tool | clusters | ARI | NMI | rare F1 | ARI (qd) | rare F1 (qd) | HVG prec. | Harmony purity | rare purity | batch mix | UMAP purity | tSNE purity | tSNE (qd) purity | DGE R-prec. | DGE R-prec. shared |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| bixverse | 12 | 0.870 | 0.934 | 0.353 | 0.799 | 0.344 | 0.436 | 0.969 | 0.292 | 0.982 | 0.973 | 0.977 | 0.979 | 0.897 | 0.975 |
-| bixverse GPU | 12 | 0.870 | 0.927 | 0.282 | 0.861 | 0.279 | 0.436 | 0.963 | 0.231 | 1.006 | 0.970 | 0.972 | 0.973 | 0.897 | 0.975 |
-| bixverse MLX | 12 | 0.870 | 0.929 | 0.299 | 0.785 | 0.287 | 0.436 | 0.965 | 0.237 | 1.005 | 0.970 | 0.973 | 0.974 | 0.897 | 0.975 |
-| Scanpy dask | 12 | 0.859 | 0.834 | 0.107 | - | - | 0.396 | 0.889 | 0.118 | 0.986 | 0.904 | - | - | - | - |
+| bixverse | 12 | 0.870 | 0.934 | 0.354 | 0.874 | 0.345 | 0.436 | 0.969 | 0.292 | 0.982 | 0.974 | 0.978 | 0.979 | 0.897 | 0.975 |
+| bixverse-py | 12 | 0.867 | 0.933 | 0.354 | 0.868 | 0.347 | 0.436 | 0.969 | 0.292 | 0.982 | 0.974 | 0.978 | 0.979 | 0.897 | 0.975 |
+| bixverse GPU (old stack) | 13 | 0.797 | 0.906 | 0.292 | 0.861 | 0.279 | 0.436 | 0.963 | 0.231 | 1.006 | 0.969 | 0.972 | 0.973 | 0.897 | 0.975 |
+| bixverse MLX (old stack) | 12 | 0.867 | 0.929 | 0.302 | 0.862 | 0.291 | 0.436 | 0.965 | 0.237 | 1.005 | 0.970 | 0.973 | 0.974 | 0.897 | 0.975 |
+| Scanpy | 12 | 0.831 | 0.829 | 0.105 | - | - | 0.396 | 0.889 | 0.118 | 0.986 | 0.904 | - | - | 0.934 | 0.879 |
 | Seurat BPCells | 14 | 0.764 | 0.898 | 0.345 | - | - | 0.437 | 0.968 | 0.281 | 0.982 | 0.971 | - | - | 0.628 | 0.912 |
 | CyteArc | 11 | 0.974 | 0.947 | 0.344 | - | - | 0.396 | 0.956 | 0.169 | 0.965 | 0.963 | - | - | 0.934 | 0.879 |
+| brisc | 39 | 0.877 | 0.932 | 0.336 | - | - | 0.436 | 0.974 | 0.358 | 0.975 | 0.979 | - | - | 0.336 | 0.987 |
+| brisc hogwild | 39 | 0.877 | 0.932 | 0.336 | - | - | 0.436 | 0.974 | 0.358 | 0.975 | 0.980 | - | - | 0.336 | 0.987 |
 
-### Harmony on the same input
+### Harmony on the same input (old stack)
+
+Measured with bixverse 0.8.4 and bixverse.gpu 0.6.2; not rerun on 0.9.0.
 
 bixverse's PCA (30 PCs) and the true batch labels for every
 implementation, native, 8 threads, median of 3 runs. Extra GB is peak RSS over
@@ -178,93 +192,64 @@ mix 0.156 at 1M (0.965, 0.487, 0.183 at 100k).
 | bixverse v1 | 0.38 | 3.33 | 0.26 | 2.47 | 0.753 / 0.712 | 0.966 | 0.256 | 1.005 |
 | harmonypy 2.1.0 | 0.44 | 4.16 | 0.15 | 1.44 | 1 / 1 | 0.968 | 0.282 | 0.982 |
 
-Inside the pipeline (Docker) bixverse's `harmony_v2_sc` takes 0.5 s at 100k,
-1.7 s at 500k and 2.9 s at 1M; the gap to the standalone numbers is the R
-wrapper plus the VM, not split further.
+Inside the current pipeline (Docker, bixverse 0.9.0) `harmony_sc` takes 0.7 s
+at 100k, 1.6 s at 500k and 3.0 s at 1M; the gap to the standalone numbers is
+the R wrapper plus the VM, not split further.
 
 ### What it shows
 
-- **bixverse is about 7x faster than scrapper at a quarter of its memory, and
-  10x to 11x faster than in-memory Scanpy.** From h5ad without tSNE: 12 s
-  against 83 s (scrapper) and 122 s (Scanpy) at 100k, 70 s against 481 s and
-  766 s at 500k (5.4 GB against 22.7 and 14.2 GB). Scanpy on Dask comes
-  closest (77, 317 and 719 s), but without DGE.
-- **At 1M only the out-of-core designs survive.** bixverse (153 s from h5ad),
-  Scanpy Dask (719 s, no DGE), CyteArc (1,617 s) and Seurat BPCells (2,305 s).
-  scrapper makes 500k at the memory ceiling with 2.8 GB swap; Seurat standard
-  OOMs in PCA at 500k.
-- **Where bixverse's time goes.** At 1M from h5ad UMAP is half of it (78 s),
-  then load (36 s) and kNN/sNN (20 s). bixverse 0.8.4 hands the sNN graph over
-  by pointer instead of copying it through igraph: against 0.8.1, load is 1.6x
-  and kNN/sNN 1.5x faster at 1M (57 to 36 s and 30 to 20 s).
-- **Quality: a parity check, not a leaderboard.** The scores are there to show
-  the speed doesn't come from cutting corners. bixverse lands within the spread
-  of the established frameworks on every score: Harmony purity 0.963 to 0.970
-  across its CPU and GPU rows (others 0.889 to 0.971), ARI 0.86 to 0.98
-  (others 0.70 to 0.97), DGE R-precision on the shared genes 0.975 to 0.976,
-  level with Seurat's presto. Every framework runs its own defaults on one seed
-  of one simulator: a different resolution or neighbour count moves cluster
-  counts and ARI by more than the frameworks differ, so read the tables as
-  "same ballpark", not as a ranking.
-- **The rare group is hard for everyone.** Rare F1 0.09 to 0.35 across all
-  frameworks (bixverse 0.22 to 0.35); the best-matching cluster is still
-  mostly other cells. That's the data, not a framework.
-- **The GPU rows score like the CPU rows,** apart from slightly more batch
-  mixing (1.004 to 1.011 against 0.982 to 0.990) and less of the rare group
-  (rare purity 0.22 to 0.27 against 0.26 to 0.29). On the same input the GPU
-  and MLX Harmony score as v2 does (rare purity 0.291 and 0.292, batch mix
-  0.982 at 1M), so the gap sits upstream of Harmony. Which step, is not
-  checked.
-- **On detectable markers scrapper, Scanpy and CyteArc rank slightly better**
-  (R-precision 0.93 to 0.94 against 0.89 to 0.90). bixverse's
-  `min_prop = 0.05` reports fewer genes, so its all-gene AUROC is lower (0.74
-  against 0.88 to 0.94 at 500k): markers it filters out rank last. BPCells
-  drops to 0.69 and 0.63 at 500k and 1M; why is not checked.
-- **`cluster_fast` does not pay off on the CPU here.** The CPU k-means costs
-  more than the Leiden it replaces: 15 s against 3 s at 500k and 47 s against
-  6 s at 1M for bixverse, 194 s against 123 s for scrapper. On the GPU it
-  costs about what Leiden does ([native runs](#native-runs-cpu-against-gpu)).
-- **DGE: bixverse in seconds.** 0.6 to 4.1 s against 3.3 to 23 s for
-  scrapper, 6 to 25 s for CyteArc, 46 to 454 s for Scanpy and 57 to 518 s for
-  BPCells (including a one-off transpose of its data layer, see
-  [methods](methods.md#caveats)).
-- **tSNE: bixverse on the CPU is 2x to 5x faster in every category.** Standard
-  Barnes-Hut at 500k: 259 s against 1,315 s for Scanpy and 1,390 s for
-  BPCells, both of which time out at 1M. FFT: 64 s against 153 to 156 s.
-  Quick and dirty: 41 s against scrapper's 133 s, both qdtsne with the leaf
-  approximation. From 500k bixverse's CPU tSNE uses an approximate kNN where
-  Scanpy's and Seurat's default Barnes-Hut pay for an exact one
-  ([methods](methods.md#workflow)).
-- **tSNE sets bixverse's peak.** Before tSNE the CPU rows peak at 4.5 GB at
-  500k and 8.2 GB at 1M; the run peaks are 5.3 to 5.4 GB and 9.9 to 10.0 GB.
-- **scrapper HDF5 trades time for memory, up to 500k.** 216 s and 3.3 GB at
-  100k against 83 s and 5.5 GB in memory; 2,448 s and 12.3 GB without swap at
-  500k against 481 s and 22.7 GB with 2.6 GB swap. Same scores. DGE is most of
-  the gap (82 s against 3.3 s at 100k, 1,717 s against 23 s at 500k), then the
-  DelayedArray pre-filter in load (228 s at 500k). At 1M it gets past load
-  (405 s) but peaks at 22.5 GB and times out in DGE. Why DGE is this
-  slow on the HDF5 matrix is not profiled. PBMC shows the same: 203 s and
-  2.7 GB at 100k against 70 s and 4.8 GB, and a DGE timeout on the full
-  data.
-- **Disk: bixverse's store is the smallest.** It takes 0.3, 1.4 and 2.7 GB,
-  about three quarters of the BPCells store (0.4, 1.8, 3.7 GB in a load-only
-  run) and a third of the 8.1 GB h5ad it reads at 1M. The BPCells column in
-  the tables is larger (1.2, 6.2, 12.5 GB) because it also holds the
-  gene-major copy of the normalised data its DGE step writes. CyteArc's store
-  holds the counts cell- and gene-major: 0.8, 4.1 and 8.3 GB.
-- **CyteArc runs every size at about 10 GB, slowly.** From h5ad 164, 777 and
-  1,617 s; its import sets the peak (8.3, 11.4 and 10.3 GB) and the analysis
-  stays under 6 GB. The analysis scales about linearly (153, 740 and
-  1,550 s). UMAP is about half of it: 84 s at 100k against 38 s for Scanpy,
-  863 to 869 s at 1M. Slower than every in-memory row at 100k, level with
-  in-memory Scanpy at 500k (777 against 766 s), 1.4x faster than BPCells at
-  1M. Loading from mtx costs 21 to 236 s more than from h5ad.
-- **Harmony: bixverse v2 is 2x faster than harmonypy 2.1.0 on the same
-  input, MLX 4.2x, at the same result.** 2.11 and 1.00 s against 4.16 s at
-  1M; v2, GPU and MLX keep 97% of harmonypy's neighbours and match its purity
-  and batch mix, with slightly more of the rare group (0.29 against 0.28).
-  harmonypy needs 1.1 GB less than v2 at 1M, about the same as MLX. v1 keeps
-  only 71 to 75% of the neighbours and mixes more.
+- **bixverse and brisc are in a league of their own.** From h5ad without
+  tSNE: bixverse 11, 50 and 109 s (bixverse-py 9, 47 and 106 s), brisc with
+  its Hogwild UMAP 9, 45 and 100 s. Next come scrapper (83 and 480 s, OOM at
+  1M), Scanpy (157, 801 and 2,408 s) and CyteArc (171, 788 and 1,640 s).
+  bixverse is 14x to 22x faster than in-memory Scanpy and 7x to 10x faster
+  than scrapper, at a fifth of scrapper's memory at 500k (4.3 against
+  23.9 GB).
+- **brisc gets there in memory, bixverse out of core.** Their totals are level;
+  how they get there differs. brisc loads in 4.5 s at 500k against bixverse's
+  15 s (which writes its store and the CSC copy), and its Leiden and DGE take
+  under a second. bixverse wins UMAP (20 s against 28 s for Hogwild and 137 s
+  for brisc's default single-threaded optimiser) and the kNN. Without Hogwild
+  brisc takes 3x as long (153 and 317 s).
+- **At 1M Scanpy and scrapper run out of road.** scrapper OOMs at load on
+  both inputs, Seurat standard already OOMs in PCA at 500k. In-memory Scanpy
+  from h5ad gets to the end of DGE at the 24 GB cap with 2.5 GB swap and then
+  times out in tSNE. Scanpy dask OOMs in its t-test DGE. bixverse peaks at
+  8.1 GB, brisc at 8.1 GB, CyteArc at 10.9 GB and BPCells at 11.5 GB.
+- **Quality: a parity check, and brisc scores best.** bixverse lands within
+  the spread of the established frameworks: Harmony purity 0.969 to 0.970
+  (others 0.889 to 0.974), ARI 0.86 to 0.98, DGE R-precision on the shared
+  genes 0.975, level with Seurat's presto. brisc has the cleanest Harmony
+  embedding (purity 0.974) and keeps the most of the rare group (rare purity
+  0.34 to 0.40 against 0.29 for bixverse), but its DGE ranks detectable
+  markers poorly (0.29 to 0.34 against 0.88 to 0.94), since it is not a test.
+  bixverse-py scores like bixverse in R: same Rust.
+- **The rare group is hard for everyone.** Rare F1 0.05 to 0.35; the
+  best-matching cluster is still mostly other cells.
+- **Cluster counts move.** brisc's sNN fragments: 19 clusters at 500k and 39
+  at 1M against 12 true groups. Its ARI stays high at 500k (0.98) since the
+  fragments sit inside true groups, and drops at 1M (0.88).
+- **DGE: bixverse in seconds with a proper test.** 0.5 to 4.1 s for the
+  Wilcoxon, against 3.5 to 22 s for scrapper (AUC), 6 to 24 s for CyteArc,
+  57 to 533 s for BPCells and 49 to 1,593 s for in-memory Scanpy. Scanpy
+  dask's t-test takes 12 and 46 s. brisc's 0.0 to 0.3 s is no test.
+- **Scanpy's kNN got slower.** 54 to 68 s at every size, against 26 to 39 s
+  on the previous stack: Scanpy 1.12.5 comes with pynndescent 0.7.0 and numba
+  0.68.1. Left as installed.
+- **tSNE: bixverse on the CPU is 2x to 6x faster in every category.** Standard
+  Barnes-Hut at 500k: 221 s against 1,316 s for Scanpy and 1,392 s for
+  BPCells, both of which time out at 1M. FFT: 40 s against 153 to 158 s.
+  Quick and dirty: 25 s against scrapper's 129 to 133 s. From 500k bixverse's
+  CPU tSNE uses an approximate kNN where Scanpy's and Seurat's default
+  Barnes-Hut pay for an exact one ([methods](methods.md#workflow)).
+- **bixverse's peak is set at load.** 8.1 to 8.2 GB at 1M, while the store and
+  the CSC copy get written; every later step, tSNE included, stays below.
+- **`cluster_fast` does not pay off on the CPU here.** 15 s against 3 s of
+  Leiden at 500k and 47 s against 6 s at 1M for bixverse, 192 s against 114 s
+  for scrapper.
+- **Disk: bixverse's store is the smallest.** 0.3, 1.4 and 2.7 GB, against
+  0.8, 4.1 and 8.3 GB for CyteArc (counts cell- and gene-major) and 1.2, 6.2
+  and 12.5 GB for BPCells (including the gene-major copy its DGE writes).
 
 ## PBMC
 
@@ -275,106 +260,105 @@ the DGE groups are the 24 samples.
 
 ![Wall time per step on PBMC, against the fastest per step](figures/steps_heatmap_pbmc.png)
 
+![Peak memory per step on PBMC, against the leanest per step](figures/steps_memory_heatmap_pbmc.png)
+
 ### 100k cells (69,412 after QC)
 
-| step | bixverse mtx | bixverse h5ad | Scanpy mtx | Scanpy h5ad | Scanpy dask | scrapper mtx | scrapper h5ad | scrapper HDF5 | Seurat std mtx | Seurat std h5ad | Seurat BPCells | CyteArc mtx | CyteArc h5ad |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| load | 7.1 | 4.4 | 19.4 | 2.3 | 6.1 | 37.0 | 5.1 | 74.3 | 41.0 | 8.9 | 14.5 | 42.7 | 20.4 |
-| qc | 0.6 | 0.8 | 0.7 | 0.8 | 1.1 | 0.4 | 0.4 | 1.1 | 2.7 | 2.6 | 1.2 | 0.1 | 0.1 |
-| normalise | n/a | n/a | 2.0 | 1.9 | 0.0 | 0.1 | 0.1 | 0.0 | 0.1 | 0.2 | 0.5 | 3.5 | 3.5 |
-| hvg | 0.3 | 0.3 | 1.3 | 1.4 | 1.7 | 0.2 | 0.2 | 2.8 | 4.0 | 4.0 | 4.0 | 4.9 | 5.0 |
-| pca | 0.6 | 0.5 | 1.4 | 1.4 | 4.0 | 2.3 | 2.4 | 9.9 | 6.9 | 7.3 | 74.7 | 4.8 | 4.7 |
-| harmony | 0.7 | 0.6 | 0.6 | 0.6 | 0.5 | 12.2 | 13.6 | 12.6 | 13.5 | 13.3 | 14.0 | 25.9 | 25.3 |
-| knn_snn | 1.2 | 1.1 | 27.0 | 26.9 | 23.7 | 4.4 | 4.4 | 4.4 | 5.3 | 5.4 | 5.6 | 16.7 | 16.4 |
-| cluster | 0.6 | 0.6 | 2.0 | 2.0 | 1.9 | 8.4 | 9.3 | 8.6 | 17.8 | 17.8 | 18.1 | 14.4 | 14.4 |
-| cluster_fast (qd) | 0.9 | 1.0 | n/a | n/a | n/a | 10.4 | 10.6 | 10.5 | n/a | n/a | n/a | n/a | n/a |
-| umap | 2.7 | 2.7 | 26.8 | 26.6 | 26.4 | 28.1 | 28.0 | 28.2 | 34.7 | 34.8 | 35.3 | 59.0 | 59.0 |
-| dge | 0.7 | 0.7 | 55.7 | 51.9 | - | 6.0 | 6.3 | 61.3 | 15.4 | 15.2 | 118.2 | 8.9 | 9.1 |
-| tsne_default | 25.7 | 26.3 | 96.1 | 94.6 | 102.3 | n/a | n/a | n/a | 67.0 | 71.8 | 75.9 | n/a | n/a |
-| tsne_fft | 7.8 | 7.6 | 31.9 | 32.0 | 31.0 | n/a | n/a | n/a | 23.9 | 24.6 | 24.2 | n/a | n/a |
-| tsne_quick (qd) | 4.5 | 4.7 | n/a | n/a | n/a | 14.0 | 15.3 | 14.5 | n/a | n/a | n/a | n/a | n/a |
-| **total** | **52** | **50** | **265** | **242** | **199** | **113** | **85** | **218** | **232** | **206** | **386** | **181** | **158** |
-| total without tSNE | 14 | 12 | 137 | 116 | 65 | 99 | 70 | 203 | 141 | 109 | 286 | 181 | 158 |
-| **peak GB** | **1.3** | **1.3** | **6.0** | **2.0** | **1.6** | **5.2** | **4.8** | **2.7** | **7.7** | **7.8** | **2.5** | **8.0** | **9.1** |
-| peak swap GB | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
-| on-disk store GB | 0.3 | 0.3 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 1.2 | 0.8 | 0.8 |
+| step | bixverse mtx | bixverse h5ad | bixverse-py mtx | bixverse-py h5ad | Scanpy mtx | Scanpy h5ad | Scanpy dask | scrapper mtx | scrapper h5ad | Seurat std mtx | Seurat std h5ad | Seurat BPCells | CyteArc mtx | CyteArc h5ad | brisc h5ad | brisc h5ad hogwild |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| load | 7.5 | 4.1 | 6.2 | 3.2 | 22.9 | 4.4 | 18.4 | 40.6 | 7.2 | 43.9 | 10.7 | 16.9 | 47.6 | 23.0 | 1.0 | 1.0 |
+| qc | 0.8 | 0.9 | 0.5 | 0.6 | 0.7 | 0.7 | 3.1 | 0.4 | 0.4 | 2.6 | 2.6 | 1.1 | 0.1 | 0.1 | 0.1 | 0.1 |
+| normalise | n/a | n/a | n/a | n/a | 2.0 | 1.9 | 0.0 | 0.1 | 0.1 | 0.1 | 0.1 | 0.5 | 3.4 | 4.0 | 0.1 | 0.1 |
+| hvg | 0.3 | 0.3 | 0.2 | 0.2 | 1.3 | 1.4 | 3.8 | 0.2 | 0.2 | 3.9 | 4.0 | 3.7 | 5.0 | 5.0 | 0.1 | 0.1 |
+| pca | 0.6 | 0.6 | 0.5 | 0.5 | 1.4 | 1.4 | 8.0 | 2.3 | 2.4 | 7.6 | 7.9 | 72.5 | 4.7 | 5.0 | 0.3 | 0.3 |
+| harmony | 0.7 | 0.7 | 0.4 | 0.5 | 0.5 | 0.5 | 0.5 | 12.2 | 11.0 | 13.0 | 13.3 | 13.1 | 30.4 | 25.8 | 0.2 | 0.2 |
+| knn_snn | 0.5 | 0.5 | 0.5 | 0.5 | 56.5 | 55.4 | 53.3 | 4.3 | 4.3 | 5.4 | 5.4 | 5.6 | 16.9 | 17.1 | 0.6 | 0.6 |
+| cluster | 0.6 | 0.6 | 0.5 | 0.5 | 2.0 | 1.8 | 2.0 | 9.2 | 8.7 | 17.1 | 17.9 | 18.2 | 14.4 | 14.5 | 0.2 | 0.2 |
+| cluster_fast (qd) | 1.0 | 0.9 | 0.7 | 0.8 | n/a | n/a | n/a | 10.4 | 10.2 | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
+| umap | 2.4 | 2.3 | 2.2 | 2.1 | 26.7 | 26.4 | 26.3 | 27.8 | 27.9 | 34.2 | 39.8 | 34.5 | 58.7 | 58.8 | 19.4 | 4.4 |
+| dge | 0.7 | 0.9 | 0.7 | 0.7 | 55.5 | 54.2 | 12.7 | 6.0 | 6.0 | 14.8 | 14.9 | 117.8 | 8.9 | 9.0 | 0.0 | 0.0 |
+| tsne_default | 24.9 | 24.7 | 24.7 | 24.4 | 103.0 | 103.1 | 104.1 | n/a | n/a | 66.0 | 71.8 | 70.3 | n/a | n/a | n/a | n/a |
+| tsne_fft | 7.6 | 7.5 | 8.2 | 7.9 | 31.7 | 30.5 | 31.4 | n/a | n/a | 23.2 | 23.1 | 24.0 | n/a | n/a | n/a | n/a |
+| tsne_quick (qd) | 4.5 | 4.6 | 4.5 | 4.6 | n/a | n/a | n/a | 14.1 | 13.6 | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
+| **total** | **51** | **48** | **49** | **46** | **304** | **282** | **264** | **117** | **82** | **232** | **212** | **378** | **190** | **162** | **22** | **7** |
+| total without tSNE | 14 | 11 | 12 | 9 | 169 | 148 | 128 | 103 | 68 | 143 | 117 | 284 | 190 | 162 | 22 | 7 |
+| **peak GB** | **1.3** | **0.9** | **0.7** | **0.7** | **4.9** | **2.1** | **2.9** | **5.5** | **4.8** | **8.8** | **7.7** | **2.4** | **8.1** | **9.7** | **0.7** | **0.7** |
+| peak swap GB | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
+| on-disk store GB | 0.3 | 0.3 | 0.3 | 0.3 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 1.2 | 0.8 | 0.8 | 0.0 | 0.0 |
 
 ### 500k cells (346,259 after QC)
 
-| step | bixverse mtx | bixverse h5ad | Scanpy mtx | Scanpy h5ad | Scanpy dask | scrapper mtx | scrapper h5ad | scrapper HDF5 | Seurat std mtx | Seurat std h5ad | Seurat BPCells | CyteArc mtx | CyteArc h5ad |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| load | 31.5 | 17.1 | **OOM** | 11.9 | 22.9 | **OOM** | 18.9 | 371.7 | **OOM** | **OOM** | 70.7 | 222.9 | 78.1 |
-| qc | 1.7 | 1.9 | - | 3.8 | 4.0 | - | 2.1 | 5.6 | - | - | 4.6 | 0.1 | 0.1 |
-| normalise | n/a | n/a | - | 3.5 | 0.0 | - | 0.4 | 0.0 | - | - | 2.3 | 14.0 | 14.1 |
-| hvg | 0.7 | 0.7 | - | 3.2 | 5.0 | - | 0.9 | 13.3 | - | - | 14.2 | 17.7 | 18.1 |
-| pca | 2.0 | 2.0 | - | 5.7 | 9.8 | - | 14.4 | 50.5 | - | - | 352.1 | 18.4 | 20.1 |
-| harmony | 2.2 | 2.2 | - | 2.4 | 2.3 | - | 87.1 | 124.8 | - | - | 88.9 | 153.0 | 144.5 |
-| knn_snn | 6.4 | 6.3 | - | 30.7 | 27.2 | - | 27.1 | 28.6 | - | - | 31.2 | 69.8 | 76.1 |
-| cluster | 2.6 | 2.5 | - | 14.1 | 13.0 | - | 85.4 | 82.6 | - | - | 104.3 | 15.0 | 15.2 |
-| cluster_fast (qd) | 13.1 | 12.1 | n/a | n/a | n/a | - | 117.5 | 118.8 | n/a | n/a | n/a | n/a | n/a |
-| umap | 21.7 | 21.0 | - | 155.0 | 152.9 | - | 127.9 | 126.8 | - | - | 198.3 | 293.3 | 293.4 |
-| dge | 2.8 | 2.9 | - | 602.2 | - | - | 39.2 | 1401.2 | - | - | 554.8 | 23.3 | 23.3 |
-| tsne_default | 149.0 | 146.4 | - | 795.5 | 806.3 | n/a | n/a | n/a | - | - | 587.7 | n/a | n/a |
-| tsne_fft | 37.5 | 37.1 | - | 109.3 | 109.3 | n/a | n/a | n/a | - | - | 105.7 | n/a | n/a |
-| tsne_quick (qd) | 24.7 | 24.6 | n/a | n/a | n/a | - | 84.1 | 87.2 | n/a | n/a | n/a | n/a | n/a |
-| **total** | **283** | **265** | failed | **1737** | **1153** | failed | **488** | **2292** | failed | failed | **2115** | **828** | **683** |
-| total without tSNE | 72 | 57 | failed | 832 | 237 | failed | 403 | 2205 | failed | failed | 1421 | 828 | 683 |
-| **peak GB** | **5.1** | **5.3** | **22.2** | **14.2** | **6.7** | **22.8** | **20.9** | **8.3** | **22.8** | **22.9** | **5.6** | **8.5** | **9.6** |
-| peak swap GB | 0.0 | 0.0 | 3.6 | 0.0 | 0.0 | 3.7 | 0.0 | 0.0 | 3.7 | 3.6 | 0.0 | 0.0 | 0.0 |
-| on-disk store GB | 1.3 | 1.3 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 5.8 | 3.9 | 3.9 |
+| step | bixverse mtx | bixverse h5ad | bixverse-py mtx | bixverse-py h5ad | Scanpy mtx | Scanpy h5ad | Scanpy dask | scrapper mtx | scrapper h5ad | Seurat std mtx | Seurat std h5ad | Seurat BPCells | CyteArc mtx | CyteArc h5ad | brisc h5ad | brisc h5ad hogwild |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| load | 31.6 | 16.6 | 29.6 | 14.7 | **OOM** | 22.5 | 82.6 | 252.1 | 30.2 | **OOM** | **OOM** | 82.7 | 231.2 | 89.8 | 4.6 | 4.6 |
+| qc | 2.3 | 2.1 | 1.4 | 1.3 | - | 3.7 | 13.8 | 2.1 | 2.2 | - | - | 4.6 | 0.1 | 0.1 | 0.2 | 0.2 |
+| normalise | n/a | n/a | n/a | n/a | - | 3.3 | 0.0 | 0.4 | 0.4 | - | - | 2.3 | 14.3 | 14.2 | 0.6 | 0.6 |
+| hvg | 0.6 | 0.6 | 0.5 | 0.5 | - | 3.0 | 14.7 | 0.9 | 0.9 | - | - | 14.3 | 18.2 | 18.2 | 0.3 | 0.3 |
+| pca | 1.8 | 1.9 | 1.7 | 1.7 | - | 5.5 | 29.2 | 14.2 | 14.5 | - | - | 356.1 | 20.1 | 20.2 | 1.2 | 1.3 |
+| harmony | 2.3 | 2.0 | 1.9 | 2.0 | - | 2.5 | 2.3 | 119.4 | 101.2 | - | - | 91.5 | 166.0 | 149.2 | 0.9 | 0.9 |
+| knn_snn | 3.4 | 3.4 | 3.1 | 3.2 | - | 61.3 | 55.3 | 27.0 | 27.0 | - | - | 32.4 | 77.5 | 77.8 | 4.0 | 4.1 |
+| cluster | 2.8 | 2.7 | 2.5 | 2.8 | - | 13.1 | 13.5 | 81.7 | 100.7 | - | - | 113.8 | 15.3 | 15.6 | 1.4 | 1.4 |
+| cluster_fast (qd) | 12.7 | 12.1 | 12.5 | 13.4 | n/a | n/a | n/a | 116.5 | 116.0 | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
+| umap | 12.7 | 13.6 | 12.5 | 12.3 | - | 153.1 | 151.7 | 126.3 | 124.4 | - | - | 197.5 | 293.0 | 293.0 | 101.5 | 25.7 |
+| dge | 2.9 | 3.1 | 2.2 | 2.3 | - | 641.1 | 47.1 | 36.6 | 37.0 | - | - | 563.7 | 23.9 | 23.4 | 0.1 | 0.1 |
+| tsne_default | 135.5 | 136.1 | 132.6 | 132.0 | - | 810.4 | 852.7 | n/a | n/a | - | - | 607.3 | n/a | n/a | n/a | n/a |
+| tsne_fft | 29.2 | 29.9 | 27.8 | 27.3 | - | 108.0 | 108.6 | n/a | n/a | - | - | 109.0 | n/a | n/a | n/a | n/a |
+| tsne_quick (qd) | 17.5 | 18.5 | 17.3 | 16.9 | n/a | n/a | n/a | 84.6 | 80.8 | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
+| **total** | **243** | **231** | **233** | **217** | failed | **1828** | **1371** | **745** | **519** | failed | failed | **2175** | **860** | **702** | **115** | **39** |
+| total without tSNE | 60 | 46 | 55 | 41 | failed | 909 | 410 | 661 | 438 | failed | failed | 1459 | 860 | 702 | 115 | 39 |
+| **peak GB** | **5.1** | **5.3** | **5.0** | **5.0** | **23.9** | **14.2** | **12.0** | **23.9** | **20.9** | **23.9** | **23.9** | **5.4** | **8.6** | **9.5** | **4.0** | **4.4** |
+| peak swap GB | 0.0 | 0.0 | 0.0 | 0.0 | 3.9 | 0.0 | 0.0 | 3.3 | 0.0 | 4.0 | 4.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
+| on-disk store GB | 1.3 | 1.3 | 1.3 | 1.3 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 5.8 | 3.9 | 3.9 | 0.0 | 0.0 |
 
 ### Full data set (684,932 after QC)
 
-| step | bixverse mtx | bixverse h5ad | Scanpy mtx | Scanpy h5ad | Scanpy dask | scrapper mtx | scrapper h5ad | scrapper HDF5 | Seurat std mtx | Seurat std h5ad | Seurat BPCells | CyteArc mtx | CyteArc h5ad |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| load | 69.1 | 34.1 | **OOM** | **OOM** | 40.2 | **OOM** | **OOM** | 731.4 | **OOM** | **OOM** | 141.6 | 384.1 | 143.1 |
-| qc | 3.4 | 3.4 | - | - | 7.4 | - | - | 13.1 | - | - | 9.4 | 0.1 | 0.1 |
-| normalise | n/a | n/a | - | - | 0.0 | - | - | 0.0 | - | - | 4.6 | 26.5 | 27.9 |
-| hvg | 1.0 | 1.0 | - | - | 8.5 | - | - | 27.4 | - | - | 27.0 | 32.5 | 32.0 |
-| pca | 4.4 | 4.1 | - | - | 16.9 | - | - | 106.2 | - | - | 695.6 | 38.5 | 41.0 |
-| harmony | 3.7 | 3.4 | - | - | 4.5 | - | - | 254.9 | - | - | 217.4 | 227.7 | 239.6 |
-| knn_snn | 14.3 | 13.5 | - | - | 33.4 | - | - | 60.6 | - | - | 70.0 | 166.9 | 171.5 |
-| cluster | 6.4 | 5.9 | - | - | 30.2 | - | - | 217.2 | - | - | 255.5 | 17.1 | 17.0 |
-| cluster_fast (qd) | 43.6 | 37.1 | n/a | n/a | n/a | - | - | 330.3 | n/a | n/a | n/a | n/a | n/a |
-| umap | 49.6 | 50.5 | - | - | 348.8 | - | - | 261.7 | - | - | 454.0 | 588.5 | 588.0 |
-| dge | 5.1 | 5.3 | - | - | - | - | - | **TIMEOUT** | - | - | 1136.6 | 39.3 | 39.9 |
-| tsne_default | 375.2 | 359.9 | - | - | 1941.0 | n/a | n/a | n/a | - | - | 1605.9 | n/a | n/a |
-| tsne_fft | 113.3 | 112.4 | - | - | 246.5 | n/a | n/a | n/a | - | - | 231.6 | n/a | n/a |
-| tsne_quick (qd) | 80.5 | 79.1 | n/a | n/a | n/a | - | - | - | n/a | n/a | n/a | n/a | n/a |
-| **total** | **726** | **673** | failed | failed | **2678** | failed | failed | failed | failed | failed | **4849** | **1521** | **1300** |
-| total without tSNE | 157 | 121 | failed | failed | 490 | failed | failed | failed | failed | failed | 3012 | 1521 | 1300 |
-| **peak GB** | **8.4** | **8.7** | **22.4** | **22.5** | **10.4** | **22.9** | **22.9** | **15.8** | **22.9** | **22.9** | **10.9** | **8.4** | **8.8** |
-| peak swap GB | 0.0 | 0.0 | 3.9 | 3.9 | 0.0 | 3.2 | 3.1 | 0.0 | 3.1 | 3.6 | 0.0 | 0.0 | 0.0 |
-| on-disk store GB | 2.6 | 2.6 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 11.5 | 7.7 | 7.7 |
+| step | bixverse mtx | bixverse h5ad | bixverse-py mtx | bixverse-py h5ad | Scanpy mtx | Scanpy h5ad | Scanpy dask | scrapper mtx | scrapper h5ad | Seurat std mtx | Seurat std h5ad | Seurat BPCells | CyteArc mtx | CyteArc h5ad | brisc h5ad | brisc h5ad hogwild |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| load | 63.1 | 29.3 | 62.9 | 28.2 | **OOM** | **OOM** | 157.1 | **OOM** | **OOM** | **OOM** | **OOM** | 167.1 | 429.8 | 180.4 | 10.6 | 9.9 |
+| qc | 3.3 | 3.4 | 2.4 | 3.2 | - | - | 26.3 | - | - | - | - | 9.1 | 0.1 | 0.1 | 0.4 | 0.3 |
+| normalise | n/a | n/a | n/a | n/a | - | - | 0.0 | - | - | - | - | 4.6 | 26.7 | 27.5 | 1.1 | 1.1 |
+| hvg | 0.9 | 1.2 | 0.8 | 0.9 | - | - | 27.2 | - | - | - | - | 27.2 | 32.3 | 34.8 | 0.5 | 0.5 |
+| pca | 3.4 | 3.4 | 3.2 | 3.2 | - | - | 54.5 | - | - | - | - | 702.8 | 38.8 | 39.7 | 2.8 | 2.8 |
+| harmony | 3.4 | 3.4 | 3.2 | 3.4 | - | - | 4.6 | - | - | - | - | 213.6 | 241.4 | 232.6 | 1.7 | 1.8 |
+| knn_snn | 7.4 | 7.4 | 7.1 | 7.1 | - | - | 60.6 | - | - | - | - | 69.4 | 182.5 | 180.2 | 9.5 | 9.6 |
+| cluster | 6.0 | 6.3 | 6.0 | 6.0 | - | - | 31.3 | - | - | - | - | 257.5 | 17.0 | 17.5 | 3.1 | 3.1 |
+| cluster_fast (qd) | 39.4 | 39.8 | 37.0 | 38.3 | n/a | n/a | n/a | - | - | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
+| umap | 30.3 | 30.7 | 30.2 | 29.5 | - | - | 355.3 | - | - | - | - | 447.7 | 591.4 | 592.0 | 197.7 | 48.3 |
+| dge | 5.1 | 5.3 | 3.9 | 4.0 | - | - | 88.1 | - | - | - | - | 1145.5 | 45.6 | 42.1 | 0.2 | 0.1 |
+| tsne_default | 295.0 | 292.4 | 286.7 | 285.3 | - | - | 1960.8 | n/a | n/a | - | - | 1551.2 | n/a | n/a | n/a | n/a |
+| tsne_fft | 63.7 | 63.4 | 60.2 | 64.7 | - | - | 249.0 | n/a | n/a | - | - | 230.4 | n/a | n/a | n/a | n/a |
+| tsne_quick (qd) | 42.8 | 42.1 | 41.0 | 42.0 | n/a | n/a | n/a | - | - | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
+| **total** | **524** | **488** | **508** | **477** | failed | failed | **3015** | failed | failed | failed | failed | **4826** | **1606** | **1347** | **228** | **77** |
+| total without tSNE | 123 | 90 | 120 | 85 | failed | failed | 805 | failed | failed | failed | failed | 3045 | 1606 | 1347 | 228 | 77 |
+| **peak GB** | **8.4** | **8.5** | **8.0** | **8.1** | **23.9** | **23.8** | **20.2** | **23.9** | **24.0** | **23.9** | **24.0** | **9.5** | **8.3** | **8.9** | **8.9** | **8.9** |
+| peak swap GB | 0.0 | 0.0 | 0.0 | 0.0 | 3.8 | 3.7 | 0.0 | 4.0 | 3.8 | 4.0 | 3.8 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
+| on-disk store GB | 2.6 | 2.6 | 2.6 | 2.6 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 11.5 | 7.7 | 7.7 | 0.0 | 0.0 |
+
+brisc keeps a few more cells than the rest (69,454, 346,448 and 685,299): its
+MT cut is <= 5% where the others use < 5%.
 
 ### Warm start
 
 Reconnecting to data a cold run already converted (`WARM=1 scripts/run.sh`),
-load step only. bixverse reopens its store and the stored cell map, so its
-object holds the post-QC cells; BPCells reopens the pre-filtered, pre-QC matrix
-and builds the Seurat object; CyteArc reopens its store with every cell, the
-QC selections and results stored in it as artifacts. Only the reopen is timed
-for CyteArc: later steps would hand back the cold run's stored results. Its
-store comes from a load-only cold run (`LOAD_ONLY=1`). Each warm run goes straight after its cold run,
-so the files are likely still in the page cache. Warm peak GB is the load only;
-cold load s is the mtx load step of the full cold run.
+load step only. Not part of the comparison, which starts from scratch every
+time. bixverse reopens its store and the stored cell map, so its object holds
+the post-QC cells; BPCells reopens the pre-filtered, pre-QC matrix and builds
+the Seurat object; CyteArc reopens its store with every cell. Cold load s is
+the mtx load step of the full cold run.
 
-![Cold against warm load for bixverse and Seurat + BPCells](figures/warm_start.png)
+![Cold against warm load](figures/warm_start.png)
 
 | data | framework | cold load s | warm load s | warm peak GB |
 |---|---|---|---|---|
-| PBMC 100k | bixverse | 7.1 | 0.2 | 0.3 |
-| PBMC 100k | Seurat BPCells | 14.5 | 2.3 | 0.8 |
-| PBMC 100k | CyteArc | 42.7 | 2.8 | 0.1 |
-| PBMC 500k | bixverse | 31.5 | 0.4 | 0.4 |
-| PBMC 500k | Seurat BPCells | 70.7 | 10.1 | 0.9 |
-| PBMC 500k | CyteArc | 222.9 | 3.0 | 0.1 |
-| PBMC full | bixverse | 69.1 | 0.6 | 0.3 |
-| PBMC full | Seurat BPCells | 141.6 | 20.9 | 1.1 |
-| PBMC full | CyteArc | 384.1 | 3.1 | 0.1 |
-| splat 1M | bixverse | 61.8 | 0.6 | 0.4 |
-| splat 1M | Seurat BPCells | 129.0 | 21.2 | 1.0 |
-| splat 1M | CyteArc | 302.6 | 2.9 | 0.1 |
+| PBMC 100k | bixverse | 7.5 | 0.4 | 0.2 |
+| PBMC 100k | Seurat BPCells | 16.9 | 2.3 | 0.5 |
+| PBMC 100k | CyteArc | 47.6 | 2.9 | 0.1 |
+| PBMC 500k | bixverse | 31.6 | 0.5 | 0.4 |
+| PBMC 500k | Seurat BPCells | 82.7 | 10.5 | 0.7 |
+| PBMC 500k | CyteArc | 231.3 | 3.0 | 0.1 |
+| PBMC full | bixverse | 63.1 | 0.8 | 0.5 |
+| PBMC full | Seurat BPCells | 167.1 | 20.9 | 1.0 |
+| PBMC full | CyteArc | 429.8 | 3.5 | 0.1 |
 
 ### What it shows
 
@@ -382,37 +366,35 @@ cold load s is the mtx load step of the full cold run.
 
 ![Speed-up per step against Scanpy with Dask on the full data set](figures/speedup_vs_scanpy_dask_full.png)
 
-- **The real data agree with the simulation.** Four frameworks finish the
-  full set, all out-of-core: bixverse in 121 s from h5ad (157 s from mtx),
-  Scanpy Dask in 490 s without DGE, CyteArc in 1,300 s (1,521 s from mtx),
-  Seurat + BPCells in 3,012 s. Everything that holds the counts in memory dies
-  at load.
-- **Memory is close among the CPU survivors.** Full data peaks: bixverse 8.4
-  GB (mtx) and 8.7 GB (h5ad), CyteArc 8.4 GB (mtx) and 8.8 GB (h5ad), Scanpy
-  Dask 10.4 GB, Seurat + BPCells 10.9 GB.
-- **Each out-of-core design pays somewhere else.** bixverse pays up front to
-  convert into its store (34 s from h5ad on the full data) and is fast
-  after. Dask loads in 40 s, but its UMAP (349 s) is the stock in-memory one
-  and it skips DGE. BPCells re-evaluates its lazy chain on every pass (PCA
-  696 s, UMAP 454 s) and its DGE takes 1,137 s, the transpose to gene-major
-  order included (11.5 GB on disk in all). CyteArc also converts up front
-  (143 s from h5ad, 384 s from mtx, 7.7 GB on disk), then spends 588 s in
-  UMAP and 228 to 240 s in Harmony.
+- **On real data brisc's Hogwild row is the fastest at every size.** 7, 39 and
+  77 s without tSNE, against 9, 41 and 85 s for bixverse-py and 11, 46 and
+  90 s for bixverse in R, both from h5ad. Same story as the simulation: brisc
+  loads 3x faster and skips the DGE test, bixverse wins UMAP (30 s against
+  48 s at full) and the kNN. bixverse peaks lower on the full data (8.1 to
+  8.5 GB against 8.9 GB anon; 9.7 to 10.1 GB against 13.4 GB max RSS).
+- **Everything else that holds the counts in memory dies.** Scanpy (both
+  inputs), scrapper and Seurat standard OOM at load on the full data.
+  The other out-of-core designs finish: Scanpy dask in 805 s (t-test DGE,
+  peaking at 20.2 GB), CyteArc in 1,347 s from h5ad (1,606 s from mtx),
+  Seurat + BPCells in 3,045 s.
 - **Against in-memory Scanpy** at 500k, the largest size it survives: bixverse
-  from h5ad is 15x faster without tSNE (57 s against 832 s) at under half the
-  memory (5.3 GB against 14.2 GB). DGE is 602 s of Scanpy's 832 s. CyteArc
-  from h5ad passes it too (683 s at 9.6 GB), on DGE: without it CyteArc
-  needs 660 s against Scanpy's 230 s.
-- **A warm start removes the conversion cost.** On the full data bixverse
-  reconnects in 0.6 s at 0.3 GB, CyteArc in 3.1 s at 0.1 GB (2.8 to 3.1 s at
-  every size, against a cold load of up to 384 s), Seurat + BPCells in 20.9 s
-  at 1.1 GB. The BPCells PCA and UMAP cost above is untouched by a warm
-  start.
-- **scrapper out of core does not finish the full data.** On HDF5 it gets
-  through load (731 s) to UMAP at a 15.8 GB peak without swap, then times out
-  in DGE, as on the 1M simulation. At 500k it finishes in 2,205 s at 8.3 GB.
+  from h5ad is 20x faster without tSNE (46 s against 909 s) at about a third
+  of the memory (5.3 GB against 14.2 GB). DGE is 641 s of Scanpy's 909 s.
+- **Each out-of-core design pays somewhere.** bixverse pays up front to write
+  its store (29 s from h5ad on the full data) and is fast after. Dask loads in
+  157 s, then runs the stock in-memory UMAP (355 s). BPCells re-evaluates its
+  lazy chain on every pass (PCA 703 s, UMAP 448 s) and its DGE takes 1,146 s,
+  the transpose to gene-major included. CyteArc converts up front (180 s from
+  h5ad, 430 s from mtx), then spends 592 s in UMAP and 233 s in Harmony.
+- **scrapper survives 500k on swap.** The mtx row reaches the cap with 3.3 GB
+  swap and finishes in 661 s; the h5ad row peaks at 20.9 GB without swap. Its
+  mtx load is 252 s, nearly all of it `Matrix::readMM`.
 
-## Native runs: CPU against GPU
+## Native runs: CPU against GPU (old stack)
+
+These predate the current stack: bixverse 0.8.4, bixverse.gpu 0.6.2,
+manifoldsR 0.5.0, on the uncompressed inputs. They get rerun against
+bixverse 0.9.0 next, together with the 10M runs.
 
 ![Time without tSNE and peak footprint, native CPU against GPU](figures/native_scaling.png)
 

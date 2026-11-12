@@ -129,8 +129,8 @@ scaling_bars <- function(labels, title, file) {
       title = title,
       subtitle = "Under a 24 GB, 8 core cap. One repeat per run; a run that died shows where.",
       caption = paste(
-        "Docker runs only; the native bixverse runs (CPU, wgpu, MLX) are in their own table in docs/results.md.",
-        "Scanpy dask has no DGE step. A run that timed out in tSNE keeps its time without tSNE.",
+        "Docker runs only; the native bixverse runs (CPU, wgpu, MLX) are in their own table in docs/results_1m.md.",
+        "Scanpy dask runs a t-test for DGE, brisc a detection-rate ranking with no test. A run that timed out in tSNE keeps its time without tSNE.",
         sep = "\n"
       ),
       theme = theme_bench(14)
@@ -139,8 +139,8 @@ scaling_bars <- function(labels, title, file) {
     theme_bench(14) &
     theme(panel.grid.major.y = element_blank(), legend.position = "bottom")
 
-  ggsave(file.path(fig_dir, paste0(file, ".png")), p, width = 14, height = 11, dpi = 300, bg = surface)
-  ggsave(file.path(fig_dir, paste0(file, ".pdf")), p, width = 14, height = 11, bg = surface)
+  ggsave(file.path(fig_dir, paste0(file, ".png")), p, width = 14, height = 12.5, dpi = 300, bg = surface)
+  ggsave(file.path(fig_dir, paste0(file, ".pdf")), p, width = 14, height = 12.5, bg = surface)
 }
 
 scaling_bars(
@@ -169,7 +169,7 @@ ratio_cap <- log2(32)
 # metric "time": seconds per step; "memory": peak anon GB inside each step's
 # window, from the 1 s samples. The memory a step holds includes what earlier
 # steps left resident, so it is the footprint during the step, not its increment.
-step_heatmap <- function(labels, title, file, height, width = 11, base_size = 10, text_size = 2.4,
+step_heatmap <- function(labels, title, file, height, width = 13, base_size = 10, text_size = 2.4,
                          metric = "time") {
   tot_name <- total_step[[metric]]
   d <- dt_all[size %in% names(labels)]
@@ -270,8 +270,8 @@ metric_title <- c(time = "Wall time per step", memory = "Peak memory per step")
 metric_file <- c(time = "steps_heatmap", memory = "steps_memory_heatmap")
 
 for (m in names(metric_title)) {
-  step_heatmap(splat_labels, paste0(metric_title[[m]], ": Splat simulation"), paste0(metric_file[[m]], "_splat"), 16, metric = m)
-  step_heatmap(size_labels, paste0(metric_title[[m]], ": Parse 1M PBMC"), paste0(metric_file[[m]], "_pbmc"), 16, metric = m)
+  step_heatmap(splat_labels, paste0(metric_title[[m]], ": Splat simulation"), paste0(metric_file[[m]], "_splat"), 18, metric = m)
+  step_heatmap(size_labels, paste0(metric_title[[m]], ": Parse 1M PBMC"), paste0(metric_file[[m]], "_pbmc"), 18, metric = m)
 
   # one figure per size, larger type
   for (lst in list(list(splat_labels, "Splat simulation", "splat"), list(size_labels, "Parse 1M PBMC", "pbmc"))) {
@@ -279,7 +279,7 @@ for (m in names(metric_title)) {
       step_heatmap(
         lst[[1]][k], paste0(metric_title[[m]], ": ", lst[[2]], ", ", lst[[1]][k]),
         paste0(metric_file[[m]], "_", lst[[3]], "_", sub(".*_", "", k)),
-        height = 9.5, width = 13, base_size = 14, text_size = 3.6, metric = m
+        height = 11, width = 15, base_size = 14, text_size = 3.6, metric = m
       )
     }
   }
@@ -344,12 +344,13 @@ speedup_plot(
   title = "Speed-up per step against in-memory Scanpy (h5ad), 500k",
   subtitle = "The largest size in-memory Scanpy survives. Only runs that completed at 500k.",
   caption = paste(
-    "bixverse normalises during load. Scanpy dask has no DGE step. bixverse CPU tSNE builds its kNN with IVF.",
+    "bixverse normalises during load. bixverse CPU tSNE builds its kNN with IVF.",
+    "DGE: Scanpy dask runs a t-test, brisc ranks by detection rate with no test; the rest run Wilcoxon or AUC.",
     "tsne_quick (qdtsne) and cluster_fast (Leiden on k-means centroids) are not shown and not in the total.",
     sep = "\n"
   ),
   file = "speedup_vs_scanpy_500k",
-  height = 5.6
+  height = 8
 )
 
 speedup_plot(
@@ -358,12 +359,12 @@ speedup_plot(
   subtitle = "In-memory Scanpy dies at load here; Dask is the Scanpy path that finishes. Only runs that completed.",
   caption = paste(
     "bixverse normalises during load; Dask defers normalisation, so the normalise column carries no fold change.",
-    "Dask has no DGE step (Wilcoxon fails on Dask arrays), so its total lacks one; in-memory Scanpy's takes 602 s at 500k.",
+    "DGE: Dask runs a t-test (Wilcoxon fails on Dask arrays), brisc ranks by detection rate with no test; the rest run Wilcoxon or AUC.",
     "bixverse CPU tSNE builds its kNN with IVF.",
     sep = "\n"
   ),
   file = "speedup_vs_scanpy_dask_full",
-  height = 4.6
+  height = 7
 )
 
 #### figure 4: cold vs warm load ------------------------------------------------

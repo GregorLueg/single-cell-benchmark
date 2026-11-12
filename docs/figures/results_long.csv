@@ -289,7 +289,7 @@ scrapper h5ad,parse_500k,346259,umap,124.43,20.89,18.38,ok
 scrapper h5ad,parse_500k,346259,dge,36.99,20.89,18.45,ok
 scrapper h5ad,parse_500k,346259,tsne_quick,80.75,20.89,20.51,ok
 Seurat std mtx,parse_500k,346259,load,,23.95,23.95,OOM
-Seurat std h5ad,parse_500k,346259,load,,23.95,23.95,running
+Seurat std h5ad,parse_500k,346259,load,,23.95,23.95,OOM
 Seurat BPCells,parse_500k,346259,load,82.72,5.43,1.46,ok
 Seurat BPCells,parse_500k,346259,qc,4.55,5.43,0.91,ok
 Seurat BPCells,parse_500k,346259,normalise,2.34,5.43,0.91,ok
@@ -704,7 +704,7 @@ bixverse-py h5ad,splat_500k,482409,dge,1.75,4.23,0.95,ok
 bixverse-py h5ad,splat_500k,482409,tsne_default,210.05,4.23,3.33,ok
 bixverse-py h5ad,splat_500k,482409,tsne_fft,39.20,4.23,3.35,ok
 bixverse-py h5ad,splat_500k,482409,tsne_quick,24.26,4.23,3.37,ok
-Scanpy mtx,splat_500k,482409,load,,23.94,23.94,running
+Scanpy mtx,splat_500k,482409,load,,23.94,23.94,OOM
 Scanpy h5ad,splat_500k,482409,load,21.55,10.82,10.82,ok
 Scanpy h5ad,splat_500k,482409,qc,2.81,10.82,8.85,ok
 Scanpy h5ad,splat_500k,482409,normalise,3.61,10.82,8.38,ok
@@ -762,7 +762,7 @@ Seurat std h5ad,splat_500k,482409,load,44.11,23.95,22.67,ok
 Seurat std h5ad,splat_500k,482409,qc,12.54,23.95,17.30,ok
 Seurat std h5ad,splat_500k,482409,normalise,0.85,23.95,16.64,ok
 Seurat std h5ad,splat_500k,482409,hvg,22.46,23.95,23.95,ok
-Seurat std h5ad,splat_500k,482409,pca,,23.95,23.92,running
+Seurat std h5ad,splat_500k,482409,pca,,23.95,23.92,OOM
 Seurat BPCells,splat_500k,482409,load,76.55,5.94,1.46,ok
 Seurat BPCells,splat_500k,482409,qc,4.44,5.94,0.82,ok
 Seurat BPCells,splat_500k,482409,normalise,1.95,5.94,0.82,ok
@@ -888,7 +888,7 @@ Scanpy dask,splat_1m,964763,harmony,4.27,23.94,2.22,ok
 Scanpy dask,splat_1m,964763,knn_snn,63.10,23.94,3.06,ok
 Scanpy dask,splat_1m,964763,cluster,46.43,23.94,7.13,ok
 Scanpy dask,splat_1m,964763,umap,560.72,23.94,10.87,ok
-Scanpy dask,splat_1m,964763,tsne_default,,23.94,23.94,OOM
+Scanpy dask,splat_1m,964763,dge,,23.94,23.94,OOM
 scrapper mtx,splat_1m,964763,load,,23.94,23.94,OOM
 scrapper h5ad,splat_1m,964763,load,,23.95,23.95,OOM
 Seurat std mtx,splat_1m,964763,load,,23.94,23.94,OOM

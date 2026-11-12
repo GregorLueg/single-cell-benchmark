@@ -2,8 +2,8 @@
 
 ## Description
 
-How far do the big single cell frameworks get on a MacBook Air class machine,
-and do they still get the right answer? The same eleven step workflow in every
+How far do single cell frameworks get on a MacBook Air class machine, and do
+they still get the right answer? The same eleven step workflow in every
 framework (load, QC, normalise, HVG, PCA, Harmony, kNN/sNN, Leiden, UMAP, DGE,
 tSNE), in Docker capped at 24 GB and 8 cores to mimic a small laptop.
 
@@ -17,73 +17,65 @@ data set (987,585 cells) is the real-data check on speed and memory.
 Every data set comes as two compressed inputs, the way they sit on most
 people's disks: `DGE.mtx.gz` (gzip level 6) and `DGE.h5ad` (gzip level 4, no
 shuffle, the layout `sc.write` and `anndata.write_h5ad(compression="gzip")`
-give). Decompression counts as part of the load. All six data sets take 19 GB
-on disk, down from 75 GB as plain text and uncompressed HDF5.
+give). Decompression counts as part of the load, and every run starts from a
+cold file cache. All six data sets take 19 GB on disk.
 
-The tables below predate that switch: they were measured on plain `DGE.mtx`
-and uncompressed h5ads, and get replaced in the next full rerun.
-
-The benchmarks ran within Docker on a MacBook M1 Max.
+The benchmarks ran within Docker on a MacBook M1 Max. Next up: the Parse 10M
+PBMC data set, see [below](#work-in-progress-parse-10m-pbmc).
 
 ## Headline
 
 Seconds without tSNE and peak memory (whole run, tSNE included) from h5ad, or
 where the run died, plus quality against the truth across the sizes each tool
-finished. Stack: bixverse 0.8.4, bixverse.gpu 0.6.2, Scanpy 1.12.4, scrapper
-1.6.3, Seurat 5.6.0, CyteArc 1.3.0. One repeat, one seed.
+finished. Stack: bixverse 0.9.0 (R) and 0.3.1 (Python), Scanpy 1.12.5,
+scrapper 1.6.3, Seurat 6.0.0, CyteArc 1.3.0, brisc 0.2.5. One repeat, one seed.
 
 | framework | 100k | 500k | 1M | Harmony purity | ARI | rare F1 |
 |---|---|---|---|---|---|---|
-| bixverse | 12 s, 1.3 GB | 70 s, 5.4 GB | 153 s, 10.0 GB | 0.969 to 0.970 | 0.87 to 0.98 | 0.26 to 0.35 |
-| Scanpy | 122 s, 2.6 GB | 766 s, 14.2 GB | OOM at load | 0.894 to 0.908 | 0.78 to 0.88 | 0.09 to 0.11 |
-| Scanpy dask (experimental, no DGE) | 77 s, 1.8 GB | 317 s, 7.8 GB | 719 s, 10.8 GB | 0.889 to 0.908 | 0.86 to 0.91 | 0.10 to 0.11 |
-| scrapper | 83 s, 5.5 GB | 481 s, 22.7 GB | OOM at load | 0.926 to 0.929 | 0.94 | 0.13 |
-| scrapper HDF5 | 216 s, 3.3 GB | 2448 s, 12.3 GB | TIMEOUT at dge | 0.926 to 0.929 | 0.94 | 0.13 |
-| Seurat std | 125 s, 8.9 GB | OOM at pca | OOM at load | 0.971 | 0.81 | 0.27 |
-| Seurat BPCells | 223 s, 2.5 GB | 1140 s, 6.9 GB | 2305 s, 10.8 GB | 0.968 to 0.971 | 0.70 to 0.79 | 0.27 to 0.35 |
-| CyteArc | 164 s, 8.3 GB | 777 s, 11.4 GB | 1617 s, 10.3 GB | 0.949 to 0.956 | 0.95 to 0.97 | 0.14 to 0.34 |
+| bixverse | 11 s, 1.2 GB | 50 s, 4.3 GB | 109 s, 8.1 GB | 0.969 to 0.970 | 0.86 to 0.98 | 0.26 to 0.35 |
+| bixverse-py | 9 s, 0.9 GB | 47 s, 4.2 GB | 106 s, 7.8 GB | 0.969 to 0.970 | 0.87 to 0.98 | 0.26 to 0.35 |
+| brisc | 30 s, 0.7 GB | 153 s, 3.1 GB | 317 s, 8.1 GB | 0.974 | 0.88 to 0.98 | 0.28 to 0.34 |
+| brisc hogwild | 9 s, 0.7 GB | 45 s, 4.1 GB | 100 s, 8.1 GB | 0.974 | 0.88 to 0.98 | 0.28 to 0.34 |
+| Scanpy | 157 s, 2.6 GB | 801 s, 10.8 GB | 2408 s, TIMEOUT in tSNE | 0.889 to 0.908 | 0.83 to 0.90 | 0.09 to 0.11 |
+| Scanpy dask (t-test DGE) | 140 s, 3.2 GB | 496 s, 13.4 GB | OOM at dge | 0.894 to 0.908 | 0.84 to 0.90 | 0.05 to 0.11 |
+| scrapper | 83 s, 5.5 GB | 480 s, 23.9 GB | OOM at load | 0.927 to 0.929 | 0.94 | 0.13 |
+| Seurat std | 124 s, 8.8 GB | OOM at pca | OOM at load | 0.971 | 0.81 | 0.27 |
+| Seurat BPCells | 223 s, 2.3 GB | 1163 s, 5.9 GB | 2344 s, TIMEOUT in tSNE | 0.968 to 0.971 | 0.70 to 0.79 | 0.27 to 0.35 |
+| CyteArc | 171 s, 6.8 GB | 788 s, 10.9 GB | 1640 s, 10.9 GB | 0.949 to 0.956 | 0.95 to 0.97 | 0.14 to 0.34 |
 
 The bixverse GPU runs (wgpu and MLX) need Metal, so they run natively and sit
-in [their own tables](docs/results.md#native-runs-cpu-against-gpu), against
-the same CPU pipeline run natively.
+in [their own tables](docs/results_1m.md#native-runs-cpu-against-gpu-old-stack),
+against the same CPU pipeline run natively. They are still on the previous
+stack and get rerun next.
 
-- **bixverse is about 7x faster than scrapper at a quarter of its memory, and
-  4.5x to 11x faster than Scanpy (Dask to h5ad).** At 1M only four
-  out-of-core designs finish: bixverse (2.6 min), Scanpy with Dask (12 min,
-  no DGE), CyteArc (27 min) and Seurat with BPCells (38 min).
-- **The GPU doubles it again from 500k.** Native wgpu and MLX are 1.8x to
-  2.2x faster than the same pipeline run natively on the CPU from 500k
-  (splat 1M: 57 and 53 s against 115 s), mostly on UMAP; at 100k 1.3x to
-  1.4x. They need up to 1.7x the memory.
-- **Scanpy Dask skips the slowest Scanpy step.** It has no DGE (Wilcoxon fails
-  on Dask arrays); in-memory Scanpy spends 454 s of its 766 s on it at 500k.
-- **The speed doesn't cut corners.** On the simulation bixverse lands within
-  the spread of the established frameworks on every score: Harmony purity
-  0.97 (others 0.89 to 0.97), ARI 0.87 to 0.98 (others 0.70 to 0.97), DGE on
-  the shared genes level with Seurat's presto. Every framework runs its own
-  defaults on one seed of one simulator, so the scores are a parity check,
-  not a ranking. The rare group (about 1% of cells) is poorly recovered by
-  everyone (rare F1 0.09 to 0.35).
-- **DGE in seconds.** 0.6 to 4.1 s for bixverse, against 3.3 to 23 s for
-  scrapper, 6 to 25 s for CyteArc, 46 to 454 s for Scanpy and 57 to 518 s for
-  BPCells. On the shared genes it ranks like Seurat's presto; scrapper,
-  Scanpy and CyteArc rank detectable markers slightly better.
-- **CyteArc finishes every size at about 10 GB, slowly.** 164, 777 and
-  1,617 s from h5ad; its import sets the peak (8.3 to 11.4 GB) and the
-  analysis stays under 6 GB. Slower than every in-memory row at 100k, level
-  with in-memory Scanpy at 500k (777 against 766 s), 1.4x faster than BPCells
-  at 1M. UMAP is about half of its analysis time.
-- **scrapper out of core saves memory, not time.** On HDF5 it stays under
-  13 GB without swap at 500k, but takes 2,448 s, most of it in DGE, and
-  times out in DGE at 1M and on the full PBMC data.
-- **Harmony on the same input:** at 1M bixverse v2 is 2x faster than
-  harmonypy 2.1.0 (2.1 against 4.2 s) and MLX 4.2x; at 100k both are 1.8x.
-  97% of harmonypy's neighbours kept, at 1.1 GB more memory for v2.
-- **Smallest on disk.** bixverse's store takes 2.7 GB at 1M, against 3.7 GB
-  for the BPCells store and 8.1 GB for the uncompressed h5ad (2.6 GB
-  gzipped). BPCells' DGE step adds a
-  gene-major copy of the normalised data, 12.5 GB on disk in all; CyteArc's
-  store holds the counts cell- and gene-major, 8.3 GB.
+- **bixverse and brisc are in a league of their own.** bixverse is 14x to 22x
+  faster than in-memory Scanpy and 7x to 10x faster than scrapper, at a fifth
+  of scrapper's memory at 500k. brisc with its multi-threaded Hogwild UMAP is
+  level with it on the simulation and a little faster on PBMC; brisc is
+  in memory and loads faster, bixverse is out of core and wins UMAP and the
+  kNN. brisc's default single-threaded UMAP takes it to 3x the time.
+- **At 1M the in-memory heavyweights run out of road.** scrapper and Seurat
+  standard OOM at load (Seurat already in PCA at 500k). Scanpy from h5ad
+  scrapes through DGE at the 24 GB cap with swap and times out in tSNE.
+  bixverse and brisc peak at 8.1 GB, CyteArc at 10.9 GB, BPCells at 11.5 GB.
+- **The speed doesn't cut corners.** bixverse lands within the spread of the
+  established frameworks on every score: Harmony purity 0.97 (others 0.89 to
+  0.97), ARI 0.86 to 0.98 (others 0.70 to 0.98), DGE on the shared genes level
+  with Seurat's presto. brisc has the cleanest Harmony embedding and keeps the
+  most of the rare group. Every framework runs its own defaults on one seed of
+  one simulator, so the scores are a parity check, not a ranking.
+- **DGE in seconds, with a test.** 0.5 to 4.1 s for bixverse's Wilcoxon,
+  against 3.5 to 22 s for scrapper, 6 to 24 s for CyteArc, 49 to 1,593 s for
+  Scanpy and 57 to 533 s for BPCells. brisc's 0.0 to 0.3 s ranks by detection
+  rate with no test and ranks detectable markers much worse (R-precision 0.29
+  to 0.34 against 0.88 to 0.94). Scanpy dask can only run the t-test.
+- **bixverse from Python or R, same thing.** bixverse-py runs the same Rust
+  and scores the same; it is 2% to 11% faster without tSNE (load and DGE).
+- **CyteArc finishes every size at about 10 GB, slowly.** 171, 788 and
+  1,640 s from h5ad; UMAP is about half of its analysis time.
+- **Smallest on disk.** bixverse's store takes 2.7 GB at 1M, against 8.3 GB
+  for CyteArc's (counts cell- and gene-major) and 12.5 GB for BPCells (with
+  the gene-major copy its DGE step writes); the gzipped h5ad is 2.8 GB.
 
 ## Real data check: PBMC
 
@@ -92,47 +84,41 @@ subsamples, or where the run died. Same stack.
 
 | framework | 100k | 500k | full |
 |---|---|---|---|
-| bixverse mtx | 14 s, 1.3 GB | 72 s, 5.1 GB | 157 s, 8.4 GB |
-| bixverse h5ad | 12 s, 1.3 GB | 57 s, 5.3 GB | 121 s, 8.7 GB |
-| Scanpy mtx | 137 s, 6.0 GB | OOM at load | OOM at load |
-| Scanpy h5ad | 116 s, 2.0 GB | 832 s, 14.2 GB | OOM at load |
-| Scanpy dask (experimental, no DGE) | 65 s, 1.6 GB | 237 s, 6.7 GB | 490 s, 10.4 GB |
-| scrapper mtx | 99 s, 5.2 GB | OOM at load | OOM at load |
-| scrapper h5ad | 70 s, 4.8 GB | 403 s, 20.9 GB | OOM at load |
-| scrapper HDF5 | 203 s, 2.7 GB | 2205 s, 8.3 GB | TIMEOUT at dge |
-| Seurat std mtx | 141 s, 7.7 GB | OOM at load | OOM at load |
-| Seurat std h5ad | 109 s, 7.8 GB | OOM at load | OOM at load |
-| Seurat BPCells | 286 s, 2.5 GB | 1421 s, 5.6 GB | 3012 s, 10.9 GB |
-| CyteArc mtx | 181 s, 8.0 GB | 828 s, 8.5 GB | 1521 s, 8.4 GB |
-| CyteArc h5ad | 158 s, 9.1 GB | 683 s, 9.6 GB | 1300 s, 8.8 GB |
+| bixverse mtx | 14 s, 1.3 GB | 60 s, 5.0 GB | 123 s, 8.4 GB |
+| bixverse h5ad | 11 s, 0.9 GB | 46 s, 5.3 GB | 90 s, 8.5 GB |
+| bixverse-py mtx | 12 s, 0.7 GB | 56 s, 5.0 GB | 120 s, 8.0 GB |
+| bixverse-py h5ad | 9 s, 0.7 GB | 41 s, 5.0 GB | 85 s, 8.1 GB |
+| brisc h5ad | 22 s, 0.7 GB | 115 s, 4.0 GB | 228 s, 8.9 GB |
+| brisc h5ad hogwild | 7 s, 0.7 GB | 39 s, 4.4 GB | 77 s, 8.9 GB |
+| Scanpy mtx | 169 s, 4.9 GB | OOM at load | OOM at load |
+| Scanpy h5ad | 148 s, 2.1 GB | 909 s, 14.2 GB | OOM at load |
+| Scanpy dask (t-test DGE) | 128 s, 2.9 GB | 410 s, 11.9 GB | 805 s, 20.2 GB |
+| scrapper mtx | 103 s, 5.5 GB | 661 s, 23.9 GB | OOM at load |
+| scrapper h5ad | 68 s, 4.8 GB | 438 s, 20.9 GB | OOM at load |
+| Seurat std mtx | 143 s, 8.8 GB | OOM at load | OOM at load |
+| Seurat std h5ad | 117 s, 7.7 GB | OOM at load | OOM at load |
+| Seurat BPCells | 284 s, 2.4 GB | 1459 s, 5.4 GB | 3045 s, 9.5 GB |
+| CyteArc mtx | 190 s, 8.1 GB | 860 s, 8.6 GB | 1606 s, 8.3 GB |
+| CyteArc h5ad | 162 s, 9.7 GB | 702 s, 9.5 GB | 1347 s, 8.9 GB |
 
-The real data agree with the simulation: only the out-of-core designs finish
-the full set (bixverse in 2.0 min from h5ad, Scanpy with Dask in 8.2 min
-without DGE, CyteArc in 22 min, Seurat with BPCells in 50 min, all at 8.4 to
-10.9 GB), and every in-memory path dies at load. CyteArc from h5ad passes
-in-memory Scanpy at 500k (683 against 832 s), mostly on DGE. Per-step tables, the warm start and the scaling
-figures are in [results](docs/results.md).
+The real data agree with the simulation. On the full set brisc with Hogwild
+is fastest (77 s), then bixverse from h5ad (85 s from Python, 90 s from R) at
+slightly less memory. The other survivors are all out of core: Scanpy dask in
+13 min, CyteArc in 22 min, Seurat with BPCells in 51 min. Every other
+in-memory path dies at load. Against in-memory Scanpy at 500k, the largest
+size it survives, bixverse is 20x faster at about a third of the memory.
+Per-step tables, the per-step memory heatmaps, the warm start and the scaling
+figures are in [results](docs/results_1m.md).
 
-## Work in progress: Tahoe-100M
+## Work in progress: Parse 10M PBMC
 
-The next step up: two plates of Tahoe-100M (plates 1 and 3, about 10.2M cells
-before QC, 9.2M after), read straight from the gzipped h5ads. Only the
-out-of-core designs run: bixverse (CPU in Docker, MLX natively), Scanpy with
-Dask, Seurat with BPCells and CyteArc. No results yet; runs go one framework
-per night.
-
-- Steps: load, QC, HVG, PCA, Harmony, kNN/sNN, UMAP, DGE. No Leiden, no tSNE.
-- QC: MT <= 15%, UMI >= 750, genes >= 250; genes kept if detected in >= 9,000
-  cells (about 0.1%), the same cut for every framework.
-- Harmony on `plate`, the only covariate with an effect on identical DMSO
-  cells. Plate is confounded with dose (plate 1 at 0.05 uM, plate 3 at 5 uM),
-  so batch mixing gets scored on DMSO cells only.
-- Truth for the embedding scores is `cell_line`; DGE is Gemcitabine against
-  DMSO_TF.
-- Each run gets a 5 h wall and a 48 GB Docker cap (the native MLX run has no
-  cap). PCA, UMAP and the rest stay at each framework's defaults.
-
-The harness lives in `tahoe/`.
+The next step up: the [Parse 10M PBMC](https://www.parsebiosciences.com/datasets/10-million-human-pbmcs-in-a-single-experiment/)
+data set, 9.7M cells from 12 donors treated with 90 cytokines, in one gzipped
+h5ad (44 GB on disk, about 226 GB of counts in memory). Out-of-core designs
+only, plus one brisc attempt, at a 48 GB cap and 5 h per run: Harmony on the
+donors, Leiden scored against Parse's cell types, DGE for a handful of
+cytokines against PBS, UMAP last. Then bixverse on the CPU against wgpu and
+MLX. Plan and status in [results_10m](docs/results_10m.md).
 
 ## Caveats
 
@@ -148,22 +134,27 @@ The harness lives in `tahoe/`.
 - Peak memory is cgroup anon only, which favours the out-of-core rows. The
   native GPU rows report the macOS peak footprint without a cap, so they get
   their own tables.
-- Docker on macOS runs in a VM: the bixverse CPU pipeline is 1.3x to 1.7x
-  faster run natively, mostly in load. The other frameworks likely pay a
-  similar tax; only bixverse was run both ways.
+- Docker on macOS runs in a VM: the bixverse CPU pipeline was 1.3x to 1.7x
+  faster run natively on the previous stack, mostly in load. The other
+  frameworks likely pay a similar tax; only bixverse was run both ways.
 - From 500k bixverse's CPU tSNE uses an approximate kNN (IVF), where the
   default Barnes-Hut of Scanpy and Seurat pays for an exact one.
 - Defaults that favour bixverse: its UMAP optimiser is multi-threaded where
   Scanpy's, Seurat's, scrapper's and CyteArc's run on one thread. UMAP
-  settings (epochs, optimiser, graph weights) are each framework's own. Defaults that favour
-  Scanpy: Leiden with 2 iterations, Wilcoxon without tie correction.
+  settings (epochs, optimiser, graph weights) are each framework's own. brisc
+  gets an extra Hogwild column, which brisc documents as not reproducible.
+  Defaults that favour Scanpy: Leiden with 2 iterations, Wilcoxon without tie
+  correction.
 - Seurat with BPCells transposes its data to gene-major order inside the DGE
   step, as BPCells advises for `FindAllMarkers`; the time and the extra disk
   count against it.
-- Harness workarounds: Scanpy Dask computes its QC sums by hand, because
-  `calculate_qc_metrics` blows up under Dask, and has no DGE. scrapper HDF5
-  and Scanpy Dask need an h5ad (or 10x `.h5`); their MTX conversion is not
-  timed.
+- Two DGE steps are not Wilcoxon: Scanpy dask runs the t-test (Wilcoxon
+  fails on Dask arrays) and brisc ranks by detection rate with no test.
+- Harness workarounds: Scanpy dask computes its QC sums by hand, because
+  `calculate_qc_metrics` blows up under Dask, and needs an h5ad; the MTX
+  conversion is not timed. brisc finds MT genes by var name, so on PBMC the
+  harness swaps the gene symbols in for its QC.
+- scrapper reaches 500k only by swapping at the 24 GB cap.
 - Every mtx reader has to inflate one gzip stream, and gzip doesn't split, so
   that part of the load runs on one thread whatever the parser does after.
 - The splat h5ads come straight from splatter-sc. They match anndata's layout
@@ -178,8 +169,10 @@ with the call you'd use instead. The pipelines are in `pipelines/`.
 
 ## Docs
 
-- [Results](docs/results.md): per-step tables and quality scores for every
-  size, the same-input Harmony comparison, and what they show.
+- [Results up to 1M](docs/results_1m.md): per-step tables, memory heatmaps
+  and quality scores for every size, the same-input Harmony comparison, the
+  native GPU runs, and what they show.
+- [Results at 10M](docs/results_10m.md): the Parse 10M PBMC run, in progress.
 - [Methods](docs/methods.md): setup, versions, the simulation, workflow
   parameters, how the scores work, full caveats, how to run it.
 
@@ -195,7 +188,7 @@ uv run scripts/to_h5ad.py data/parse_100k
 
 docker build -f docker/r.Dockerfile -t scbench-r .
 docker build -f docker/py.Dockerfile -t scbench-py .
-scripts/run.sh <tool> splat_100k       # bixverse | scanpy | scrapper | seurat_standard | seurat_bpcells
+scripts/run.sh <tool> splat_100k       # bixverse | bixverse_py | scanpy | scrapper | seurat_standard | seurat_bpcells | cytearc | brisc
 uv run scripts/tables.py results
 uv run scripts/score.py results/splat_100k data/splat_100k
 ```

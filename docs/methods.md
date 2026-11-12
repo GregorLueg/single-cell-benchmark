@@ -28,7 +28,7 @@
 - **Memory**: cgroup `anon` sampled once a second (`docker/monitor.sh`). Page
   cache is excluded, so streaming tools are not charged for their files. This
   favours the out-of-core rows (bixverse, Seurat BPCells, Scanpy Dask,
-  scrapper HDF5, CyteArc): the file pages they read or map do not count, while an
+  CyteArc): the file pages they read or map do not count, while an
   in-memory row pays for every byte it holds. The cgroup cap counts cached
   pages too and reclaims them under pressure, so it still bounds every run.
   The monitor also logs `shmem` and `file_mapped`, to catch tools that hold
@@ -53,24 +53,24 @@
   seconds (45 min by default). The tables mark it as **TIMEOUT**.
 - **Repeats**: one per run. Treat differences of a few seconds as noise.
 - **bixverse**: loaders run at their default `csc_mem_gb = 8`; the sNN kNN is
-  nndescent (`BIX_KNN=nndescent`). Every framework's sNN kNN is approximate
-  (Annoy or NNDescent), so this is like for like. The GPU and MLX rows use GPU
-  NNDescent (`find_neighbours_gpu_sc`).
+  NNDescent at every size (`BIX_KNN=nndescent`, the harness default). Every
+  framework's sNN kNN is approximate (Annoy, hnswlib or NNDescent), so this is
+  like for like. The GPU and MLX rows use GPU NNDescent
+  (`find_neighbours_gpu_sc`).
+- **bixverse-py**: the same Rust through the Python bindings
+  (`pipelines/bixverse_pipeline.py`), same steps and parameters as the R
+  pipeline, UMAP with `randomised = False` as manifoldsR's default. Its own
+  image (`docker/bixverse-py.Dockerfile`, Python 3.12): PyPI only ships
+  x86_64 Linux wheels, so bixverse-rs and manifolds-rs are built from source
+  for linux/arm64. Against the R rows it runs 2% to 11% faster without tSNE
+  (load and DGE, under 3 s at 1M; every other step level). Same Rust, so
+  that is the R and Python glue or the build profiles; not investigated.
 - **Scanpy Dask**: X read lazily from the h5ad in 50k cell CSR chunks, threaded
   scheduler. `sc.pp.calculate_qc_metrics` peaks at 16.6 GB transiently on 500k
   cells under Dask, whatever the chunk size, and kills the full data set. The
   Dask row therefore computes the three per-cell QC sums with `map_blocks`
   instead (6.2 GB peak, same cells kept). Everything else is stock Scanpy.
-- **scrapper HDF5**: the scrapper pipeline on the h5ad read out of core as
-  `HDF5Array::H5ADMatrix`. `beachmat.hdf5` hands scrapper a native tatami
-  matrix, so QC, HVG, PCA and DGE stream from the file. Pre-filter by
-  DelayedArray block processing. The Bioconductor (OSCA) stack on the same
-  matrix is not benchmarked; see the caveats. Input restriction: HDF5Array
-  reads h5ad (`H5ADMatrix`) and the Cell Ranger `.h5` (`TENxMatrix`, the same
-  seed class) out of core, but nothing in this stack streams MTX. An MTX-only
-  source (Parse, the MTX directory of Cell Ranger) has to be read into memory
-  and written to HDF5 first; that conversion is not timed here, as for the
-  Scanpy Dask row, which also needs an h5ad.
+  It needs an h5ad; for an MTX-only source the conversion is not timed.
 - **CyteArc**: imports the mtx or h5ad into its Zarr store at load
   (`MtxToZarr`, `H5adToZarr`), then streams every count pass from it. Its own
   Python 3.13 image (`docker/cytearc.Dockerfile`). Memory budget and workers
@@ -121,7 +121,7 @@ the expected nonzeros, 0.9% to 2.8% off what h5py picks for the final count.
 and 500k cell subsamples (`scripts/subsample.py`, seed 42). The mtx rows read
 the subsampled mtx; the h5ad rows read `scripts/to_h5ad.py` output. That
 conversion runs once, outside the timings, and is in memory; every h5ad row
-(bixverse, Scanpy, Scanpy Dask, scrapper, scrapper HDF5, Seurat, CyteArc,
+(bixverse, bixverse-py, Scanpy, Scanpy Dask, scrapper, Seurat, CyteArc,
 brisc) is spared it. Only the mtx rows pay for parsing text.
 
 **Compressed inputs**: every data set ships as `DGE.mtx.gz` (gzip level 6,
@@ -131,8 +131,7 @@ level 4 without shuffle on every dataset, what `sc.write` and
 people's disks, so decompression is part of the load. Before the switch the
 inputs were plain `DGE.mtx` and uncompressed h5ads, 80.5 GB for the six data
 sets against 20.2 GB now; the counts are identical, checked value by value.
-The tables in [results](results.md) were measured on the uncompressed inputs
-and get replaced in the next full rerun.
+Every Docker row has been rerun on the compressed inputs.
 
 | data set | `DGE.mtx` | `DGE.mtx.gz` | h5ad uncompressed | h5ad gzip |
 |---|---|---|---|---|
@@ -155,21 +154,24 @@ Every row, PBMC and simulation, runs on the same stack.
 
 | framework | versions |
 |---|---|
-| bixverse | bixverse 0.8.4 (`no-igraph` df3b39b), bixverse.gpu 0.6.2 (`remove-igraph` b36befe), bixverse-rs 0.9.4 and 0.9.0, manifoldsR 0.5.0 (manifolds-rs 0.7.2; 0.7.3 in bixverse.gpu) |
-| Scanpy | 1.12.4 (anndata 0.13.4, dask 2026.8.0, harmonypy 2.1.0, openTSNE 1.0.4, scikit-learn 1.9.1) |
+| bixverse | bixverse 0.9.0 (`feat-bixverse-rs-updates` 8a64c261a, bixverse-r crates 0.10.1), manifoldsR 0.6.0 (r-universe) |
+| bixverse-py | bixverse 0.3.1 (bixverse-rs `main` 85c6f5a), manifolds-rs 0.6.1 (`main` 9fb0257), Python 3.12 |
+| bixverse GPU / MLX (native) | bixverse 0.8.4, bixverse.gpu 0.6.2 (`remove-igraph` b36befe), manifoldsR 0.5.0; not rerun yet |
+| Scanpy | 1.12.5 (anndata 0.13.4, dask 2026.8.0, harmonypy 2.1.0, umap-learn 0.5.12, pynndescent 0.7.0, numba 0.68.1, openTSNE 1.0.4, scikit-learn 1.9.1) |
 | scrapper | 1.6.3 |
-| Seurat | 5.6.0 (SeuratObject 5.4.0, BPCells 0.3.1, harmony 2.0.5, presto 1.1.0, uwot 0.2.5) |
-| scrapper HDF5 | scrapper 1.6.3, HDF5Array 1.40.0, DelayedArray 0.38.2, beachmat.hdf5 1.10.0 |
+| Seurat | 6.0.0 (SeuratObject 5.4.0, BPCells 0.3.1, harmony 2.0.5, presto 1.1.0, uwot 0.2.5) |
 | CyteArc | 1.3.0 (PyPI), Python 3.13 |
 | brisc | 0.2.5 (PyPI), Python 3.12, OpenBLAS |
 
-bixverse, bixverse.gpu and manifoldsR are built from source: bixverse and
-bixverse.gpu at the commits in the table, manifoldsR at the commit in
-`vendor/SHAS`. bixverse.gpu uses the bixverse-rs 0.9.0 crates; bixverse
-patches them to the `feat-faster-i/o` branch (78f5046, version 0.9.4). The single cell store is the v4 format. The GPU and MLX
-rows use the default PCA solver, block Lanczos. Docker:
-`docker/r-local.Dockerfile` on top of `scbench-r`. Native: installed into
-`rlib/`, bixverse.gpu with the MLX backend.
+bixverse (R) is built from a `git archive` of the commit in the table
+(`docker/r-local.Dockerfile` on top of `scbench-r`, crates from crates.io);
+bixverse-py and manifolds-rs from the commits in the table
+(`docker/bixverse-py.Dockerfile`). The commits are in `vendor/SHAS`. Scanpy
+pins umap-learn 0.5.12: 0.6.0 breaks `sc.pp.neighbors` (numba `TypingError`
+on `knn_dists`). The newer pynndescent and numba that come with Scanpy 1.12.5
+make its kNN step slower than on the old stack; it is left as installed,
+since that is what a user gets. The native GPU and MLX rows still run the
+older stack, installed into `rlib/` with the MLX backend, block Lanczos PCA.
 
 ## Workflow
 
@@ -205,9 +207,9 @@ scrapper's batch correction via `block =` plus MNN, Seurat's sketching.
    CyteArc also scale to unit variance. brisc runs its `pca` at its defaults
    otherwise; whether it scales is not checked.
 6. **harmony**: by sample. Scanpy runs harmonypy with `ncores = 8`, the CPU
-   cap; Seurat calls `setThreads(8)`, as its 5.6.0 kernels default to one
-   thread. CyteArc runs its own Harmony2 (`reduction.harmony`), brisc its own
-   `harmonize`.
+   cap; Seurat calls `setThreads(8)`, as its threaded kernels (from 5.6.0)
+   default to one thread. bixverse runs `harmony_sc`, its v2 Harmony. CyteArc
+   runs its own Harmony2 (`reduction.harmony`), brisc its own `harmonize`.
 7. **knn_snn**: k = 15. scrapper builds the kNN once (`findKNN` with Annoy)
    and hands it to both `buildSnnGraph` and `runUmap`, as
    `runAllNeighborSteps` in its vignette does; the harness calls the steps one
@@ -242,8 +244,9 @@ scrapper's batch correction via `block =` plus MNN, Seurat's sketching.
    multi-threaded Hogwild optimiser, which brisc documents as not
    reproducible between runs. A column of its own, totals included.
 10. **dge**: one-vs-rest markers, each framework's default test: bixverse
-    `find_all_markers_sc` (Wilcoxon, `min_prop = 0.05`), Scanpy
-    `rank_genes_groups` (Wilcoxon), Seurat `FindAllMarkers` (presto),
+    `find_all_markers_sc` (Wilcoxon, `min_prop = 0.05`; `find_all_markers`
+    in bixverse-py), Scanpy `rank_genes_groups` (Wilcoxon; the t-test on
+    Dask, see the caveats), Seurat `FindAllMarkers` (presto),
     scrapper `scoreMarkers` (AUC), CyteArc `markers.search` (Mann-Whitney,
     scored by AUC as for scrapper; genes in at least 5 cells, groups frozen
     from the cell column with `snapshot_cluster_labels`). On BPCells, `FindAllMarkers` does not use
@@ -354,23 +357,20 @@ harmonypy.
 - **One repeat, one machine, one simulation seed.** Apple Silicon under
   Docker, not a real 24 GB laptop. Reruns of the same bixverse configuration
   moved the load step by up to 35 s, mostly in the MTX reader's file passes.
-- **Results predate the compressed inputs.** Every table so far was measured
-  on plain `DGE.mtx` and uncompressed h5ads (see Data); the next full rerun
-  replaces them.
 - **gzip doesn't split.** Every mtx reader has to inflate one gzip stream, so
   that part of the load runs on one thread whatever the parser does after.
   The h5ad readers inflate chunk by chunk. How much either costs is not
   measured yet.
-- **Peak memory includes tSNE.** For bixverse at 1M the tSNE step sets the
-  run peak (10.0 against 8.2 GB before tSNE, h5ad).
+- **Peak memory includes tSNE.** It is the whole-run peak. For bixverse the
+  load sets it (8.1 GB at 1M, h5ad); tSNE stays below.
 - **Docker on macOS runs in a VM.** The bixverse CPU pipeline runs 1.3x to
   1.7x faster natively without tSNE, most of it in load (input files reach
   the VM through file sharing). The other frameworks likely pay a similar VM
   tax; only bixverse was run both ways. On a Linux host it should be smaller;
   not measured.
-- **Not every row ran on the same host OS.** The bixverse rows were rerun
-  after the host moved to macOS 27.0.1; the other frameworks' Docker rows were
-  not. Inside the VM that should not matter much; not measured.
+- **The native GPU rows are on the old stack.** bixverse 0.8.4 and
+  bixverse.gpu 0.6.2 on uncompressed inputs; they get rerun against the
+  current bixverse.
 - **Splat is the easy case.** No gene-gene structure beyond the DE, no
   continuous states, convex groups of similar density, and a multiplicative
   batch effect on every gene. The quality scores rank pipelines on that, not
@@ -409,11 +409,16 @@ harmonypy.
   24 GB cap at 1M cells: it OOMs in DGE on the 1M simulation and peaks at
   24.0 GB on PBMC full.
 - **`cluster_fast` on the CPU is slower than the Leiden it replaces** from
-  500k (bixverse 14 against 4 s at 500k, 47 against 8 s at 1M; scrapper 194
-  against 123 s). It is in the tables as an option, not in the totals.
-- **scrapper HDF5 times out in DGE at the largest size.** On the 1M
-  simulation and the full PBMC data no step finished within 45 min after
-  UMAP; its row there is marked TIMEOUT.
+  500k (bixverse 15 against 3 s at 500k, 47 against 6 s at 1M; scrapper 192
+  against 114 s). It is in the tables as an option, not in the totals.
+- **scrapper survives 500k on swap.** Both scrapper rows reach the 24 GB cap
+  at 500k (PBMC and simulation) and finish by swapping, so their 500k times
+  include swap traffic. In the earlier run on the plain `DGE.mtx` the PBMC
+  500k mtx row died at load; whether the gzip read is what saves it now is
+  not tested.
+- **No scrapper HDF5 row.** scrapper on an `HDF5Array::H5ADMatrix` ran in
+  earlier versions of this benchmark. On the gzip h5ad it went from 4 to
+  15 min at 100k and timed out in DGE at 1M, so it was dropped.
 - **No OSCA row.** The Bioconductor stack (scuttle, scran, scater) on the
   same HDF5-backed matrix does not finish HVG at any size from 500k up within
   45 min, and its forked workers OOM at 100k in PCA and DGE. Its row-wise
@@ -421,7 +426,7 @@ harmonypy.
   after `logNormCounts`, so beachmat falls back to R-level block processing,
   and HDF5Array's CSC extractor loads every column for each row block of the
   cell-major file. scran 1.40 and scuttle 1.22 deprecate these functions in
-  favour of scrapper, which is the scrapper HDF5 row.
+  favour of scrapper.
 - **Scanpy pays a first-run cost.** Each run is a fresh container, so numba
   compiles its kernels every time; the numba cache is partial and lost with
   the container. This is what a user running the pipeline once sees, and it
@@ -443,21 +448,20 @@ harmonypy.
   bixverse's default optimiser (`adam_parallel`) uses all 8. CyteArc's
   `embeddings.umap` and brisc's `umap` default to one thread as well. This
   favours bixverse. Only brisc gets an extra parallel column (Hogwild); at
-  100k it cut UMAP from 27.3 to 6.0 s and at 1M from 290 to 71 s, and
-  dropped the rare group's UMAP purity from 0.36 to 0.33 at 100k (one run
+  100k it cut UMAP from 27.2 to 5.6 s and at 1M from 278 to 64 s (one run
   each). The other four stay on one thread.
 - **Harmony is not one implementation.** Seurat runs the R harmony package
   (with `project.dim = TRUE`), Scanpy harmonypy, scrapper, bixverse,
   CyteArc and brisc their own. The same-input comparison covers bixverse and harmonypy only.
 - **Per-step times of the lazy rows shift work between steps.** Scanpy Dask,
-  scrapper HDF5, BPCells and CyteArc defer computation, so a step can pay for work
+  BPCells and CyteArc defer computation, so a step can pay for work
   queued earlier. Compare their totals, not single steps.
 - **brisc runs on OpenBLAS.** MKL is x86-only and Accelerate macOS-only, so
   linux/arm64 gets OpenBLAS, which brisc's docs call slower. This works
   against brisc; by how much is not measured.
-- **brisc's anon peak runs short.** At 1M its max RSS (16.2 GiB) sits about
-  1.2 GB above the cgroup anon peak (15.0 GB); `shmem` and `file_mapped` do
-  not account for the gap. At 100k the two are within 0.3 GB.
+- **brisc's anon peak runs short.** At 1M its max RSS (12.3 GiB) sits about
+  4 GB above the cgroup anon peak (8.1 GB); `shmem` and `file_mapped` do not
+  account for the gap. At 100k: 1.4 GiB against 0.7 GB.
 - **Defaults differ** in scaling, normalisation and graph construction; see
   Workflow.
 
@@ -479,6 +483,7 @@ docker build -f docker/r.Dockerfile -t scbench-r .
 docker build -f docker/py.Dockerfile -t scbench-py .
 docker build -f docker/cytearc.Dockerfile -t scbench-cytearc .
 docker build -f docker/brisc.Dockerfile -t scbench-brisc .
+docker build -f docker/bixverse-py.Dockerfile -t scbench-bixverse-py .
 # bixverse and manifoldsR sources packed into vendor/ (see the
 # header of docker/r-local.Dockerfile)
 docker build -f docker/r-local.Dockerfile -t scbench-r:local .
@@ -491,8 +496,8 @@ BIXVERSE_GPU_MLX=true R_LIBS=rlib R CMD INSTALL -l rlib bixverse.gpu
 # Once, in a real terminal:  sudo visudo -f /etc/sudoers.d/purge
 #   and add:                 <user> ALL=(root) NOPASSWD: /usr/sbin/purge
 
-# tool: bixverse | scanpy | cytearc | brisc | scrapper | seurat_standard | seurat_bpcells
-# INPUT: mtx | h5ad | dask (scanpy only) | hdf5 (scrapper only, with TAG=hdf5); brisc h5ad only
+# tool: bixverse | bixverse_py | scanpy | cytearc | brisc | scrapper | seurat_standard | seurat_bpcells
+# INPUT: mtx | h5ad | dask (scanpy only); brisc h5ad only. DGE_METHOD overrides Scanpy's test
 [COLD=0] [INPUT=h5ad] [BIX_KNN=nndescent] [BIX_TSNE_KNN=ivf] [TAG=suffix] [STEP_TIMEOUT=2700] [R_IMAGE=scbench-r:local] scripts/run.sh <tool> <dataset>
 [BACKEND=mlx] scripts/run_native.sh <dataset>       # bixverse.gpu on Metal: wgpu, or MLX
 BACKEND=cpu BIX_KNN=nndescent [BIX_TSNE_KNN=ivf] scripts/run_native.sh <dataset>   # native CPU control
