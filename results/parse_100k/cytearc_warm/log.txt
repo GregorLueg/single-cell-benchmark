@@ -1,19 +1,19 @@
 cells: 100000, genes: 60664
 	Command being timed: "python /bench/pipelines/cytearc_warm.py /data /out /scratch"
-	User time (seconds): 4.18
-	System time (seconds): 0.18
-	Percent of CPU this job got: 138%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:03.15
+	User time (seconds): 4.27
+	System time (seconds): 0.21
+	Percent of CPU this job got: 137%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:03.25
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 222796
+	Maximum resident set size (kbytes): 222980
 	Average resident set size (kbytes): 0
-	Major (requiring I/O) page faults: 8
-	Minor (reclaiming a frame) page faults: 41381
-	Voluntary context switches: 612
-	Involuntary context switches: 128
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 41733
+	Voluntary context switches: 603
+	Involuntary context switches: 72
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 73520

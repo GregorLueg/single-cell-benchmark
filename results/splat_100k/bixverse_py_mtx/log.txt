@@ -1,0 +1,132 @@
+bixverse 0.3.1, manifolds-rs 0.6.1
+Text pass (gzip, integer): 20 buckets, ~5000 cells/bucket
+Text pass done: 2.18s (cell-major order)
+Genes passing QC: 18_567 / 19_273
+Cells passing QC: 99_992 / 100_000
+Writing pass: 20 buckets, no sort
+  Wrote bucket 2/20 (10%)
+  Wrote bucket 4/20 (20%)
+  Wrote bucket 6/20 (30%)
+  Wrote bucket 8/20 (40%)
+  Wrote bucket 10/20 (50%)
+  Wrote bucket 12/20 (60%)
+  Wrote bucket 14/20 (70%)
+  Wrote bucket 16/20 (80%)
+  Wrote bucket 18/20 (90%)
+  Wrote bucket 20/20 (100%)
+Writing pass done: 2.42s
+Converting the cell-based data into the gene-based format.
+  Counted 107_277_971 non-zeros over 18_567 genes in 40.67ms; converting in 1 phase(s).
+  Phase 1/1: genes 0-18567, scatter 495.60ms, compress + write 193.66ms
+  Conversion into gene-friendly format done: 733.61ms
+>>> load: 5.8 s <<<
+>>> qc: 0.1 s <<<
+HVG (VST): 18_567 genes, 1 batches, 1 disk block(s)
+HVG (VST): Calculated gene statistics in 84.63ms
+HVG (VST): Fitted Loess in 1.59ms
+HVG (VST): Standardised variance in 631.17µs (57 gene(s) re-read for the clip)
+HVG (VST): Total run time -> 87.52ms
+>>> hvg: 0.2 s <<<
+Using sparse SVD solving on scaled data on 2000 HVG.
+Sparse PCA: Loaded in data in 67.99ms
+Sparse PCA: finished the data preparations in 5.12ms
+Sparse PCA: finished calculations in 579.53ms
+Sparse PCA: total run time -> 655.29ms
+>>> pca: 0.7 s <<<
+Auto-determined number of Harmony clusters: 100
+Harmony v2: 96_342 cells, 30 dims, 1 variable(s), 100 clusters
+  Variable 0: 24 levels
+ Initial data preparation done in 11.71ms
+Running initial k-means...
+Initial objective: 1393.2588
+
+=== Harmony v2 iteration 1 ===
+  Running k-means clustering...
+  Applying ridge regression correction...
+  Harmony objective: 1214.4652
+   Finished iteration in 41.51ms / Total runtime 138.20ms
+
+=== Harmony v2 iteration 2 ===
+  Running k-means clustering...
+  Applying ridge regression correction...
+  Harmony objective: 752.5283
+   Finished iteration in 40.30ms / Total runtime 179.01ms
+
+=== Harmony v2 iteration 3 ===
+  Running k-means clustering...
+  Applying ridge regression correction...
+  Harmony objective: 725.7051
+   Finished iteration in 41.14ms / Total runtime 220.69ms
+
+=== Harmony v2 iteration 4 ===
+  Running k-means clustering...
+  Applying ridge regression correction...
+  Harmony objective: 715.8817
+   Finished iteration in 41.24ms / Total runtime 262.40ms
+
+=== Harmony v2 iteration 5 ===
+  Running k-means clustering...
+  Applying ridge regression correction...
+  Harmony objective: 711.6912
+   Finished iteration in 40.92ms / Total runtime 303.76ms
+
+Harmony v2 converged at iteration 5
+ Finished Harmony 304.09ms
+>>> harmony: 0.4 s <<<
+Generating kNN data with nndescent method.
+Building NNDescent kNN graph ...
+... built NNDescent kNN graph in 542.83ms
+Generated NNDescent graph: 556.52ms
+Generating the snn graph.
+Added 0 edges to reconnect components that pruning cut off.
+Built the Snn { similarity: Jaccard, prune: 0.0625, rescue: true } graph: 179.43ms
+>>> knn_snn: 0.8 s <<<
+>>> cluster: 0.6 s <<<
+>>> cluster_fast: 1.0 s <<<
+>>> umap: 3.0 s <<<
+>>> dge: 0.5 s <<<
+>>> tsne_default: 41.2 s <<<
+>>> tsne_fft: 15.0 s <<<
+>>> tsne_quick: 11.0 s <<<
+cells after QC: 96342, clusters: 11, fast clusters: 12 (res 1), 15 (res 2)
+nanobind: leaked 27 instances!
+nanobind: leaked 2 types!
+ - leaked type "_duckdb._sqltypes.DuckDBPyType"
+ - leaked type "ExplainType"
+nanobind: leaked 10 functions!
+ - leaked function "__init__"
+ - leaked function "__eq__"
+ - leaked function ""
+ - leaked function "__new__"
+ - leaked function ""
+ - leaked function "__getitem__"
+ - leaked function "__repr__"
+ - leaked function "df"
+ - leaked function "__hash__"
+ - leaked function "__getattr__"
+ - ... skipped remainder
+nanobind: this is likely caused by a reference counting issue in the binding code.
+See https://nanobind.readthedocs.io/en/latest/refleaks.html	Command being timed: "python /bench/pipelines/bixverse_pipeline.py /data /out /scratch"
+	User time (seconds): 523.83
+	System time (seconds): 13.54
+	Percent of CPU this job got: 594%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:30.45
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 1307184
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 17
+	Minor (reclaiming a frame) page faults: 2724150
+	Voluntary context switches: 462623
+	Involuntary context switches: 16081
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 3165088
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
+exit=0

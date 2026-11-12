@@ -1,20 +1,20 @@
->>> load: 0.4 s <<<
+>>> load: 0.5 s <<<
 cells: 346259, genes: 36753
 	Command being timed: "Rscript /bench/pipelines/bixverse_warm.R /data /out /scratch"
-	User time (seconds): 2.20
-	System time (seconds): 0.54
-	Percent of CPU this job got: 132%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:02.06
+	User time (seconds): 2.41
+	System time (seconds): 0.64
+	Percent of CPU this job got: 131%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:02.31
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 1222328
+	Maximum resident set size (kbytes): 1222868
 	Average resident set size (kbytes): 0
-	Major (requiring I/O) page faults: 384
-	Minor (reclaiming a frame) page faults: 133099
-	Voluntary context switches: 554
-	Involuntary context switches: 479
+	Major (requiring I/O) page faults: 397
+	Minor (reclaiming a frame) page faults: 147444
+	Voluntary context switches: 1188
+	Involuntary context switches: 128
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 0

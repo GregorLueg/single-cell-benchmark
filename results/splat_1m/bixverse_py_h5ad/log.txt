@@ -1,0 +1,165 @@
+bixverse 0.3.1, manifolds-rs 0.6.1
+Step 1/3: Analysing data structure and calculating QC metrics...
+  Reading CSR matrix structure (shape: 1_000_000 x 19_273 )...
+First pass - gene expression statistics:
+  Processed 10% of chunks (10/100)
+  Processed 20% of chunks (20/100)
+  Processed 30% of chunks (30/100)
+  Processed 40% of chunks (40/100)
+  Processed 50% of chunks (50/100)
+  Processed 60% of chunks (60/100)
+  Processed 70% of chunks (70/100)
+  Processed 80% of chunks (80/100)
+  Processed 90% of chunks (90/100)
+  Processed 100% of chunks (100/100)
+  Gene expression stats: min = 0 | max = 988_153 | avg = 55_662 cells per gene
+First pass done: 4.40s
+  Genes passing filter: 19_021 / 19_273
+Second pass - cell statistics:
+  Processed 10% of chunks (10/100)
+  Processed 20% of chunks (20/100)
+  Processed 30% of chunks (30/100)
+  Processed 40% of chunks (40/100)
+  Processed 50% of chunks (50/100)
+  Processed 60% of chunks (60/100)
+  Processed 70% of chunks (70/100)
+  Processed 80% of chunks (80/100)
+  Processed 90% of chunks (90/100)
+  Processed 100% of chunks (100/100)
+  Cell stats: genes per cell: min = 84 | max = 6_632
+  Cell stats: library size: min = 138 | max = 39965
+Second pass done: 3.92s
+  Cells passing filter: 999_877 / 1_000_000
+Step 2/3: QC Results:
+  Genes passing QC: 19_021 / 19_273
+  Cells passing QC: 999_877 / 1_000_000
+Step 3/3: Writing cells to CSR format...
+  Processing 999_877 cells in batches of 1_000...
+  Processed 1_000 / 999_877 cells
+  Processed 101_000 / 999_877 cells
+  Processed 201_000 / 999_877 cells
+  Processed 301_000 / 999_877 cells
+  Processed 401_000 / 999_877 cells
+  Processed 501_000 / 999_877 cells
+  Processed 601_000 / 999_877 cells
+  Processed 701_000 / 999_877 cells
+  Processed 801_000 / 999_877 cells
+  Processed 901_000 / 999_877 cells
+  Processed 999_877 / 999_877 cells
+  Writing complete in 6.94s
+Converting the cell-based data into the gene-based format.
+  Counted 1_072_761_768 non-zeros over 19_021 genes in 273.91ms; converting in 2 phase(s).
+  Phase 1/2: genes 0-17717, scatter 6.28s, compress + write 1.79s
+  Phase 2/2: genes 17717-19021, scatter 299.35ms, compress + write 133.09ms
+  Conversion into gene-friendly format done: 8.82s
+>>> load: 28.2 s <<<
+>>> qc: 0.4 s <<<
+HVG (VST): 19_021 genes, 1 batches, 20 disk block(s)
+HVG (VST): Calculated gene statistics in 578.58ms
+HVG (VST): Fitted Loess in 1.70ms
+HVG (VST): Standardised variance in 1.87ms (24 gene(s) re-read for the clip)
+HVG (VST): Total run time -> 583.49ms
+>>> hvg: 1.4 s <<<
+Using sparse SVD solving on scaled data on 2000 HVG.
+Sparse PCA: Loaded in data in 598.47ms
+Sparse PCA: finished the data preparations in 32.18ms
+Sparse PCA: finished calculations in 2.52s
+Sparse PCA: total run time -> 3.19s
+>>> pca: 3.5 s <<<
+Auto-determined number of Harmony clusters: 100
+Harmony v2: 964_763 cells, 30 dims, 1 variable(s), 100 clusters
+  Variable 0: 24 levels
+ Initial data preparation done in 50.73ms
+Running initial k-means...
+Initial objective: 1394.1913
+
+=== Harmony v2 iteration 1 ===
+  Running k-means clustering...
+  Applying ridge regression correction...
+  Harmony objective: 1213.3087
+   Finished iteration in 303.31ms / Total runtime 1.03s
+
+=== Harmony v2 iteration 2 ===
+  Running k-means clustering...
+  Applying ridge regression correction...
+  Harmony objective: 725.6371
+   Finished iteration in 300.21ms / Total runtime 1.33s
+
+=== Harmony v2 iteration 3 ===
+  Running k-means clustering...
+  Applying ridge regression correction...
+  Harmony objective: 698.6740
+   Finished iteration in 304.58ms / Total runtime 1.64s
+
+=== Harmony v2 iteration 4 ===
+  Running k-means clustering...
+  Applying ridge regression correction...
+  Harmony objective: 687.2263
+   Finished iteration in 305.75ms / Total runtime 1.94s
+
+=== Harmony v2 iteration 5 ===
+  Running k-means clustering...
+  Applying ridge regression correction...
+  Harmony objective: 682.3834
+   Finished iteration in 298.48ms / Total runtime 2.24s
+
+Harmony v2 converged at iteration 5
+ Finished Harmony 2.24s
+>>> harmony: 2.9 s <<<
+Generating kNN data with nndescent method.
+Building NNDescent kNN graph ...
+... built NNDescent kNN graph in 8.40s
+Generated NNDescent graph: 8.58s
+Generating the snn graph.
+Added 0 edges to reconnect components that pruning cut off.
+Built the Snn { similarity: Jaccard, prune: 0.0625, rescue: true } graph: 2.98s
+>>> knn_snn: 11.8 s <<<
+>>> cluster: 6.6 s <<<
+>>> cluster_fast: 48.3 s <<<
+>>> umap: 48.0 s <<<
+>>> dge: 3.2 s <<<
+>>> tsne_default: 512.3 s <<<
+>>> tsne_fft: 105.1 s <<<
+>>> tsne_quick: 68.0 s <<<
+cells after QC: 964763, clusters: 12, fast clusters: 12 (res 1), 17 (res 2)
+nanobind: leaked 27 instances!
+nanobind: leaked 2 types!
+ - leaked type "_duckdb._sqltypes.DuckDBPyType"
+ - leaked type "ExplainType"
+nanobind: leaked 10 functions!
+ - leaked function "__repr__"
+ - leaked function "__hash__"
+ - leaked function ""
+ - leaked function "__getattr__"
+ - leaked function "__getitem__"
+ - leaked function "df"
+ - leaked function "__eq__"
+ - leaked function "__init__"
+ - leaked function "__new__"
+ - leaked function ""
+ - ... skipped remainder
+nanobind: this is likely caused by a reference counting issue in the binding code.
+See https://nanobind.readthedocs.io/en/latest/refleaks.html	Command being timed: "python /bench/pipelines/bixverse_pipeline.py /data /out /scratch"
+	User time (seconds): 6058.80
+	System time (seconds): 46.93
+	Percent of CPU this job got: 648%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 15:41.62
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 9888084
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 19
+	Minor (reclaiming a frame) page faults: 18729911
+	Voluntary context switches: 614561
+	Involuntary context switches: 101396
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 5906744
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
+exit=0

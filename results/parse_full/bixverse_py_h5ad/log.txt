@@ -1,0 +1,194 @@
+bixverse 0.3.1, manifolds-rs 0.6.1
+Step 1/3: Analysing data structure and calculating QC metrics...
+  Reading CSR matrix structure (shape: 987_585 x 60_664 )...
+First pass - gene expression statistics:
+  Processed 10% of chunks (9/99)
+  Processed 20% of chunks (18/99)
+  Processed 30% of chunks (27/99)
+  Processed 40% of chunks (36/99)
+  Processed 50% of chunks (45/99)
+  Processed 50% of chunks (54/99)
+  Processed 60% of chunks (63/99)
+  Processed 70% of chunks (72/99)
+  Processed 80% of chunks (81/99)
+  Processed 90% of chunks (90/99)
+  Processed 100% of chunks (99/99)
+  Gene expression stats: min = 0 | max = 987_481 | avg = 19_410 cells per gene
+First pass done: 4.18s
+  Genes passing filter: 39_137 / 60_664
+Second pass - cell statistics:
+  Processed 10% of chunks (9/99)
+  Processed 20% of chunks (18/99)
+  Processed 30% of chunks (27/99)
+  Processed 40% of chunks (36/99)
+  Processed 50% of chunks (45/99)
+  Processed 50% of chunks (54/99)
+  Processed 60% of chunks (63/99)
+  Processed 70% of chunks (72/99)
+  Processed 80% of chunks (81/99)
+  Processed 90% of chunks (90/99)
+  Processed 100% of chunks (99/99)
+  Cell stats: genes per cell: min = 38 | max = 12_462
+  Cell stats: library size: min = 209 | max = 198077
+Second pass done: 3.57s
+  Cells passing filter: 984_669 / 987_585
+Step 2/3: QC Results:
+  Genes passing QC: 39_137 / 60_664
+  Cells passing QC: 984_669 / 987_585
+Step 3/3: Writing cells to CSR format...
+  Processing 984_669 cells in batches of 1_000...
+  Processed 1_000 / 984_669 cells
+  Processed 99_000 / 984_669 cells
+  Processed 197_000 / 984_669 cells
+  Processed 295_000 / 984_669 cells
+  Processed 393_000 / 984_669 cells
+  Processed 491_000 / 984_669 cells
+  Processed 589_000 / 984_669 cells
+  Processed 687_000 / 984_669 cells
+  Processed 785_000 / 984_669 cells
+  Processed 883_000 / 984_669 cells
+  Processed 981_000 / 984_669 cells
+  Processed 984_669 / 984_669 cells
+  Writing complete in 7.18s
+Converting the cell-based data into the gene-based format.
+  Counted 1_176_929_574 non-zeros over 39_137 genes in 304.25ms; converting in 2 phase(s).
+  Phase 1/2: genes 0-15577, scatter 6.08s, compress + write 1.41s
+  Phase 2/2: genes 15577-39137, scatter 723.35ms, compress + write 353.43ms
+  Conversion into gene-friendly format done: 8.91s
+>>> load: 28.2 s <<<
+Using a streaming approach for gene set percentage calculation.
+Finished the gene set proportion calculations: 1.61s
+>>> qc: 3.2 s <<<
+HVG (VST): 39_137 genes, 1 batches, 40 disk block(s)
+HVG (VST): Calculated gene statistics in 657.07ms
+HVG (VST): Fitted Loess in 2.15ms
+HVG (VST): Standardised variance in 760.08µs (80 gene(s) re-read for the clip)
+HVG (VST): Total run time -> 660.87ms
+>>> hvg: 0.9 s <<<
+Using sparse SVD solving on scaled data on 2000 HVG.
+Sparse PCA: Loaded in data in 428.45ms
+Sparse PCA: finished the data preparations in 23.75ms
+Sparse PCA: finished calculations in 2.51s
+Sparse PCA: total run time -> 2.98s
+>>> pca: 3.2 s <<<
+Auto-determined number of Harmony clusters: 100
+Harmony v2: 684_932 cells, 30 dims, 1 variable(s), 100 clusters
+  Variable 0: 24 levels
+ Initial data preparation done in 55.82ms
+Running initial k-means...
+Initial objective: 281.6162
+
+=== Harmony v2 iteration 1 ===
+  Running k-means clustering...
+  Applying ridge regression correction...
+  Harmony objective: 242.3334
+   Finished iteration in 248.11ms / Total runtime 804.02ms
+
+=== Harmony v2 iteration 2 ===
+  Running k-means clustering...
+  Applying ridge regression correction...
+  Harmony objective: 83.3320
+   Finished iteration in 247.77ms / Total runtime 1.05s
+
+=== Harmony v2 iteration 3 ===
+  Running k-means clustering...
+  Applying ridge regression correction...
+  Harmony objective: 56.3216
+   Finished iteration in 246.03ms / Total runtime 1.30s
+
+=== Harmony v2 iteration 4 ===
+  Running k-means clustering...
+  Applying ridge regression correction...
+  Harmony objective: 48.3338
+   Finished iteration in 248.28ms / Total runtime 1.55s
+
+=== Harmony v2 iteration 5 ===
+  Running k-means clustering...
+  Applying ridge regression correction...
+  Harmony objective: 45.2725
+   Finished iteration in 248.16ms / Total runtime 1.80s
+
+=== Harmony v2 iteration 6 ===
+  Running k-means clustering...
+  Applying ridge regression correction...
+  Harmony objective: 43.8451
+   Finished iteration in 247.51ms / Total runtime 2.04s
+
+=== Harmony v2 iteration 7 ===
+  Running k-means clustering...
+  Applying ridge regression correction...
+  Harmony objective: 43.0886
+   Finished iteration in 253.69ms / Total runtime 2.30s
+
+=== Harmony v2 iteration 8 ===
+  Running k-means clustering...
+  Applying ridge regression correction...
+  Harmony objective: 42.4825
+   Finished iteration in 249.04ms / Total runtime 2.55s
+
+=== Harmony v2 iteration 9 ===
+  Running k-means clustering...
+  Applying ridge regression correction...
+  Harmony objective: 42.0728
+   Finished iteration in 261.40ms / Total runtime 2.81s
+
+Harmony v2 converged at iteration 9
+ Finished Harmony 2.81s
+>>> harmony: 3.4 s <<<
+Generating kNN data with nndescent method.
+Building NNDescent kNN graph ...
+... built NNDescent kNN graph in 4.78s
+Generated NNDescent graph: 4.89s
+Generating the snn graph.
+Added 0 edges to reconnect components that pruning cut off.
+Built the Snn { similarity: Jaccard, prune: 0.0625, rescue: true } graph: 2.00s
+>>> knn_snn: 7.1 s <<<
+>>> cluster: 6.0 s <<<
+>>> cluster_fast: 38.3 s <<<
+>>> umap: 29.5 s <<<
+>>> dge: 4.0 s <<<
+>>> tsne_default: 285.3 s <<<
+>>> tsne_fft: 64.7 s <<<
+>>> tsne_quick: 42.0 s <<<
+cells after QC: 684932, clusters: 35, fast clusters: 15 (res 1), 23 (res 2)
+nanobind: leaked 27 instances!
+nanobind: leaked 2 types!
+ - leaked type "_duckdb._sqltypes.DuckDBPyType"
+ - leaked type "ExplainType"
+nanobind: leaked 10 functions!
+ - leaked function "__hash__"
+ - leaked function "__eq__"
+ - leaked function "__new__"
+ - leaked function "__getitem__"
+ - leaked function "__getattr__"
+ - leaked function "__repr__"
+ - leaked function "__init__"
+ - leaked function ""
+ - leaked function ""
+ - leaked function "df"
+ - ... skipped remainder
+nanobind: this is likely caused by a reference counting issue in the binding code.
+See https://nanobind.readthedocs.io/en/latest/refleaks.html	Command being timed: "python /bench/pipelines/bixverse_pipeline.py /data /out /scratch"
+	User time (seconds): 3527.93
+	System time (seconds): 42.88
+	Percent of CPU this job got: 689%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 8:37.77
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 10195232
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 32
+	Minor (reclaiming a frame) page faults: 15067431
+	Voluntary context switches: 603525
+	Involuntary context switches: 71377
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 5643088
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
+exit=0

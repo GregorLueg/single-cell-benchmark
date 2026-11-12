@@ -8,35 +8,35 @@ INFO: execution countsImportBand: read=1/1 compute=1/1 write=1/1 fetch=0.00s com
 INFO: execution countsImportBand: read=1/1 compute=1/1 write=1/1 fetch=0.00s compute=0.00s readerWait=0.00s computeWait=0.00s held=0 reason=1 compute workers used because each unit needs 3214825092 bytes; 1 writers used because each unit needs 3214825092 bytes
 INFO: execution countsImportBand: read=1/1 compute=1/1 write=1/1 fetch=0.00s compute=0.00s readerWait=0.00s computeWait=0.00s held=0 reason=1 compute workers used because each unit needs 3214825092 bytes; 1 writers used because each unit needs 3214825092 bytes
 INFO: execution countsImportBand: read=1/1 compute=1/1 write=1/1 fetch=0.00s compute=0.00s readerWait=0.00s computeWait=0.00s held=0 reason=1 compute workers used because each unit needs 3214825092 bytes; 1 writers used because each unit needs 3214825092 bytes
->>> load: 143.1 s <<<
+>>> load: 180.4 s <<<
 >>> qc: 0.1 s <<<
->>> hvg: 32.0 s <<<
->>> normalise: 27.9 s <<<
->>> pca: 41.0 s <<<
->>> harmony: 239.6 s <<<
->>> knn_snn: 171.5 s <<<
->>> cluster: 17.0 s <<<
->>> umap: 588.0 s <<<
->>> dge: 39.9 s <<<
+>>> hvg: 34.8 s <<<
+>>> normalise: 27.5 s <<<
+>>> pca: 39.7 s <<<
+>>> harmony: 232.6 s <<<
+>>> knn_snn: 180.2 s <<<
+>>> cluster: 17.5 s <<<
+>>> umap: 592.0 s <<<
+>>> dge: 42.1 s <<<
 cells after QC: 684935, clusters: 27
 	Command being timed: "python /bench/pipelines/cytearc_pipeline.py /data /out /scratch"
-	User time (seconds): 4164.45
-	System time (seconds): 278.95
+	User time (seconds): 4312.41
+	System time (seconds): 302.20
 	Percent of CPU this job got: 341%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 21:42.74
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 22:29.75
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 8029864
+	Maximum resident set size (kbytes): 8038572
 	Average resident set size (kbytes): 0
-	Major (requiring I/O) page faults: 43
-	Minor (reclaiming a frame) page faults: 165142872
-	Voluntary context switches: 970863
-	Involuntary context switches: 363655
+	Major (requiring I/O) page faults: 50
+	Minor (reclaiming a frame) page faults: 164011552
+	Voluntary context switches: 804527
+	Involuntary context switches: 361463
 	Swaps: 0
-	File system inputs: 2032112
-	File system outputs: 17143352
+	File system inputs: 776
+	File system outputs: 17139296
 	Socket messages sent: 0
 	Socket messages received: 0
 	Signals delivered: 0

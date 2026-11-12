@@ -1,0 +1,164 @@
+bixverse 0.3.1, manifolds-rs 0.6.1
+Step 1/3: Analysing data structure and calculating QC metrics...
+  Reading CSR matrix structure (shape: 500_000 x 19_273 )...
+First pass - gene expression statistics:
+  Processed 10% of chunks (5/50)
+  Processed 20% of chunks (10/50)
+  Processed 30% of chunks (15/50)
+  Processed 40% of chunks (20/50)
+  Processed 50% of chunks (25/50)
+  Processed 60% of chunks (30/50)
+  Processed 70% of chunks (35/50)
+  Processed 80% of chunks (40/50)
+  Processed 90% of chunks (45/50)
+  Processed 100% of chunks (50/50)
+  Gene expression stats: min = 0 | max = 494_177 | avg = 27_806 cells per gene
+First pass done: 2.08s
+  Genes passing filter: 18_926 / 19_273
+Second pass - cell statistics:
+  Processed 10% of chunks (5/50)
+  Processed 20% of chunks (10/50)
+  Processed 30% of chunks (15/50)
+  Processed 40% of chunks (20/50)
+  Processed 50% of chunks (25/50)
+  Processed 60% of chunks (30/50)
+  Processed 70% of chunks (35/50)
+  Processed 80% of chunks (40/50)
+  Processed 90% of chunks (45/50)
+  Processed 100% of chunks (50/50)
+  Cell stats: genes per cell: min = 83 | max = 5_583
+  Cell stats: library size: min = 142 | max = 25891
+Second pass done: 2.01s
+  Cells passing filter: 499_933 / 500_000
+Step 2/3: QC Results:
+  Genes passing QC: 18_926 / 19_273
+  Cells passing QC: 499_933 / 500_000
+Step 3/3: Writing cells to CSR format...
+  Processing 499_933 cells in batches of 1_000...
+  Processed 1_000 / 499_933 cells
+  Processed 51_000 / 499_933 cells
+  Processed 101_000 / 499_933 cells
+  Processed 151_000 / 499_933 cells
+  Processed 201_000 / 499_933 cells
+  Processed 251_000 / 499_933 cells
+  Processed 301_000 / 499_933 cells
+  Processed 351_000 / 499_933 cells
+  Processed 401_000 / 499_933 cells
+  Processed 451_000 / 499_933 cells
+  Processed 499_933 / 499_933 cells
+  Writing complete in 3.47s
+Converting the cell-based data into the gene-based format.
+  Counted 535_900_498 non-zeros over 18_926 genes in 134.56ms; converting in 1 phase(s).
+  Phase 1/1: genes 0-18926, scatter 3.20s, compress + write 797.97ms
+  Conversion into gene-friendly format done: 4.15s
+>>> load: 13.7 s <<<
+>>> qc: 0.2 s <<<
+HVG (VST): 18_926 genes, 1 batches, 19 disk block(s)
+HVG (VST): Calculated gene statistics in 289.99ms
+HVG (VST): Fitted Loess in 1.24ms
+HVG (VST): Standardised variance in 923.42µs (29 gene(s) re-read for the clip)
+HVG (VST): Total run time -> 293.19ms
+>>> hvg: 0.4 s <<<
+Using sparse SVD solving on scaled data on 2000 HVG.
+Sparse PCA: Loaded in data in 253.67ms
+Sparse PCA: finished the data preparations in 16.99ms
+Sparse PCA: finished calculations in 1.35s
+Sparse PCA: total run time -> 1.63s
+>>> pca: 1.8 s <<<
+Auto-determined number of Harmony clusters: 100
+Harmony v2: 482_409 cells, 30 dims, 1 variable(s), 100 clusters
+  Variable 0: 24 levels
+ Initial data preparation done in 27.00ms
+Running initial k-means...
+Initial objective: 1393.9396
+
+=== Harmony v2 iteration 1 ===
+  Running k-means clustering...
+  Applying ridge regression correction...
+  Harmony objective: 1216.5154
+   Finished iteration in 158.06ms / Total runtime 530.39ms
+
+=== Harmony v2 iteration 2 ===
+  Running k-means clustering...
+  Applying ridge regression correction...
+  Harmony objective: 735.5112
+   Finished iteration in 156.47ms / Total runtime 687.34ms
+
+=== Harmony v2 iteration 3 ===
+  Running k-means clustering...
+  Applying ridge regression correction...
+  Harmony objective: 706.8292
+   Finished iteration in 157.04ms / Total runtime 844.71ms
+
+=== Harmony v2 iteration 4 ===
+  Running k-means clustering...
+  Applying ridge regression correction...
+  Harmony objective: 697.0016
+   Finished iteration in 157.56ms / Total runtime 1.00s
+
+=== Harmony v2 iteration 5 ===
+  Running k-means clustering...
+  Applying ridge regression correction...
+  Harmony objective: 692.9136
+   Finished iteration in 157.15ms / Total runtime 1.16s
+
+Harmony v2 converged at iteration 5
+ Finished Harmony 1.16s
+>>> harmony: 1.5 s <<<
+Generating kNN data with nndescent method.
+Building NNDescent kNN graph ...
+... built NNDescent kNN graph in 3.36s
+Generated NNDescent graph: 3.45s
+Generating the snn graph.
+Added 0 edges to reconnect components that pruning cut off.
+Built the Snn { similarity: Jaccard, prune: 0.0625, rescue: true } graph: 1.24s
+>>> knn_snn: 4.9 s <<<
+>>> cluster: 2.9 s <<<
+>>> cluster_fast: 15.2 s <<<
+>>> umap: 20.0 s <<<
+>>> dge: 1.8 s <<<
+>>> tsne_default: 210.0 s <<<
+>>> tsne_fft: 39.2 s <<<
+>>> tsne_quick: 24.3 s <<<
+cells after QC: 482409, clusters: 12, fast clusters: 12 (res 1), 17 (res 2)
+nanobind: leaked 27 instances!
+nanobind: leaked 2 types!
+ - leaked type "_duckdb._sqltypes.DuckDBPyType"
+ - leaked type "ExplainType"
+nanobind: leaked 10 functions!
+ - leaked function "__new__"
+ - leaked function "__getattr__"
+ - leaked function "__init__"
+ - leaked function "df"
+ - leaked function "__hash__"
+ - leaked function "__getitem__"
+ - leaked function ""
+ - leaked function ""
+ - leaked function "__eq__"
+ - leaked function "__repr__"
+ - ... skipped remainder
+nanobind: this is likely caused by a reference counting issue in the binding code.
+See https://nanobind.readthedocs.io/en/latest/refleaks.html	Command being timed: "python /bench/pipelines/bixverse_pipeline.py /data /out /scratch"
+	User time (seconds): 2360.95
+	System time (seconds): 26.58
+	Percent of CPU this job got: 630%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 6:18.55
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 5302800
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 10
+	Minor (reclaiming a frame) page faults: 8662079
+	Voluntary context switches: 545221
+	Involuntary context switches: 52058
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 3023856
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
+exit=0

@@ -1,5 +1,5 @@
-Text pass (integer): 128 buckets, ~7813 cells/bucket
-Text pass done: 27.61s (cell-major order)
+Text pass (gzip, integer): 128 buckets, ~7813 cells/bucket
+Text pass done: 21.82s (cell-major order)
 Genes passing QC: 19_021 / 19_273
 Cells passing QC: 999_877 / 1_000_000
 Writing pass: 128 buckets, no sort
@@ -14,33 +14,33 @@ Writing pass: 128 buckets, no sort
   Wrote bucket 108/128 (84%)
   Wrote bucket 120/128 (93%)
   Wrote bucket 128/128 (100%)
-Writing pass done: 22.49s
+Writing pass done: 24.52s
  Converting the cell-based data into the gene-based format.
-  Counted 1_072_761_768 non-zeros over 19_021 genes in 276.06ms; converting in 2 phase(s).
-  Phase 1/2: genes 0-17717, scatter 6.36s, compress + write 1.90s
-  Phase 2/2: genes 17717-19021, scatter 331.09ms, compress + write 134.43ms
-  Conversion into gene-friendly format done: 9.05s
+  Counted 1_072_761_768 non-zeros over 19_021 genes in 283.76ms; converting in 2 phase(s).
+  Phase 1/2: genes 0-17717, scatter 7.42s, compress + write 1.94s
+  Phase 2/2: genes 17717-19021, scatter 340.54ms, compress + write 139.88ms
+  Conversion into gene-friendly format done: 10.17s
 Loading observations data from flat file into the DuckDB.
 Loading variable data from flat file into the DuckDB.
->>> load: 61.8 s <<<
->>> qc: 0.6 s <<<
+>>> load: 59.9 s <<<
+>>> qc: 0.8 s <<<
 Setting streaming for large data to TRUE.
 HVG (VST): 19_021 genes, 1 batches, 20 disk block(s)
-HVG (VST): Calculated gene statistics in 570.98ms
-HVG (VST): Fitted Loess in 3.06ms
-HVG (VST): Standardised variance in 1.68ms (24 gene(s) re-read for the clip)
-HVG (VST): Total run time -> 576.76ms
->>> hvg: 0.8 s <<<
+HVG (VST): Calculated gene statistics in 599.04ms
+HVG (VST): Fitted Loess in 1.41ms
+HVG (VST): Standardised variance in 849.29µs (24 gene(s) re-read for the clip)
+HVG (VST): Total run time -> 602.23ms
+>>> hvg: 0.9 s <<<
 Using sparse SVD solving on scaled data on 2000 HVG.
-Sparse PCA: Loaded in data in 329.29ms
-Sparse PCA: finished the data preparations in 31.51ms
-Sparse PCA: finished calculations in 4.05s
-Sparse PCA: total run time -> 4.45s
->>> pca: 4.8 s <<<
+Sparse PCA: Loaded in data in 623.28ms
+Sparse PCA: finished the data preparations in 31.65ms
+Sparse PCA: finished calculations in 2.60s
+Sparse PCA: total run time -> 3.28s
+>>> pca: 3.6 s <<<
  Auto-determined number of Harmony clusters: 100
 Harmony v2: 964_763 cells, 30 dims, 1 variable(s), 100 clusters
   Variable 0: 24 levels
- Initial data preparation done in 48.56ms
+ Initial data preparation done in 46.65ms
 Running initial k-means...
 Initial objective: 1394.1908
 
@@ -48,216 +48,159 @@ Initial objective: 1394.1908
   Running k-means clustering...
   Applying ridge regression correction...
   Harmony objective: 1213.3083
-   Finished iteration in 312.30ms / Total runtime 1.05s
+   Finished iteration in 304.01ms / Total runtime 1.03s
 
 === Harmony v2 iteration 2 ===
   Running k-means clustering...
   Applying ridge regression correction...
   Harmony objective: 725.6370
-   Finished iteration in 332.36ms / Total runtime 1.38s
+   Finished iteration in 306.30ms / Total runtime 1.34s
 
 === Harmony v2 iteration 3 ===
   Running k-means clustering...
   Applying ridge regression correction...
   Harmony objective: 698.6740
-   Finished iteration in 328.44ms / Total runtime 1.71s
+   Finished iteration in 312.61ms / Total runtime 1.65s
 
 === Harmony v2 iteration 4 ===
   Running k-means clustering...
   Applying ridge regression correction...
   Harmony objective: 687.2263
-   Finished iteration in 310.27ms / Total runtime 2.02s
+   Finished iteration in 302.55ms / Total runtime 1.96s
 
 === Harmony v2 iteration 5 ===
   Running k-means clustering...
   Applying ridge regression correction...
   Harmony objective: 682.3833
-   Finished iteration in 311.81ms / Total runtime 2.34s
+   Finished iteration in 299.11ms / Total runtime 2.26s
 
 Harmony v2 converged at iteration 5
- Finished Harmony 2.34s
+ Finished Harmony 2.26s
 >>> harmony: 3.0 s <<<
 
-Built forest: 3.57s
-Running NN-Descent: 964_763 samples, max_candidates=30
-Seeded graph from forest: 3.94s
- Starting chunk size 6_472 for memory-bounded updates (200 MiB budget)
- Preparing candidates for iter 1
- Processing updates for iter 1
-  8 chunks, next chunk size 196612
-  Iter 1: 13_950_507 edge updates (rate=0.4820)
- Preparing candidates for iter 2
- Processing updates for iter 2
-  5 chunks, next chunk size 232520
-  Iter 2: 1_527_163 edge updates (rate=0.0528)
- Preparing candidates for iter 3
- Processing updates for iter 3
-  2 chunks, next chunk size 964763
-  Iter 3: 128_321 edge updates (rate=0.0044)
- Preparing candidates for iter 4
- Processing updates for iter 4
-  1 chunks, next chunk size 964763
-  Iter 4: 12_465 edge updates (rate=0.0004)
-  Converged after 4 iterations
-
-NN-Descent build breakdown (n=964763, k=30):
-  forest build               3.572 s   21.7%
-  graph seeding              3.938 s   23.9%
-  candidates                 2.090 s   12.7%
-  mark old                   0.037 s    0.2%
-  local join                 5.326 s   32.3%
-  radix sort                 0.383 s    2.3%
-  apply updates              1.143 s    6.9%
-  total                     16.488 s
-  updates: 172_390_051 emitted, 15_618_456 accepted (9.06%)
-  merged candidate list: mean 49.8, max 1013
-  candidate pairs evaluated: 2_812_744_214
-Generated NNDescent index: 16.98s
-Extracted NNDescent graph: 44.49ms
+Building NNDescent kNN graph ...
+... built NNDescent kNN graph in 8.29s
+Generated NNDescent graph: 8.44s
 Generating the snn graph.
-Added 3 edges to reconnect components that pruning cut off.
-Built the Snn { similarity: Jaccard, prune: 0.0625, rescue: true } graph: 2.60s
->>> knn_snn: 20.3 s <<<
->>> cluster: 5.7 s <<<
->>> cluster_fast: 45.5 s <<<
+Added 1 edges to reconnect components that pruning cut off.
+Built the Snn { similarity: Jaccard, prune: 0.0625, rescue: true } graph: 2.81s
+>>> knn_snn: 11.8 s <<<
+Running leiden clustering at resolution 1.
+>>> cluster: 6.4 s <<<
+>>> cluster_fast: 46.6 s <<<
 Running UMAP.
-Using n_epochs = 500 (dataset <10k samples or adam_parallel optimiser)
-Using provided kNN graph.
-Running umap with alpha: 0.59 and beta: 1.33
-Using precomputed kNN graph...
-Constructing fuzzy simplicial set...
-Finalised graph generation in 914.65ms.
-Initialising embedding via spectral layout...
-Initialised embedding in: 5.44s.
-Optimising embedding via Adam (multi-threaded) (500 epochs) on 24_069_848 edges...
- Completed epoch 50/500
- Completed epoch 100/500
- Completed epoch 150/500
- Completed epoch 200/500
- Completed epoch 250/500
- Completed epoch 300/500
- Completed epoch 350/500
- Completed epoch 400/500
- Completed epoch 450/500
- Completed epoch 500/500
-Optimised embedding in: 70.35s.
-UMAP complete!
->>> umap: 77.4 s <<<
->>> dge: 4.0 s <<<
+Using n_epochs = 500 (Adam optimiser or dataset <=10k samples)
+Running UMAP on 964_763 samples ...
+ Using precomputed kNN graph
+ Building fuzzy simplicial set ...
+ ... graph in 754.54ms
+ Initialising via spectral ...
+ ... initialised in 1.62s
+ Optimising via Adam (multi-threaded), 500 epochs on 24_016_476 edges ...
+  Epoch 50/500
+  Epoch 100/500
+  Epoch 150/500
+  Epoch 200/500
+  Epoch 250/500
+  Epoch 300/500
+  Epoch 350/500
+  Epoch 400/500
+  Epoch 450/500
+  Epoch 500/500
+ ... optimised in 45.06s
+... finished UMAP in 47.46s
+>>> umap: 48.1 s <<<
+>>> dge: 4.1 s <<<
 Running t-SNE.
-Running kNN search (k=90) using ivf...
-  Processed 100_000 / 964_763 samples.
-  Processed 200_000 / 964_763 samples.
-  Processed 300_000 / 964_763 samples.
-  Processed 400_000 / 964_763 samples.
-  Processed 500_000 / 964_763 samples.
-  Processed 600_000 / 964_763 samples.
-  Processed 700_000 / 964_763 samples.
-  Processed 800_000 / 964_763 samples.
-  Processed 900_000 / 964_763 samples.
-kNN search done in: 62.55s.
-Computing Gaussian affinities and symmetrising...
-Finalised graph generation in 5.59s.
-Initialising embedding via pca...
-Initialised embedding in: 212.96ms.
-Optimising via Barnes-Hut t-SNE (1000 epochs)...
- Epoch 0/1000 | Z = 930_399_841_560
- Epoch 50/1000 | Z = 230_116_083_562
- Epoch 100/1000 | Z = 161_535_614_723
- Epoch 150/1000 | Z = 142_892_775_678
- Epoch 200/1000 | Z = 134_247_133_862
- Epoch 250/1000 | Z = 129_129_769_006
- Epoch 300/1000 | Z = 32_720_566_719
- Epoch 350/1000 | Z = 16_929_754_879
- Epoch 400/1000 | Z = 11_390_491_955
- Epoch 450/1000 | Z = 8_579_373_352
- Epoch 500/1000 | Z = 6_868_684_507
- Epoch 550/1000 | Z = 5_714_499_967
- Epoch 600/1000 | Z = 4_884_244_607
- Epoch 650/1000 | Z = 4_260_470_164
- Epoch 700/1000 | Z = 3_776_976_892
- Epoch 750/1000 | Z = 3_391_361_917
- Epoch 800/1000 | Z = 3_076_929_567
- Epoch 850/1000 | Z = 2_816_465_989
- Epoch 900/1000 | Z = 2_597_542_206
- Epoch 950/1000 | Z = 2_410_918_201
- Epoch 999/1000 | Z = 2_253_140_306
-Optimisation complete in 560.23s.
->>> tsne_default: 629.2 s <<<
+Running t-SNE on 964_763 samples ...
+ kNN search via ivf (k = 90) ...
+ ... kNN search in 30.07s
+ Building Gaussian affinities ...
+ ... graph in 4.44s
+ Initialising via pca ...
+ ... initialised in 279.31ms
+ Optimising via Barnes-Hut t-SNE (1000 epochs) ...
+  Epoch 50/1000 | Z = 197_811_057_205
+  Epoch 100/1000 | Z = 154_697_643_586
+  Epoch 150/1000 | Z = 140_399_719_626
+  Epoch 200/1000 | Z = 132_819_904_796
+  Epoch 250/1000 | Z = 127_895_840_925
+  Epoch 300/1000 | Z = 33_349_919_126
+  Epoch 350/1000 | Z = 17_157_632_373
+  Epoch 400/1000 | Z = 11_478_264_176
+  Epoch 450/1000 | Z = 8_622_062_296
+  Epoch 500/1000 | Z = 6_882_559_177
+  Epoch 550/1000 | Z = 5_712_594_346
+  Epoch 600/1000 | Z = 4_875_543_518
+  Epoch 650/1000 | Z = 4_248_205_558
+  Epoch 700/1000 | Z = 3_763_062_989
+  Epoch 750/1000 | Z = 3_377_184_197
+  Epoch 800/1000 | Z = 3_063_119_684
+  Epoch 850/1000 | Z = 2_803_195_051
+  Epoch 900/1000 | Z = 2_584_843_315
+  Epoch 950/1000 | Z = 2_398_890_468
+  Epoch 1000/1000 | Z = 2_238_652_935
+ ... optimised in 490.55s
+... finished t-SNE in 525.52s
+>>> tsne_default: 525.9 s <<<
 Running t-SNE.
-Running kNN search (k=90) using ivf...
-  Processed 100_000 / 964_763 samples.
-  Processed 200_000 / 964_763 samples.
-  Processed 300_000 / 964_763 samples.
-  Processed 400_000 / 964_763 samples.
-  Processed 500_000 / 964_763 samples.
-  Processed 600_000 / 964_763 samples.
-  Processed 700_000 / 964_763 samples.
-  Processed 800_000 / 964_763 samples.
-  Processed 900_000 / 964_763 samples.
-kNN search done in: 62.60s.
-Computing Gaussian affinities and symmetrising...
-Finalised graph generation in 5.50s.
-Initialising embedding via pca...
-Initialised embedding in: 207.33ms.
-Optimising via three-kernel FFT Interpolation-based t-SNE (1000 epochs)...
- Epoch 0/1000 | Z = 1_162_447_454_807 | n_boxes = 50
- Epoch 50/1000 | Z = 212_834_002_747 | n_boxes = 50
- Epoch 100/1000 | Z = 158_995_911_244 | n_boxes = 50
- Epoch 150/1000 | Z = 142_967_132_765 | n_boxes = 50
- Epoch 200/1000 | Z = 135_047_811_757 | n_boxes = 50
- Epoch 250/1000 | Z = 129_873_915_740 | n_boxes = 50
- Epoch 300/1000 | Z = 32_950_470_914 | n_boxes = 100
- Epoch 350/1000 | Z = 16_920_875_908 | n_boxes = 50
- Epoch 400/1000 | Z = 11_309_298_670 | n_boxes = 60
- Epoch 450/1000 | Z = 8_455_798_407 | n_boxes = 75
- Epoch 500/1000 | Z = 6_723_414_564 | n_boxes = 85
- Epoch 550/1000 | Z = 5_558_189_139 | n_boxes = 96
- Epoch 600/1000 | Z = 4_721_231_678 | n_boxes = 110
- Epoch 650/1000 | Z = 4_097_610_159 | n_boxes = 120
- Epoch 700/1000 | Z = 3_617_775_976 | n_boxes = 130
- Epoch 750/1000 | Z = 3_239_198_689 | n_boxes = 140
- Epoch 800/1000 | Z = 2_934_085_621 | n_boxes = 140
- Epoch 850/1000 | Z = 2_721_972_776 | n_boxes = 140
- Epoch 900/1000 | Z = 2_584_492_608 | n_boxes = 140
- Epoch 950/1000 | Z = 2_467_398_335 | n_boxes = 140
- Epoch 999/1000 | Z = 2_366_419_143 | n_boxes = 140
-Optimisation complete in 124.06s.
->>> tsne_fft: 192.8 s <<<
+Running t-SNE on 964_763 samples ...
+ kNN search via ivf (k = 90) ...
+ ... kNN search in 29.79s
+ Building Gaussian affinities ...
+ ... graph in 4.49s
+ Initialising via pca ...
+ ... initialised in 218.20ms
+ Optimising via three-kernel FFT Interpolation-based t-SNE (1000 epochs) ...
+  Epoch 50/1000 | Z = 198_991_968_773 | n_boxes = 50
+  Epoch 100/1000 | Z = 155_688_318_520 | n_boxes = 50
+  Epoch 150/1000 | Z = 141_088_912_322 | n_boxes = 55
+  Epoch 200/1000 | Z = 133_561_593_877 | n_boxes = 50
+  Epoch 250/1000 | Z = 129_059_786_901 | n_boxes = 50
+  Epoch 300/1000 | Z = 33_025_125_517 | n_boxes = 50
+  Epoch 350/1000 | Z = 16_939_184_487 | n_boxes = 50
+  Epoch 400/1000 | Z = 11_289_117_355 | n_boxes = 60
+  Epoch 450/1000 | Z = 8_430_054_821 | n_boxes = 70
+  Epoch 500/1000 | Z = 6_702_135_200 | n_boxes = 85
+  Epoch 550/1000 | Z = 5_543_308_908 | n_boxes = 96
+  Epoch 600/1000 | Z = 4_708_610_050 | n_boxes = 110
+  Epoch 650/1000 | Z = 4_085_212_705 | n_boxes = 120
+  Epoch 700/1000 | Z = 3_605_217_294 | n_boxes = 130
+  Epoch 750/1000 | Z = 3_225_957_980 | n_boxes = 140
+  Epoch 800/1000 | Z = 2_920_692_618 | n_boxes = 140
+  Epoch 850/1000 | Z = 2_677_554_960 | n_boxes = 140
+  Epoch 900/1000 | Z = 2_535_985_850 | n_boxes = 140
+  Epoch 950/1000 | Z = 2_421_994_047 | n_boxes = 140
+  Epoch 1000/1000 | Z = 2_321_323_824 | n_boxes = 140
+ ... optimised in 70.61s
+... finished t-SNE in 105.30s
+>>> tsne_fft: 105.5 s <<<
 Running t-SNE.
-Running kNN search (k=90) using ivf...
-  Processed 100_000 / 964_763 samples.
-  Processed 200_000 / 964_763 samples.
-  Processed 300_000 / 964_763 samples.
-  Processed 400_000 / 964_763 samples.
-  Processed 500_000 / 964_763 samples.
-  Processed 600_000 / 964_763 samples.
-  Processed 700_000 / 964_763 samples.
-  Processed 800_000 / 964_763 samples.
-  Processed 900_000 / 964_763 samples.
-kNN search done in: 62.40s.
-Computing Gaussian affinities and symmetrising...
-Finalised graph generation in 5.46s.
-Initialising embedding via pca...
-Initialised embedding in: 214.44ms.
-Optimising via quick-and-dirty Barnes-Hut t-SNE (500 epochs, max depth 7)...
- Epoch 0/500 | Z = 930_410_520_806
- Epoch 50/500 | Z = 241_793_524_214
- Epoch 100/500 | Z = 163_708_804_823
- Epoch 150/500 | Z = 144_209_788_948
- Epoch 200/500 | Z = 135_658_139_515
- Epoch 250/500 | Z = 130_444_926_770
- Epoch 300/500 | Z = 37_158_699_696
- Epoch 350/500 | Z = 19_662_727_816
- Epoch 400/500 | Z = 14_429_731_752
- Epoch 450/500 | Z = 11_452_339_913
- Epoch 499/500 | Z = 9_862_352_546
-Optimisation complete in 63.90s.
->>> tsne_quick: 132.4 s <<<
-cells after QC: 964763, clusters: 12, fast clusters: 13 (res 1), 16 (res 2)
+Running t-SNE on 964_763 samples ...
+ kNN search via ivf (k = 90) ...
+ ... kNN search in 30.50s
+ Building Gaussian affinities ...
+ ... graph in 4.54s
+ Initialising via pca ...
+ ... initialised in 280.29ms
+ Optimising via quick-and-dirty Barnes-Hut t-SNE (500 epochs, max depth 7) ...
+  Epoch 50/500 | Z = 198_249_930_617
+  Epoch 100/500 | Z = 155_393_996_376
+  Epoch 150/500 | Z = 141_704_792_129
+  Epoch 200/500 | Z = 134_016_181_744
+  Epoch 250/500 | Z = 128_944_663_875
+  Epoch 300/500 | Z = 39_381_944_553
+  Epoch 350/500 | Z = 20_191_450_071
+  Epoch 400/500 | Z = 15_024_361_703
+  Epoch 450/500 | Z = 12_201_979_520
+  Epoch 500/500 | Z = 10_361_146_838
+ ... optimised in 34.13s
+... finished t-SNE in 69.64s
+>>> tsne_quick: 69.8 s <<<
+cells after QC: 964763, clusters: 13, fast clusters: 13 (res 1), 17 (res 2)
 R version 4.6.1 (2026-06-24)
 Platform: aarch64-unknown-linux-gnu
-Running under: Ubuntu 24.04.4 LTS
+Running under: Ubuntu 24.04.5 LTS
 
 Matrix products: default
 BLAS:   /usr/lib/aarch64-linux-gnu/openblas-pthread/libblas.so.3 
@@ -278,36 +221,36 @@ attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
 other attached packages:
-[1] bixverse_0.8.4      data.table_1.18.6.1
+[1] bixverse_0.9.0      data.table_1.18.6.1
 
 loaded via a namespace (and not attached):
  [1] vctrs_0.7.3        patchwork_1.3.2    cli_3.6.6          rlang_1.3.0       
  [5] zeallot_0.2.0      otel_0.2.0         DBI_1.3.0          purrr_1.2.2       
  [9] generics_0.1.4     S7_0.2.2           glue_1.8.1         backports_1.5.1   
-[13] scales_1.4.0       grid_4.6.1         manifoldsR_0.5.0   tibble_3.3.1      
-[17] lifecycle_1.0.5    duckdb_1.5.6       compiler_4.6.1     dplyr_1.2.1       
+[13] scales_1.4.0       grid_4.6.1         manifoldsR_0.6.0   tibble_3.3.1      
+[17] lifecycle_1.0.5    duckdb_2.0.0       compiler_4.6.1     dplyr_1.2.1       
 [21] codetools_0.2-20   RColorBrewer_1.1-3 pkgconfig_2.0.3    farver_2.1.2      
 [25] lattice_0.22-9     R6_2.6.1           tidyselect_1.2.1   pillar_1.11.1     
 [29] magrittr_2.0.5     checkmate_2.3.4    Matrix_1.7-5       gtable_0.3.6      
 [33] ggplot2_4.0.3     
 	Command being timed: "Rscript /bench/pipelines/bixverse.R /data /out /scratch"
-	User time (seconds): 8384.84
-	System time (seconds): 81.66
-	Percent of CPU this job got: 708%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 19:55.66
+	User time (seconds): 6166.78
+	System time (seconds): 58.66
+	Percent of CPU this job got: 687%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 15:05.22
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 10478704
+	Maximum resident set size (kbytes): 10216496
 	Average resident set size (kbytes): 0
-	Major (requiring I/O) page faults: 1872
-	Minor (reclaiming a frame) page faults: 29373400
-	Voluntary context switches: 661988
-	Involuntary context switches: 95907
+	Major (requiring I/O) page faults: 550
+	Minor (reclaiming a frame) page faults: 25062208
+	Voluntary context switches: 521037
+	Involuntary context switches: 102045
 	Swaps: 0
-	File system inputs: 232920
-	File system outputs: 30992952
+	File system inputs: 200
+	File system outputs: 30994600
 	Socket messages sent: 0
 	Socket messages received: 0
 	Signals delivered: 0

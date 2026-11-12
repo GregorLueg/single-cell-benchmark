@@ -1,22 +1,22 @@
->>> load: 5.1 s <<<
+>>> load: 7.2 s <<<
 >>> qc: 0.4 s <<<
 >>> normalise: 0.1 s <<<
 >>> hvg: 0.2 s <<<
 >>> pca: 2.4 s <<<
->>> harmony: 13.6 s <<<
->>> knn_snn: 4.4 s <<<
->>> cluster: 9.3 s <<<
->>> cluster_fast: 10.6 s <<<
+>>> harmony: 11.0 s <<<
+>>> knn_snn: 4.3 s <<<
+>>> cluster: 8.7 s <<<
+>>> cluster_fast: 10.2 s <<<
 Warning message:
 In clusterKmeans(t(emb), k = as.integer(4 * sqrt(nrow(emb))), num.threads = threads) :
   convergence failure for k-means
->>> umap: 28.0 s <<<
->>> dge: 6.3 s <<<
->>> tsne_quick: 15.3 s <<<
-cells after QC: 69412, clusters: 13, fast clusters: 7 (res 1), 12 (res 2)
+>>> umap: 27.9 s <<<
+>>> dge: 6.0 s <<<
+>>> tsne_quick: 13.6 s <<<
+cells after QC: 69412, clusters: 14, fast clusters: 6 (res 1), 11 (res 2)
 R version 4.6.1 (2026-06-24)
 Platform: aarch64-unknown-linux-gnu
-Running under: Ubuntu 24.04.4 LTS
+Running under: Ubuntu 24.04.5 LTS
 
 Matrix products: default
 BLAS:   /usr/lib/aarch64-linux-gnu/openblas-pthread/libblas.so.3 
@@ -57,20 +57,20 @@ loaded via a namespace (and not attached):
 [40] abind_1.4-8           stats4_4.6.1          matrixStats_1.5.0    
 [43] tools_4.6.1           pkgconfig_2.0.3      
 	Command being timed: "Rscript /bench/pipelines/scrapper.R /data /out /scratch"
-	User time (seconds): 187.11
-	System time (seconds): 7.63
+	User time (seconds): 180.40
+	System time (seconds): 6.77
 	Percent of CPU this job got: 196%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:39.04
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:35.12
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 5106260
+	Maximum resident set size (kbytes): 5104776
 	Average resident set size (kbytes): 0
-	Major (requiring I/O) page faults: 183
-	Minor (reclaiming a frame) page faults: 3512888
-	Voluntary context switches: 4366
-	Involuntary context switches: 11525
+	Major (requiring I/O) page faults: 184
+	Minor (reclaiming a frame) page faults: 3365418
+	Voluntary context switches: 3018
+	Involuntary context switches: 4534
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 0
