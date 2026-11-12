@@ -120,11 +120,11 @@ with step("cluster"):
 with step("umap"):
     sc.tl.umap(adata)
 
-# Wilcoxon fails on dask arrays in scanpy 1.12.4 (numba TypingError in
-# _select_top_n); only the t-test runs, which we do not use, so no DGE there
-if INPUT != "dask":
-    with step("dge"):
-        sc.tl.rank_genes_groups(adata, DGE_COL, method="wilcoxon", n_genes=adata.n_vars)
+# Wilcoxon fails on dask arrays in scanpy 1.12.5 (numba TypingError in _ranks),
+# so the Dask row runs the t-test, the only method that works there
+dge_method = os.environ.get("DGE_METHOD") or ("t-test" if INPUT == "dask" else "wilcoxon")
+with step("dge"):
+    sc.tl.rank_genes_groups(adata, DGE_COL, method=dge_method, n_genes=adata.n_vars)
 
 
 def write_emb(name, key):
@@ -136,11 +136,10 @@ def write_emb(name, key):
 # all score.py inputs before the tSNE steps, so a tSNE timeout only loses its rows
 adata.obs[["leiden"]].to_csv(out / "clusters.csv")
 if TRUTH:
-    if INPUT != "dask":
-        df = sc.get.rank_genes_groups_df(adata, group=None)
-        df.rename(columns={"names": "gene", "scores": "score"})[["group", "gene", "score"]].to_csv(
-            out / "markers.csv", index=False
-        )
+    df = sc.get.rank_genes_groups_df(adata, group=None)
+    df.rename(columns={"names": "gene", "scores": "score"})[["group", "gene", "score"]].to_csv(
+        out / "markers.csv", index=False
+    )
     pd.Series(adata.var_names[adata.var["highly_variable"].values], name="gene").to_csv(
         out / "hvg.csv", index=False
     )

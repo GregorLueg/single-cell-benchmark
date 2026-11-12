@@ -47,6 +47,19 @@ if os.environ.get("LOAD_ONLY") == "1":
 with step("qc"):
     # both cell cuts cover the harness pre-filter (>= 100 genes, >= 250 UMIs).
     # qc raises on data without MT genes, and the harness has no MALAT1 filter
+    # qc finds MT genes by var_names, which are Ensembl ids here; the symbols
+    # live in gene_name, so swap them in for qc and back afterwards. A third of
+    # the symbols are null and some repeat, and qc rejects duplicates, so nulls
+    # take the id and repeats a suffix ("-" is in MT- itself, hence "__")
+    id_col = sc.var.columns[0]
+    if "gene_name" in sc.var.columns:
+        sc = (
+            sc.with_columns_var(
+                qc_name=pl.coalesce(pl.col("gene_name").cast(pl.String), pl.col(id_col).cast(pl.String))
+            )
+            .set_var_names("qc_name")
+            .make_var_names_unique(separator="__")
+        )
     has_mt = sc.var[:, 0].cast(pl.String).str.to_uppercase().str.starts_with("MT-").any()
     sc = sc.qc(
         min_genes=250,
@@ -54,7 +67,7 @@ with step("qc"):
         max_mito_fraction=0.05 if has_mt else None,
         nonzero_MALAT1=False,
         allow_float=True,
-    )
+    ).set_var_names(id_col)
 
 # hvg works on the raw counts, so it sits before normalisation
 with step("hvg"):

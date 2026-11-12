@@ -56,7 +56,7 @@ watchdog=$!
 
 status=0
 docker run --rm --name scbench-run --cpus=8 --memory="$mem" --memory-swap="$memswap" --shm-size="${SHM:-64m}" \
-  -e LOAD_ONLY="${LOAD_ONLY:-0}" -e OMP_NUM_THREADS=8 -e OPENBLAS_NUM_THREADS=8 -e RAYON_NUM_THREADS=8 -e INPUT="${INPUT:-mtx}" -e CHUNK="${CHUNK:-50000}" -e BIX_CSC_GB="${BIX_CSC_GB:-8}" -e BIX_KNN="${BIX_KNN:-nndescent}" -e BIX_TSNE_KNN="${BIX_TSNE_KNN:-kmknn}" -e BRISC_HOGWILD="${BRISC_HOGWILD:-0}" \
+  -e LOAD_ONLY="${LOAD_ONLY:-0}" -e OMP_NUM_THREADS=8 -e OPENBLAS_NUM_THREADS=8 -e RAYON_NUM_THREADS=8 -e INPUT="${INPUT:-mtx}" -e CHUNK="${CHUNK:-50000}" -e BIX_CSC_GB="${BIX_CSC_GB:-8}" -e BIX_KNN="${BIX_KNN:-nndescent}" -e BIX_TSNE_KNN="${BIX_TSNE_KNN:-kmknn}" -e BRISC_HOGWILD="${BRISC_HOGWILD:-0}" -e DGE_METHOD="${DGE_METHOD:-}" \
   -v "$root/data/$dataset:/data:ro" \
   -v "$out:/out" \
   -v "$root/pipelines:/bench/pipelines:ro" \
