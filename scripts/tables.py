@@ -79,8 +79,7 @@ def load_run(d):
     swap = mem["swap_bytes"].max() / GB
     failed_at = None
     if status not in (0, None):
-        # Scanpy on dask has no DGE step (Wilcoxon is unsupported there)
-        order = [s for s in TOOL_STEPS[family(d.name)] if not (s == "dge" and d.name.endswith("dask"))]
+        order = TOOL_STEPS[family(d.name)]
         failed_at = next((s for s in order if s not in steps), order[-1])
         if (d / "TIMEOUT").exists():
             kind = "TIMEOUT"
