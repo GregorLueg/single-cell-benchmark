@@ -199,6 +199,11 @@ step_heatmap <- function(labels, title, file, height, width = 11, base_size = 10
     value < 10, sprintf("%.1f", value),
     default = format(round(value), big.mark = ",", trim = TRUE)
   )]
+  # * marks a DGE step that is not a Wilcoxon or AUC test
+  if (metric == "time") {
+    d[step == "dge" & (column == "Scanpy dask" | family == "brisc") & !lab %in% c("n/a", "-"),
+      lab := paste0(lab, "*")]
+  }
   d[!is.na(status) & status != "ok", value := NA_real_]
   # log2 ratio to the best run that finished the step, capped at 32x and put
   # on 0 to 1: unlike a min-max scale, 200 s against 201 s stays one colour.
@@ -239,7 +244,8 @@ step_heatmap <- function(labels, title, file, height, width = 11, base_size = 10
       },
       caption = paste(
         "Black: n/a (step not in that framework), OOM or TIMEOUT where the run died, - not reached.",
-        "Scanpy dask has no DGE step. Docker runs only; the native bixverse runs are in their own table.",
+        "DGE*: Scanpy dask runs a t-test (Wilcoxon fails on Dask arrays), brisc ranks by detection rate with no test; the rest run Wilcoxon or AUC.",
+        "Docker runs only; the native bixverse runs are in their own table.",
         "bixverse CPU tSNE builds its kNN with IVF from 500k (kmknn at 100k). (qd) steps are not in the total.",
         if (metric == "memory") "Steps under ~1 s read the sample nearest their midpoint." else NULL,
         sep = "\n"

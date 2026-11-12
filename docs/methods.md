@@ -186,7 +186,11 @@ scrapper's batch correction via `block =` plus MNN, Seurat's sketching.
    is counted at load and only used to restrict its markers.
 2. **qc**: MT < 5%, total UMIs >= 750, detected genes >= 250. brisc's `qc`
    runs with its MALAT1 filter off (not part of the harness QC) and its MT
-   filter off where there are no MT genes, as both raise otherwise.
+   filter off where there are no MT genes, as both raise otherwise. brisc
+   finds MT genes by var name, so on PBMC its QC swaps the symbols in (null
+   symbols take the Ensembl id, repeats a suffix). Its cut is <= 5% against
+   < 5% elsewhere: brisc keeps 0.05% more cells on PBMC full (685,299 against
+   684,932), CyteArc 3 more.
 3. **normalise**: library size to 1e4 and log1p (bixverse, Scanpy, Seurat);
    centred size factors and log2 (scrapper defaults); CyteArc's default,
    library size to 1000 over the HVGs and log1p, computed lazily, so it runs
@@ -393,12 +397,17 @@ harmonypy.
   `FindAllMarkers` on BPCells transposes once per group and is slower; with
   it the step writes a gene-major copy of the data (7.7 GB on the full PBMC
   data). The split between transpose and marker test is not timed.
-- **No DGE for Scanpy Dask.** Wilcoxon `rank_genes_groups` fails on Dask
-  arrays in Scanpy 1.12.4 (numba `TypingError` in `_select_top_n`). Only the
-  t-test runs, and a t-test on zero-inflated counts is not a like-for-like
-  substitute, so the Dask row has no DGE step. Its totals are not
-  like-for-like: the same step takes in-memory Scanpy 454 s on the 500k
-  simulation and 602 s on PBMC 500k. Treat the Dask row as experimental.
+- **Two DGE steps are not Wilcoxon.** Scanpy Dask runs the t-test: Wilcoxon
+  `rank_genes_groups` fails on Dask arrays in Scanpy 1.12.5 (numba
+  `TypingError` in `_ranks`), and the t-test is the only method that works
+  there. brisc ranks by detection rate and fold change in detection rate with
+  no test at all, so its 0.0 to 0.3 s DGE step does not compare with the
+  others. On detectable markers the t-test holds up (R-precision 0.93 on the
+  500k simulation, in line with the Wilcoxon rows); brisc's ranking does not
+  (0.29 at 100k and 0.34 at 1M, against 0.88 to 0.94 for the rest). Both are
+  marked * in the step heatmaps. The t-test also pushes the Dask row to the
+  24 GB cap at 1M cells: it OOMs in DGE on the 1M simulation and peaks at
+  24.0 GB on PBMC full.
 - **`cluster_fast` on the CPU is slower than the Leiden it replaces** from
   500k (bixverse 14 against 4 s at 500k, 47 against 8 s at 1M; scrapper 194
   against 123 s). It is in the tables as an option, not in the totals.
@@ -443,10 +452,6 @@ harmonypy.
 - **Per-step times of the lazy rows shift work between steps.** Scanpy Dask,
   scrapper HDF5, BPCells and CyteArc defer computation, so a step can pay for work
   queued earlier. Compare their totals, not single steps.
-- **brisc's DGE is not like-for-like.** A detection-rate count with no test
-  is cheaper than any Wilcoxon or AUC, so its 0.0 to 0.3 s DGE step does not
-  compare with the others. It also ranks detectable markers worse (R-precision
-  0.29 at 100k and 0.34 at 1M, against 0.88 to 0.94 for the rest).
 - **brisc runs on OpenBLAS.** MKL is x86-only and Accelerate macOS-only, so
   linux/arm64 gets OpenBLAS, which brisc's docs call slower. This works
   against brisc; by how much is not measured.
